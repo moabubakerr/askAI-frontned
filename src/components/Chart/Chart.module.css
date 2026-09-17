@@ -1,0 +1,125 @@
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-inline: 12px;
+  padding-block: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--neutral-50);
+}
+
+.caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.unit {
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.plot {
+  min-width: 0;
+}
+
+/* The plot itself never mirrors: time runs left to right in both directions. */
+.svg {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridline {
+  stroke: var(--neutral-200);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--ink-faint);
+}
+
+.area {
+  fill: var(--blue-500);
+  opacity: 0.1;
+  animation: fade-in 320ms var(--ease) both;
+  animation-delay: 160ms;
+}
+
+.line {
+  fill: none;
+  stroke: var(--blue-700);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  animation: draw-line 620ms var(--ease) both;
+}
+
+.point {
+  fill: var(--surface);
+  stroke: var(--blue-700);
+  stroke-width: 2;
+  animation: fade-in 200ms var(--ease) both;
+}
+
+.bar {
+  fill: var(--blue-600);
+  animation: grow-bar 320ms var(--ease) both;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+}
+
+.table th {
+  text-align: start;
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-faint);
+  background: var(--neutral-50);
+  padding-inline: 10px;
+  padding-block: 7px;
+  white-space: nowrap;
+  border-block-end: 1px solid var(--hairline);
+}
+
+.table td {
+  padding-inline: 10px;
+  padding-block: 7px;
+  color: var(--ink-soft);
+  border-block-start: 1px solid var(--neutral-150);
+}
+
+.table tbody tr:first-child td {
+  border-block-start: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

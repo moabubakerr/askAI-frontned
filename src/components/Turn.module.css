@@ -1,0 +1,117 @@
+/*
+ * Runs once, on mount — the turn just asked. Existing turns do not remount, so
+ * a lens toggle or an evidence expand never replays it.
+ */
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: rise-fade 320ms var(--ease) both;
+}
+
+.ask {
+  display: flex;
+  align-items: baseline;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  padding-block-end: 2px;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.question {
+  flex: 1 1 320px;
+  min-width: 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--neutral-950);
+}
+
+.against {
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+.resolved {
+  font-size: var(--fs-small);
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-inline: 16px;
+  padding-block: 18px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-muted);
+  font-size: var(--fs-body);
+}
+
+.spinner {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--blue-100);
+  border-block-start-color: var(--blue-500);
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.failure {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-inline: 16px;
+  padding-block: 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--fs-body);
+  color: var(--ink-soft);
+}
+
+.retry {
+  padding-inline: 12px;
+  padding-block: 6px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+.packages {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Combined: two cards side by side, nothing reconciled between them. */
+.pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

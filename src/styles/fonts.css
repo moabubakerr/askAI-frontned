@@ -1,0 +1,29 @@
+/*
+ * Fonts are bundled, not fetched.
+ *
+ * The VM has no guaranteed egress and the page must render fully offline, so
+ * nothing here reaches Google Fonts or any other origin. Each import pulls a
+ * woff2 out of node_modules at build time; Vite emits it into assets/ and the
+ * runtime image serves it from the same origin as the app.
+ *
+ * Weights match what the UI actually uses — see tokens.css and the component
+ * modules. Arabic carries the same weights as Latin: both languages are first
+ * class, and Arabic must not fall back to a system face.
+ */
+
+/* Latin UI face */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+
+/* Arabic UI face */
+@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-700.css';
+
+/* Figures, row references and scope lines */
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';

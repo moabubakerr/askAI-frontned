@@ -1,0 +1,66 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-style: normal;
+  color: var(--el-accent);
+}
+
+.figure {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.value {
+  font-size: var(--fs-headline);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--blue-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.sentence {
+  font-size: var(--fs-sentence);
+  line-height: 1.55;
+  color: var(--el-ink);
+  max-width: 62ch;
+}
+
+.delta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--fs-body);
+  color: var(--ink-soft);
+}
+
+.deltaLabel {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--el-accent);
+}
+
+@media (max-width: 560px) {
+  .value {
+    font-size: 34px;
+  }
+}

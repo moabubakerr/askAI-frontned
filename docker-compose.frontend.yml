@@ -1,0 +1,36 @@
+services:
+  askai-web:
+    build: .
+    image: askai-web:latest
+    container_name: askai-web
+    restart: unless-stopped
+
+    ports:
+      # VM host 17000 -> nginx 8080 in the container.
+      # 17900 is the API and 17800 is taken.
+      - "17000:8080"
+
+    environment:
+      # The API by Compose service name on its container port, over the shared
+      # network. Not localhost: inside a container that is this container.
+      #
+      # Override from the shell or a .env beside this file, e.g.
+      #   API_UPSTREAM=http://host.docker.internal:17900 docker compose -f ... up -d
+      # which also needs the extra_hosts block below uncommented.
+      API_UPSTREAM: ${API_UPSTREAM:-http://askai-api:8000}
+
+      # Asserted on every proxied request, server-side.
+      CALLER_ID: ${CALLER_ID:-askai-web}
+
+    # Fallback only, for reaching the API on the VM host's published port
+    # instead of over the shared network.
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+    networks:
+      - kap_shared_network
+
+networks:
+  kap_shared_network:
+    # Created outside this file — the API is already on it.
+    external: true

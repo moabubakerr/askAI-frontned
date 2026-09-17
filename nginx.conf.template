@@ -1,0 +1,86 @@
+# ---------------------------------------------------------------------------
+# Ask AI — web client: static files plus a same-origin /api proxy.
+#
+# Rendered at container start by the base image's entrypoint: ${API_UPSTREAM}
+# and ${CALLER_ID} are substituted through envsubst, and nothing else is (see
+# NGINX_ENVSUBST_FILTER in the Dockerfile), so $host, $request_uri and friends
+# reach nginx as nginx syntax.
+#
+# The whole point of this file: the browser only ever talks to this origin. The
+# API is not a different host, port or scheme as far as the page is concerned,
+# so no preflight is ever sent and the API's missing CORS middleware never
+# matters.
+# ---------------------------------------------------------------------------
+
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Arabic content is UTF-8 and must stay that way. This sets the charset on
+    # text responses served from here; proxied responses keep whatever the API
+    # declared, untouched.
+    charset utf-8;
+    charset_types text/css text/plain application/javascript application/json image/svg+xml;
+
+    # A proxied JSON body is bytes to be forwarded, not text to be adjusted.
+    # Nothing here rewrites, re-encodes or compresses what the API returned.
+    gzip on;
+    gzip_proxied off;
+    gzip_types text/css text/plain application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # ---- the API ----------------------------------------------------------
+    # proxy_pass with no URI part, so the original path is passed through as-is:
+    #   /api/ask     -> ${API_UPSTREAM}/api/ask
+    #   /api/health  -> ${API_UPSTREAM}/api/health
+    # (API_UPSTREAM must therefore have no trailing slash.)
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_http_version 1.1;
+
+        # Caller identity is asserted here, server-side. proxy_set_header
+        # replaces whatever arrived, so a browser that sets X-Caller-Id itself
+        # cannot forge one: a client that can set it can forge it.
+        proxy_set_header X-Caller-Id ${CALLER_ID};
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+
+        # Pass the response body straight through, byte for byte. No buffering,
+        # no rewriting: the JSON carries Arabic and must arrive as the API sent
+        # it.
+        proxy_buffering off;
+        proxy_request_buffering off;
+
+        # An answer can take a while to compose; a 60s default would cut one off
+        # mid-question.
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    # ---- the app ----------------------------------------------------------
+    # Hashed filenames, so they can be cached hard and forever.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # index.html is never cached: it is what points at the current bundle, and a
+    # stale copy would keep serving the previous deploy.
+    location = /index.html {
+        add_header Cache-Control "no-store";
+    }
+
+    # SPA history fallback. A deep link is a client route, not a missing file.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

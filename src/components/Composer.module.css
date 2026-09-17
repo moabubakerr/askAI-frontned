@@ -1,0 +1,103 @@
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0) 0%, var(--page-bg) 28%);
+  padding-block-start: 22px;
+}
+
+.inner {
+  max-width: var(--canvas-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block-end: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding-inline: 14px;
+  padding-block: 11px;
+  border-radius: var(--radius);
+  border: 1px solid var(--neutral-300);
+  background: var(--surface);
+  font-size: var(--fs-sentence);
+  box-shadow: var(--shadow-1);
+  transition: border-color var(--t-hover) var(--ease);
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.input:hover {
+  border-color: var(--neutral-400);
+}
+
+.input:focus-visible {
+  border-color: var(--blue-500);
+}
+
+.send {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding-inline: 18px;
+  padding-block: 11px;
+  border: 1px solid var(--blue-900);
+  border-radius: var(--radius);
+  background: var(--blue-900);
+  color: #fff;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-hover) var(--ease);
+}
+
+.send:hover:not(:disabled) {
+  background: var(--blue-800);
+}
+
+.send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  padding-inline: 12px;
+  padding-block: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-muted);
+  font-size: var(--fs-small);
+  cursor: pointer;
+  transition:
+    color var(--t-hover) var(--ease),
+    border-color var(--t-hover) var(--ease);
+}
+
+.reset:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--neutral-300);
+}
+
+.reset:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

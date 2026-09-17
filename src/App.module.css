@@ -1,0 +1,34 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.canvas {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: var(--canvas-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.skip {
+  position: absolute;
+  inset-inline-start: 8px;
+  inset-block-start: -60px;
+  z-index: 50;
+  padding-inline: 14px;
+  padding-block: 9px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--blue-800);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-2);
+  transition: inset-block-start var(--t-move) var(--ease);
+}
+
+.skip:focus-visible {
+  inset-block-start: 8px;
+}

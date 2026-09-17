@@ -1,0 +1,12 @@
+# Development happens on Windows; the image builds on Linux. Normalise to LF in
+# the repository and on checkout, so a CRLF never reaches a config file or a
+# script inside the container.
+* text=auto eol=lf
+
+# Binary, never touched.
+*.png binary
+*.jpg binary
+*.woff binary
+*.woff2 binary
+*.ico binary
+*.gz binary

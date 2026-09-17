@@ -1,0 +1,113 @@
+:root {
+  /* ---- palette -------------------------------------------------- */
+  --blue-950: #052444;
+  --blue-900: #06325f;
+  --blue-800: #0a3a6b;
+  --blue-700: #104b8c;
+  --blue-600: #1a5ba8;
+  --blue-500: #2e6fbf;
+  --blue-400: #4f86cc;
+  --blue-300: #7aa6da;
+  --blue-200: #a9c6e9;
+  --blue-100: #d6e4f5;
+  --blue-50: #eef4fb;
+
+  --gold-700: #b07d06;
+  --gold-500: #fcc326;
+  --gold-200: #ffe9b0;
+  --gold-50: #fff9ec;
+
+  --neutral-950: #0d1626;
+  --neutral-800: #243349;
+  --neutral-600: #54647d;
+  --neutral-500: #71839b;
+  --neutral-400: #97a6ba;
+  --neutral-300: #c0cbd9;
+  --neutral-200: #dde4ec;
+  --neutral-150: #e8edf3;
+  --neutral-100: #f1f4f8;
+  --neutral-50: #f8fafc;
+
+  --green-600: #2a8a5b;
+  --amber-600: #c4870e;
+  --amber-700: #9a6510;
+  --teal-600: #0e7c8b;
+
+  /* ---- roles ---------------------------------------------------- */
+  --page-bg: var(--neutral-50);
+  --surface: #ffffff;
+  --hairline: var(--neutral-200);
+  --ink: var(--neutral-950);
+  --ink-soft: var(--neutral-800);
+  --ink-muted: var(--neutral-600);
+  --ink-faint: var(--neutral-500);
+
+  --accent-approved: var(--blue-900);
+  --accent-external: var(--gold-500);
+
+  /* ---- element-class treatments --------------------------------- */
+  --class-measured-accent: var(--blue-700);
+  --class-measured-bg: var(--surface);
+  --class-measured-ink: var(--neutral-950);
+
+  --class-derived-accent: var(--blue-600);
+  --class-derived-bg: var(--surface);
+  --class-derived-ink: var(--neutral-950);
+
+  --class-attributed-accent: var(--teal-600);
+  --class-attributed-bg: #eef8f9;
+  --class-attributed-ink: var(--neutral-950);
+
+  --class-article-accent: var(--neutral-400);
+  --class-article-bg: var(--neutral-50);
+  --class-article-ink: var(--neutral-800);
+
+  --class-external-accent: var(--gold-700);
+  --class-external-bg: var(--gold-50);
+  --class-external-ink: var(--neutral-950);
+
+  --class-absent-accent: var(--neutral-400);
+  --class-absent-bg: var(--neutral-100);
+  --class-absent-ink: var(--neutral-800);
+
+  /* ---- type ----------------------------------------------------- */
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Sans Arabic', ui-monospace, monospace;
+
+  --fs-headline: 44px;
+  --fs-sentence: 16px;
+  --fs-body: 13.5px;
+  --fs-small: 12.5px;
+  --fs-eyebrow: 10.5px;
+  --tracking-eyebrow: 0.08em;
+
+  /* ---- shape ---------------------------------------------------- */
+  --radius: 8px;
+  --radius-pill: 999px;
+  --stripe: 3px;
+
+  --shadow-1: 0 1px 2px rgba(13, 22, 38, 0.04), 0 1px 1px rgba(13, 22, 38, 0.03);
+  --shadow-2: 0 2px 8px rgba(13, 22, 38, 0.06), 0 1px 2px rgba(13, 22, 38, 0.04);
+  --shadow-header: 0 1px 0 rgba(5, 36, 68, 0.12);
+
+  --focus-ring: 0 0 0 3px rgba(46, 111, 191, 0.35);
+
+  /* ---- layout --------------------------------------------------- */
+  --canvas-max: 1180px;
+  --gutter: 20px;
+  --header-h: 56px;
+  --subbar-h: 48px;
+
+  /* ---- motion --------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --t-hover: 120ms;
+  --t-move: 200ms;
+}
+
+[lang='ar'] {
+  --font-sans: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+  /* Arabic sets larger for the same optical size; dates and plurals are longer. */
+  --fs-sentence: 16.5px;
+  --fs-body: 14px;
+  --fs-eyebrow: 11px;
+}

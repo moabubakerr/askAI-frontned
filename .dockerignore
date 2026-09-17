@@ -1,0 +1,41 @@
+# Everything here would otherwise be shipped to the Docker daemon on every VM
+# build. node_modules alone is hundreds of megabytes, and the image installs its
+# own from the lockfile anyway.
+
+node_modules
+**/node_modules
+
+# Build output — the image builds its own.
+dist
+build
+.vite
+*.tsbuildinfo
+
+# VCS and tooling
+.git
+.gitignore
+.github
+.claude
+.vscode
+.idea
+
+# Local environment. VITE_USE_FIXTURES=true in a stray .env would ship a build
+# that answers from fixtures instead of the service.
+.env
+.env.*
+!.env.example
+
+# Docker's own files: changing DEPLOY.md must not bust the build cache.
+Dockerfile
+.dockerignore
+docker-compose*.yml
+DEPLOY.md
+README.md
+
+# Local artifacts
+*.log
+npm-debug.log*
+coverage
+.DS_Store
+Thumbs.db
+*.tar.gz

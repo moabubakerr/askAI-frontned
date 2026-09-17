@@ -1,0 +1,6 @@
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding-block: 26px 8px;
+}

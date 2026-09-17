@@ -1,0 +1,149 @@
+/* Visibly not the approved answer: its own surface, its own stripe, its own
+   column — never the same card shell. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--gold-200);
+  border-inline-start: var(--stripe) solid var(--accent-external);
+  border-radius: var(--radius);
+  background: var(--class-external-bg);
+  box-shadow: var(--shadow-1);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--class-external-accent);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.outcome {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.outcome[data-failed='true'] {
+  color: var(--amber-700);
+}
+
+.elapsed {
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+.agent {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.caveat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.caveatLabel {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--class-external-accent);
+}
+
+.prose {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.reason {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.check {
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.check[data-flagged='true'] {
+  border-color: var(--gold-200);
+}
+
+.checkTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 8px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.check[data-flagged='true'] .checkTitle {
+  color: var(--amber-700);
+}
+
+.pairs {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(80px, max-content) 1fr;
+  gap: 4px 12px;
+  font-size: var(--fs-body);
+}
+
+.pair dt {
+  color: var(--ink-faint);
+}
+
+.pair dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.item {
+  display: block;
+}

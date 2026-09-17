@@ -1,0 +1,84 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-inline: 14px;
+  padding-block: 11px;
+  border: 1px solid var(--blue-100);
+  border-inline-start: var(--stripe) solid var(--blue-400);
+  border-radius: var(--radius);
+  background: var(--blue-50);
+  flex-wrap: wrap;
+}
+
+.icon {
+  color: var(--blue-600);
+  flex: none;
+  margin-block-start: 2px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--blue-700);
+}
+
+.pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: var(--fs-small);
+}
+
+.pair dt {
+  color: var(--ink-faint);
+  min-width: 8ch;
+}
+
+.pair dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.change + .change::before {
+  content: ' · ';
+  color: var(--ink-faint);
+}
+
+.reject {
+  flex: none;
+  padding-inline: 12px;
+  padding-block: 6px;
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--blue-800);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--t-hover) var(--ease);
+}
+
+.reject:hover {
+  background: var(--blue-100);
+}
