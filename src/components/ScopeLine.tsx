@@ -1,6 +1,7 @@
 import {
   asOfPeriod,
   isDeferredPeriod,
+  periodRange,
   unboundReason,
   type AnswerElement,
   type AnswerSpec,
@@ -26,6 +27,7 @@ interface Props {
 export function ScopeLine({ scope, spec }: Props) {
   const { t, tOpen } = useI18n();
 
+  const range = periodRange(spec);
   const asOf = asOfPeriod(spec);
   const deferred = isDeferredPeriod(spec);
   const unbound = unboundReason(spec.detail_id);
@@ -40,7 +42,13 @@ export function ScopeLine({ scope, spec }: Props) {
         </span>
       ) : null}
 
-      {asOf ? (
+      {/* A span, when the question covers one. `resolved_period` only reports
+          where it ends. */}
+      {range ? (
+        <span className={styles.asOf}>
+          {t('scope.range', { start: range.start, end: range.end })}
+        </span>
+      ) : asOf ? (
         <span className={styles.asOf} data-deferred={deferred ? 'true' : undefined}>
           {t('scope.asOf', { period: asOf })}
         </span>

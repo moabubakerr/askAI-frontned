@@ -104,6 +104,7 @@ export type CountryScope = 'national' | 'named' | 'declared_benchmarks';
  */
 export type PeriodSlot =
   | { bound: { exact: string } }
+  | { bound: { range: { start: string; end: string } } }
   | { deferred: { latest: true } }
   | Record<string, unknown>;
 
@@ -297,6 +298,18 @@ export function exactPeriod(spec: AnswerSpec): string | null {
 }
 
 /**
+ * The span a series question covers. `resolved_period` reports only where the
+ * series ends, so a range has to be read from the slot or the answer looks like
+ * it is about one year when it covers seven.
+ */
+export function periodRange(spec: AnswerSpec): { start: string; end: string } | null {
+  const period = spec.period as { bound?: { range?: { start?: string; end?: string } } };
+  const range = period?.bound?.range;
+  if (!range?.start || !range.end) return null;
+  return { start: range.start, end: range.end };
+}
+
+/**
  * What the answer is actually as of. `resolved_period` is what a deferred
  * period resolved to and is the most common question about an answer, so it
  * wins over the exact period whenever it is present.
@@ -313,9 +326,16 @@ export interface SourceRefParts {
   source: string;
 }
 
-/** 'detail|period|country|source' — split, never reformatted. */
+/**
+ * 'detail|period|country|source' — split, never reformatted.
+ *
+ * Not every reference has that shape: a catalogue entry arrives as
+ * 'catalogue:detail:<id>', with no period and no row behind it. Rather than
+ * mis-reading that as a detail id, it is returned whole as the source.
+ */
 export function parseSourceRef(ref: string | undefined): SourceRefParts | null {
   if (!ref) return null;
+  if (!ref.includes('|')) return { detail: '', period: '', country: '', source: ref };
   const [detail = '', period = '', country = '', source = ''] = ref.split('|');
   return { detail, period, country, source };
 }

@@ -83,6 +83,31 @@
   gap: 14px;
 }
 
+/* The answer, when the service put it in elements that normally support one
+   rather than in a headline — a definition, a catalogue entry. */
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leadItem {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.leadLabel {
+  display: block;
+  margin-block-end: 4px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 .exploreLink {
   display: inline-flex;
   align-items: center;

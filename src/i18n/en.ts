@@ -52,6 +52,7 @@ export const en = {
   'class.absent': 'Not published',
 
   'scope.asOf': 'As of {period}',
+  'scope.range': '{start}–{end}',
 
   /* Slot names and binding reasons are open vocabularies: an unknown key falls
      back to the service's own wording rather than being renamed here. */
@@ -68,6 +69,7 @@ export const en = {
 
   'basis.title': 'Basis',
   'analysis.title': 'Published analysis',
+  'series.title': 'Published rows',
 
   'evidence.show': 'Show published rows',
   'evidence.hide': 'Hide published rows',

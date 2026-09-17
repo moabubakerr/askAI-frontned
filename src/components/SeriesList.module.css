@@ -1,0 +1,66 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.title {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.label {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* One published row per line, in figures type so the periods and values line
+   up down the column. */
+.row {
+  padding: 7px 12px;
+  border-inline-start: var(--stripe) solid var(--class-measured-accent);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--hairline);
+}
+
+.row:nth-child(even) {
+  background: var(--neutral-50);
+}
+
+.row[data-el-class='derived'] {
+  border-inline-start-color: var(--class-derived-accent);
+}
+
+.row[data-el-class='external'] {
+  border-inline-start-color: var(--class-external-accent);
+}
+
+.row[data-el-class='absent'] {
+  border-inline-start-color: var(--class-absent-accent);
+  color: var(--class-absent-ink);
+}

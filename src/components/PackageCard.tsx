@@ -1,5 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
-import { assertNever, type AnswerPackage, type Candidate } from '../api/types';
+import { assertNever, type AnswerElement, type AnswerPackage, type Candidate } from '../api/types';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation } from '../state/useConversation';
@@ -8,12 +8,13 @@ import { BasisList } from './BasisList';
 import { Caveat, Degradations, Suggestions } from './Callouts';
 import { Chart } from './Chart/Chart';
 import { ClarificationBody } from './ClarificationBody';
-import { byRole, firstByRole } from './elements';
+import { byRole, firstByRole, CLASS_LABEL } from './elements';
 import { Delta, Headline } from './Headline';
 import { EvidenceDisclosure } from './EvidenceDisclosure';
 import { ProvenanceChip } from './ProvenanceChip';
 import { RefusalBody, RefusalChip } from './RefusalCard';
 import { ScopeLine } from './ScopeLine';
+import { SeriesList } from './SeriesList';
 import styles from './PackageCard.module.css';
 
 interface Props {
@@ -44,10 +45,19 @@ export function PackageCard({
   const scope = firstByRole(pkg.elements, 'scope');
   const headline = firstByRole(pkg.elements, 'headline');
   const delta = firstByRole(pkg.elements, 'delta');
-  const series = firstByRole(pkg.elements, 'series');
+  const series = byRole(pkg.elements, 'series');
   const notes = byRole(pkg.elements, 'note');
   const analysis = [...byRole(pkg.elements, 'analysis'), ...byRole(pkg.elements, 'commentary')];
   const evidence = byRole(pkg.elements, 'evidence');
+
+  /*
+   * Evidence normally sits behind the disclosure, one interaction from the
+   * figure it supports. But a package without a headline has no figure to
+   * support: the service put the answer itself in these rows — a definition, a
+   * catalogue entry — and hiding them would hide the answer. So when there is
+   * no headline, they are the lead.
+   */
+  const evidenceIsTheAnswer = headline === undefined && evidence.length > 0;
 
   const regionId = `evidence-${turnIndex}-${pkgIndex}`;
 
@@ -78,13 +88,19 @@ export function PackageCard({
         {headline ? <Headline element={headline} /> : null}
         {delta ? <Delta element={delta} /> : null}
 
+        {evidenceIsTheAnswer ? <Lead elements={evidence} /> : null}
+
+        {/* The rows themselves, in both lenses. A chart is an optional extra
+            view of them, not the only way to see them. */}
+        <SeriesList elements={series} />
+
         {/* A property of the content, not a footnote: it survives Executive. */}
         {pkg.caveat ? <Caveat text={pkg.caveat} /> : null}
 
         <KindBlock
           pkg={pkg}
           explore={explore}
-          seriesElement={series}
+          seriesElement={series[0]}
           view={chartView(turnIndex, pkgIndex, chartableDefault(pkg))}
           onViewChange={(view) => setChartView(turnIndex, pkgIndex, view)}
           onPickCandidate={onPickCandidate}
@@ -95,7 +111,7 @@ export function PackageCard({
 
         <BasisList elements={notes} />
 
-        {!explore && hasExploreOnlyContent(analysis.length, evidence.length, series) ? (
+        {!explore && hasExploreOnlyContent(analysis.length, evidenceIsTheAnswer ? 0 : evidence.length) ? (
           <button type="button" className={styles.exploreLink} onClick={() => setLens('explore')}>
             {t('lens.openExplore')}
             <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" />
@@ -109,7 +125,8 @@ export function PackageCard({
 
       {explore ? (
         <EvidenceDisclosure
-          rows={evidence}
+          // Already the lead, so the disclosure would only repeat it.
+          rows={evidenceIsTheAnswer ? [] : evidence}
           open={isEvidenceOpen(turnIndex, pkgIndex)}
           onToggle={() => toggleEvidence(turnIndex, pkgIndex)}
           regionId={regionId}
@@ -124,12 +141,29 @@ function chartableDefault(pkg: AnswerPackage): string {
   return pkg.chartable.default_view ?? pkg.chartable.alternate_views[0] ?? 'line';
 }
 
-function hasExploreOnlyContent(
-  analysisCount: number,
-  evidenceCount: number,
-  series: ReturnType<typeof firstByRole>,
-): boolean {
-  return analysisCount > 0 || evidenceCount > 0 || series !== undefined;
+/** Series rows are no longer explore-only: they render in both lenses. */
+function hasExploreOnlyContent(analysisCount: number, evidenceCount: number): boolean {
+  return analysisCount > 0 || evidenceCount > 0;
+}
+
+/**
+ * Elements the service sent as the answer itself, rendered as prose. Their
+ * `class` still badges them, so a definition read from the catalogue does not
+ * look like a measured figure.
+ */
+function Lead({ elements }: { elements: AnswerElement[] }) {
+  const { t } = useI18n();
+
+  return (
+    <div className={styles.lead}>
+      {elements.map((element, index) => (
+        <p key={index} className={styles.leadItem} data-el-class={element.class}>
+          <span className={styles.leadLabel}>{t(CLASS_LABEL[element.class])}</span>
+          <LocalizedText text={element.text} />
+        </p>
+      ))}
+    </div>
+  );
 }
 
 interface KindBlockProps {

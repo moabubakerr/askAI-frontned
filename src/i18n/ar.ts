@@ -54,6 +54,7 @@ export const ar: Dict = {
   'class.absent': 'غير منشور',
 
   'scope.asOf': 'حتى {period}',
+  'scope.range': '{start}–{end}',
 
   'slot.detail': 'المؤشر',
   'slot.period': 'الفترة',
@@ -68,6 +69,7 @@ export const ar: Dict = {
 
   'basis.title': 'الأساس',
   'analysis.title': 'التحليل المنشور',
+  'series.title': 'السجلات المنشورة',
 
   'evidence.show': 'إظهار السجلات المنشورة',
   'evidence.hide': 'إخفاء السجلات المنشورة',
