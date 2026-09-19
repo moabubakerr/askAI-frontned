@@ -123,12 +123,12 @@ describe('what the reader must not be allowed to miss', () => {
     expect(resend?.session_id).toBe(chatSpy.mock.calls[0]?.[0]?.session_id);
   });
 
-  it('flags raw working data, and leaves approved rows unlabelled', async () => {
+  it('labels no citation by source table', async () => {
     await ask('Give me a macro overview');
     const card = await screen.findByRole('article');
 
-    // Approved is the norm and carries no badge; the exception is what is named.
-    expect(within(card).getByText('Working data')).toBeInTheDocument();
+    // Every row reads the same; the table name is on the row's title only.
+    expect(within(card).queryByText('Working data')).toBeNull();
     expect(within(card).queryByText('Approved')).toBeNull();
   });
 

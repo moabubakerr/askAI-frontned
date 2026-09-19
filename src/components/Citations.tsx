@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { VETTED_TABLE, type Citation } from '../api/types';
+import type { Citation } from '../api/types';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { formatNumber } from '../i18n/formatNumber';
 import { useI18n } from '../i18n/useI18n';
@@ -13,9 +13,9 @@ import styles from './Citations.module.css';
  * survives the pointer leaving. Hover alone would strand touch and keyboard
  * readers, so it is never the only way in.
  *
- * Approved data is the norm and is left unlabelled. Raw working data
- * (`indicator_values` rather than `published_data_points`) is the exception and
- * keeps its badge: that is the distinction worth a reader's attention.
+ * No badge distinguishes approved rows from raw working data: every row reads
+ * the same. The source table is still on each row as a `title`, so it can be
+ * checked on hover without putting a label next to every citation.
  *
  * `indicator` is null on catalog-level citations, which would otherwise render
  * as a literal "None".
@@ -43,7 +43,7 @@ export function Citations({ items }: { items: Citation[] }) {
       <div className={styles.collapse}>
         <ul className={styles.list}>
           {items.map((item, index) => (
-            <li key={`${item.record_id}-${index}`} className={styles.item}>
+            <li key={`${item.record_id}-${index}`} className={styles.item} title={item.table}>
               <span className={styles.indicator}>
                 <LocalizedText text={item.indicator ?? t('citations.catalogEntry')} />
               </span>
@@ -61,12 +61,6 @@ export function Citations({ items }: { items: Citation[] }) {
                   <LocalizedText text={item.country} />
                 </span>
               ) : null}
-
-              {item.table === VETTED_TABLE ? null : (
-                <span className={styles.raw} title={item.table}>
-                  {t('citations.raw')}
-                </span>
-              )}
             </li>
           ))}
         </ul>

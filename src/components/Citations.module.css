@@ -107,17 +107,3 @@
   font-family: var(--font-mono);
   color: var(--ink-muted);
 }
-
-/* Approved data is the norm and carries no badge. Raw working data is the
-   exception, and says so. */
-.raw {
-  padding: 1px 8px;
-  border: 1px solid var(--gold-200);
-  border-radius: var(--radius-pill);
-  background: var(--gold-50);
-  color: var(--gold-700);
-  font-size: var(--fs-eyebrow);
-  font-weight: 600;
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}

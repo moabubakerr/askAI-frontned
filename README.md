@@ -64,7 +64,7 @@ whatever `.env` says.
 | `period_mismatch` must not carry the Council's name to another period | `ReadPanel` — neutral label plus a caution |
 | A trend shows its readings once | `FactsPanel` skips the table when a chart is rendering; the chart's Table view is the other half of the toggle |
 | Trend summary figures are computed server-side | stat tiles: first → latest, % change, peak, trough |
-| `table` distinguishes approved from raw | `Citations`, which badges each row |
+| `table` is carried on each citation | `Citations` — shown as the row's `title`, with no badge |
 | `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
 | A new conversation must `DELETE /session/{id}` | `reset()` — otherwise the old indicator leaks into an unrelated question |
 | Council analysis and generated prose must never share a block | `ReadPanel` — separate surfaces, attribution on one, disclaimer on the other |
@@ -145,7 +145,6 @@ Type any of these (substring matching, in either language):
 - string figures are parsed, grouped, and never re-rounded
 - the `Sources:` footer is not rendered twice
 - `countries_with_no_data` is always shown
-- approved rows and raw working data are visibly different
 - a null `indicator` renders a fallback, never a literal "None"
 - charts honour `decimal_places`, carry the overview warning and name missing countries
 - an ambiguous match becomes clickable choices that resend

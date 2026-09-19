@@ -75,7 +75,6 @@ export const en = {
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',
-  'citations.raw': 'Working data',
 
   'chart.group': 'Chart view',
   'chart.view.line': 'Line',
