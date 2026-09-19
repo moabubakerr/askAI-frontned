@@ -1,0 +1,67 @@
+/* Quoted, attributed, and visibly not the app talking. Shared by analyst
+   commentary and article excerpts so the two can never drift apart. */
+.block {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--class-attributed-accent);
+  border-inline-start: var(--stripe) solid var(--class-attributed-accent);
+  border-radius: var(--radius);
+  background: var(--class-attributed-bg);
+}
+
+.attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 10px;
+  margin-block-end: 8px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--class-attributed-accent);
+}
+
+.meta {
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink-muted);
+}
+
+.prose + .prose {
+  margin-block-start: 10px;
+  padding-block-start: 10px;
+  border-block-start: 1px solid var(--neutral-200);
+}
+
+.label {
+  display: block;
+  margin-block-end: 3px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+  /* The service's own line breaks. */
+  white-space: pre-wrap;
+}
+
+.bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+  list-style: disc;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+}

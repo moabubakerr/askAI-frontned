@@ -93,16 +93,23 @@ describe('what the reader must not be allowed to miss', () => {
     expect(await screen.findByText(/replaced with a plain template/i)).toBeInTheDocument();
   });
 
-  it('turns an ambiguous match into clickable choices', async () => {
+  it('builds the chips from facts.candidates, not from the message text', async () => {
+    const chatSpy = vi.spyOn(client, 'chat');
     const user = await ask('What is the GDP forecast?');
     await screen.findByText(/could match more than one indicator/i);
 
-    // The service refuses to guess (F-003/F-012); the reader picks instead.
-    expect(screen.getByRole('button', { name: 'GDP Growth Demo' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Real GDP' }));
+    // 'Debt to GDP Ratio' is in `candidates` but never in the message, so a
+    // chip for it proves the structured field is what is being read.
+    expect(screen.getByRole('button', { name: 'Debt to GDP Ratio' })).toBeInTheDocument();
 
-    // The pick is asked as its own turn, and answers with a value.
-    expect(await screen.findByText('Target')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Real GDP' }));
+    await screen.findByText('Target');
+
+    // Sent verbatim, on the same session: the service is holding that exact
+    // string, and an altered one would not match.
+    const resend = chatSpy.mock.calls[1]?.[0];
+    expect(resend?.message).toBe('Real GDP');
+    expect(resend?.session_id).toBe(chatSpy.mock.calls[0]?.[0]?.session_id);
   });
 
   it('flags raw working data, and leaves approved rows unlabelled', async () => {
@@ -358,5 +365,98 @@ describe('the v2 answer additions', () => {
 
     const prose = within(card).getByText(/بلغ الناتج المحلي/);
     expect(prose.closest('[dir="rtl"]')).not.toBeNull();
+  });
+});
+
+describe('the readable gate', () => {
+  it('offers the read view only when the service says the answer is readable', async () => {
+    await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByRole('button', { name: /Read this for me/ })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['What does inflation mean?', 'a definition'],
+    ['What can you do?', 'a capability answer'],
+    ['How many indicators are there?', 'a catalogue listing'],
+    ['Tell me about GDP Growth Demo', 'a no-data answer'],
+    ['Show me the analyst commentary', 'analyst commentary'],
+    ['Show me articles on diversification', 'article excerpts'],
+  ])('hides it on %s (%s)', async (question) => {
+    await ask(question);
+    await screen.findByRole('article');
+
+    // readable is false: offering it here shows the reader nothing new.
+    expect(screen.queryByRole('button', { name: /Read this for me/ })).toBeNull();
+  });
+
+  it('follows the flag rather than the shape of the answer', async () => {
+    // A reading-shaped payload with readable:false must still hide the button.
+    const response: ChatResponse = {
+      answer: 'Real GDP was 185.17 in 2025-Q4.',
+      facts_payload: {
+        ok: true,
+        facts: { indicator: 'Real GDP', period_label: '2025-Q4', actual: '185.17', unit: 'QAR' },
+        citations: [],
+      },
+      chart: null,
+      verified: true,
+      readable: false,
+    };
+    vi.spyOn(client, 'chat').mockResolvedValue(response);
+
+    await ask('anything');
+    await screen.findByRole('article');
+
+    expect(screen.queryByRole('button', { name: /Read this for me/ })).toBeNull();
+  });
+});
+
+describe('SCAI’s own writing', () => {
+  it('renders analyst commentary as attributed content, with its bullets', async () => {
+    await ask('Show me the analyst commentary');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText(/SCAI analyst commentary/i)).toBeInTheDocument();
+    const bullet = within(card).getByText('Services expanded for a fourth consecutive quarter.');
+    // Quoted and attributed, not merged into the prose above it.
+    expect(bullet.closest('figure')).not.toBeNull();
+  });
+
+  it('keeps each commentary field under its own heading', async () => {
+    await ask('Show me the analyst commentary');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('In detail')).toBeInTheDocument();
+    expect(within(card).getByText('NPC analysis')).toBeInTheDocument();
+    expect(within(card).getByText('Benchmark')).toBeInTheDocument();
+  });
+
+  it('puts article excerpts behind a disclosure and names the article', async () => {
+    const user = await ask('Show me articles on diversification');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('economic diversification')).toBeInTheDocument();
+    expect(screen.queryByText(/share of non-hydrocarbon activity has risen/)).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /Show sources \(2\)/ }));
+
+    expect(screen.getByText(/share of non-hydrocarbon activity has risen/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Diversification and the non-hydrocarbon economy'),
+    ).toBeInTheDocument();
+  });
+
+  it('styles article excerpts the same way as analyst commentary', async () => {
+    const user = await ask('Show me articles on diversification');
+    await screen.findByRole('article');
+    await user.click(screen.getByRole('button', { name: /Show sources/ }));
+
+    // Both are the Council's published writing, so both are attributed quotes —
+    // never mistakable for generated prose.
+    const excerpt = screen.getByText(/share of non-hydrocarbon activity has risen/);
+    expect(excerpt.closest('figure')).not.toBeNull();
+    expect(screen.getAllByText(/From a SCAI article/).length).toBeGreaterThan(0);
   });
 });

@@ -36,27 +36,34 @@ function sourcesFooter(indicator: string, period: string): string {
   return `\n\nSources:\n• ${indicator} — SCAI Approved/Published Data — original source: ${SOURCE} — ${period}`;
 }
 
+/**
+ * `readable` is true only where the answer holds an actual reading — a value at
+ * a period. The service decides it; the client never infers it.
+ */
 function found(
   answer: string,
   facts: Facts,
   citations: Citation[],
   chart: ChartSpec | null = null,
   verified = true,
+  readable = true,
 ): ChatResponse {
   return {
     answer,
     facts_payload: { ok: true, facts, citations, chart },
     chart,
     verified,
+    readable,
   };
 }
 
-function missing(message: string): ChatResponse {
+function missing(message: string, facts?: Facts): ChatResponse {
   return {
     answer: message,
-    facts_payload: { ok: false, message, citations: [] },
+    facts_payload: { ok: false, message, ...(facts ? { facts } : {}), citations: [] },
     chart: null,
     verified: true,
+    readable: false,
   };
 }
 
@@ -83,6 +90,10 @@ const definition = (): ChatResponse =>
       unit: '%',
     },
     [citation(null, 'catalog')],
+    null,
+    true,
+    // A definition holds no reading, so there is nothing to read out.
+    false,
   );
 
 const TREND_ROWS = [
@@ -250,6 +261,9 @@ const capability = (): ChatResponse =>
         'I report approved published values, definitions, trends and comparisons. Forecasts are out of scope.',
     },
     [],
+    null,
+    true,
+    false,
   );
 
 const countList = (): ChatResponse =>
@@ -257,6 +271,9 @@ const countList = (): ChatResponse =>
     'There are 3 published indicators in the national accounts sector: Real GDP, Nominal GDP and GDP per capita.',
     { count: 3, names: ['Real GDP', 'Nominal GDP', 'GDP per capita'] },
     [],
+    null,
+    true,
+    false,
   );
 
 const periodRanking = (): ChatResponse =>
@@ -291,6 +308,68 @@ const approximateMatch = (): ChatResponse =>
       unit: '%',
     },
     [citation('Annual Growth in Labor Productivity', '2022')],
+  );
+
+/** SCAI's analyst commentary, verbatim. */
+const analysisAnswer = (): ChatResponse =>
+  found(
+    'SCAI analysts published commentary on Real GDP for 2025-Q4.' +
+      sourcesFooter('Real GDP', '2025-Q4'),
+    {
+      indicator: 'Real GDP',
+      unit: 'QAR',
+      analysis: [
+        {
+          period_label: '2025-Q4',
+          value: '185.170',
+          summary: [
+            'Activity held its upward path through the quarter.',
+            '• Non-hydrocarbon output carried most of the increase.',
+            '• Services expanded for a fourth consecutive quarter.',
+          ].join('\n'),
+          detailed:
+            'Quarter-on-quarter growth was concentrated in construction and transport, with manufacturing broadly flat.',
+          npc_analysis: 'The reading is consistent with the Council’s published medium-term path.',
+          benchmark: 'Above the GCC median for the same quarter.',
+        },
+      ],
+    },
+    [citation('Real GDP', '2025-Q4')],
+    null,
+    true,
+    // Commentary is text, not a reading.
+    false,
+  );
+
+/** Excerpts from SCAI articles. */
+const passagesAnswer = (): ChatResponse =>
+  found(
+    'Three published articles discuss economic diversification.',
+    {
+      topic: 'economic diversification',
+      passages: [
+        {
+          article_title: 'Diversification and the non-hydrocarbon economy',
+          article_id: 'art-114',
+          excerpt:
+            'The share of non-hydrocarbon activity has risen steadily since 2018, with services accounting for most of the gain.',
+          match: 'economic diversification',
+          distance: 0.21,
+        },
+        {
+          article_title: 'Reading the export series',
+          article_id: 'art-087',
+          excerpt:
+            'Concentration in a small number of commodities remains high despite a widening export base.',
+          match: 'diversification',
+          distance: 0.33,
+        },
+      ],
+    },
+    [],
+    null,
+    true,
+    false,
   );
 
 /** The verifier rejected the model's phrasing, so the prose is a template. */
@@ -340,6 +419,8 @@ const FIXTURES: Fixture[] = [
   // countries — and both questions start with the word "compare".
   { keywords: ['against', 'between', 'مقارنة بين'], respond: comparison },
   { keywords: ['across', 'compare', 'versus', ' vs ', 'قارن'], respond: countryComparison },
+  { keywords: ['commentary', 'analyst', 'تعليق'], respond: analysisAnswer },
+  { keywords: ['article', 'diversification', 'مقال'], respond: passagesAnswer },
   { keywords: ['best quarters', 'strongest', 'top periods', 'أفضل الفترات'], respond: periodRanking },
   { keywords: ['productivity', 'إنتاجية'], respond: approximateMatch },
   { keywords: ['trend', 'each quarter', 'over time', 'chart', 'اتجاه'], respond: trend },
@@ -351,6 +432,9 @@ const FIXTURES: Fixture[] = [
     respond: () =>
       missing(
         '"GDP forecast" could match more than one indicator: "GDP", "GDP Growth Demo", "Real GDP". Which one did you mean?',
+        // The chips come from here, not from the message text: the service is
+        // holding exactly these strings.
+        { candidates: ['Real GDP', 'Debt to GDP Ratio', 'GDP Growth Demo'] },
       ),
   },
   {

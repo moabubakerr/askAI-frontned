@@ -49,6 +49,15 @@ export interface ChatResponse {
    * quietly, and worth logging.
    */
   verified: boolean;
+  /**
+   * True only when the answer contains an actual reading — a value measured at
+   * a period. It is the single gate on the "read this for me" affordance:
+   * offering it on a greeting, a refusal, a definition or a catalogue listing
+   * shows the reader nothing they were not already shown.
+   *
+   * Never inferred from the shape of the answer. The service decides.
+   */
+  readable?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -65,6 +74,7 @@ export interface ChatResponse {
  * different treatments, and are never merged — see `ReadPanel`.
  */
 export interface ReadResponse {
+  readable?: boolean;
   /** Null for trends and rankings, which have no single figure. */
   headline: ReadHeadline | null;
   one_liner?: string | null;
@@ -133,6 +143,8 @@ export interface FactsFound {
 export interface FactsMissing {
   ok: false;
   message: string;
+  /** Present on an ambiguous match, carrying `candidates`. */
+  facts?: Facts;
   citations?: Citation[];
   chart?: ChartSpec | null;
 }
@@ -262,6 +274,8 @@ export type FactsKind =
   | 'country-comparison'
   | 'country-ranking'
   | 'period-ranking'
+  | 'analysis'
+  | 'passages'
   | 'overview'
   | 'capability'
   | 'count'
@@ -285,6 +299,8 @@ export function factsKind(facts: Facts): FactsKind {
   if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
   if (has('period_a', 'period_b')) return 'comparison';
   if (has('high_period', 'low_period')) return 'extremes';
+  if (has('analysis')) return 'analysis';
+  if (has('passages')) return 'passages';
   if (has('ranked_periods')) return 'period-ranking';
   if (has('ranked')) return 'country-ranking';
   if (has('rows')) return 'country-comparison';
@@ -367,6 +383,47 @@ export function countriesWithNoData(facts: Facts): string[] {
   return Array.isArray(value) ? value.filter((c): c is string => typeof c === 'string') : [];
 }
 
+/**
+ * SCAI's analyst commentary, verbatim — the Council's own writing, attached to a
+ * reading. Rendered as quoted and attributed content, never merged into a
+ * summary and never styled like generated prose.
+ */
+export interface AnalysisEntry {
+  period_label?: string;
+  value?: Figure;
+  summary?: string;
+  detailed?: string;
+  npc_analysis?: string;
+  benchmark?: string;
+  [key: string]: unknown;
+}
+
+/** Excerpts from SCAI articles — also the Council's published writing. */
+export interface PassageEntry {
+  article_title?: string;
+  article_id?: string;
+  excerpt: string;
+  match?: string;
+  distance?: number;
+  [key: string]: unknown;
+}
+
+export function factsAnalysis(facts: Facts): AnalysisEntry[] {
+  const value = facts['analysis'];
+  return Array.isArray(value) ? (value as AnalysisEntry[]) : [];
+}
+
+export function factsPassages(facts: Facts): PassageEntry[] {
+  const value = facts['passages'];
+  return Array.isArray(value) ? (value as PassageEntry[]) : [];
+}
+
+/** What the passage search was for. */
+export function factsTopic(facts: Facts): string | null {
+  const topic = facts['topic'];
+  return typeof topic === 'string' && topic.length > 0 ? topic : null;
+}
+
 /* ------------------------------------------------------------------ */
 /* charts                                                              */
 /* ------------------------------------------------------------------ */
@@ -424,19 +481,17 @@ export function isFound(payload: FactsPayload): payload is FactsFound {
 }
 
 /**
- * An ambiguous match names the candidates inside its message, in double quotes:
- * `"GDP forecast" could match … "GDP", "GDP Growth Demo", "Real GDP".`
+ * The indicators an ambiguous question could have meant.
  *
- * Pulling them out turns a dead end into one click. The first quoted run is the
- * term the reader used, so it is excluded — offering it back would just repeat
- * the ambiguous question.
+ * This is the structured field, not the message text: the service remembers
+ * what it offered and resolves the exact indicator when one comes back. So each
+ * candidate is resent **verbatim** — trimmed, retitled or reworded, it will not
+ * match what the service is holding.
  */
-export function ambiguousChoices(message: string): string[] {
-  const quoted = [...message.matchAll(/"([^"]{1,80})"/g)].map((m) => m[1] ?? '');
-  if (quoted.length < 3) return [];
-  const [asked, ...rest] = quoted;
-  const unique = [...new Set(rest.filter((name) => name && name !== asked))];
-  return unique.length >= 2 ? unique : [];
+export function factsCandidates(facts: Facts | undefined): string[] {
+  const candidates = facts?.['candidates'];
+  if (!Array.isArray(candidates)) return [];
+  return candidates.filter((name): name is string => typeof name === 'string' && name.length > 0);
 }
 
 /**

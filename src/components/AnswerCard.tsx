@@ -1,6 +1,6 @@
 import { AlertTriangle, BookOpen } from 'lucide-react';
 import {
-  ambiguousChoices,
+  factsCandidates,
   factsIndicator,
   factsKind,
   factsNote,
@@ -9,6 +9,7 @@ import {
   splitApproximateMatch,
   splitSourcesFooter,
   type ChatResponse,
+  type Facts,
 } from '../api/types';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
@@ -103,12 +104,14 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
       {found ? <FactsPanel facts={payload.facts} /> : null}
 
       {/* Not found is a legitimate answer, so it gets no error styling — but an
-          ambiguous match names its candidates, and those become one click. */}
-      {!found ? <Choices message={payload.message} onAsk={onAsk} /> : null}
+          ambiguous match carries its candidates, and those become one click. */}
+      {!found ? <Choices facts={payload.facts} onAsk={onAsk} /> : null}
 
       {chart ? <Chart spec={chart} /> : null}
 
-      {found ? (
+      {/* The service decides what is readable — true only when the answer holds
+          an actual reading. Never inferred from the shape of the answer. */}
+      {response.readable === true ? (
         <div className={styles.readBlock}>
           {turn.readStatus === 'idle' ? (
             <button type="button" className={styles.readButton} onClick={() => readTurn(turn)}>
@@ -137,14 +140,15 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
 }
 
 /**
- * "GDP forecast" could match … "GDP", "GDP Growth Demo", "Real GDP".
+ * The indicators an ambiguous question could have meant.
  *
- * The service refuses to guess between them, which is right. Offering the names
- * back as buttons turns that refusal into a choice rather than a dead end.
+ * The service refuses to guess between them, which is right. Each name is sent
+ * back **verbatim** as the next message on the same session: the service is
+ * holding what it offered, and an altered string will not match it.
  */
-function Choices({ message, onAsk }: { message: string; onAsk: (question: string) => void }) {
+function Choices({ facts, onAsk }: { facts: Facts | undefined; onAsk: (question: string) => void }) {
   const { t } = useI18n();
-  const choices = ambiguousChoices(message);
+  const choices = factsCandidates(facts);
   if (choices.length === 0) return null;
 
   return (

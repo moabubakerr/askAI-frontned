@@ -1,11 +1,17 @@
 import { UserRound } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
-import { Segmented } from './Segmented';
-import type { Lang } from '../api/types';
 import styles from './Header.module.css';
 
+/**
+ * No language toggle.
+ *
+ * The service answers in the language of the *question*, so the reader picks by
+ * typing: an Arabic question gets an Arabic answer, rendered RTL, whatever the
+ * chrome around it says. A toggle here would only restate the interface
+ * language, and would suggest it controls the reply — which it does not.
+ */
 export function Header() {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
 
   return (
     <header className={styles.header}>
@@ -29,17 +35,6 @@ export function Header() {
         </div>
 
         <div className={styles.controls}>
-          <Segmented<Lang>
-            label={t('header.langGroup')}
-            tone="dark"
-            size="compact"
-            value={lang}
-            onChange={setLang}
-            options={[
-              { value: 'en', label: t('header.langEn') },
-              { value: 'ar', label: t('header.langAr') },
-            ]}
-          />
           <button type="button" className={styles.avatar} aria-label={t('header.account')}>
             <UserRound size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>

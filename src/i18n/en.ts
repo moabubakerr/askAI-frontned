@@ -4,9 +4,6 @@ export const en = {
   'app.product': 'Ask AI',
   'app.skipToComposer': 'Skip to the question box',
 
-  'header.langGroup': 'Interface language',
-  'header.langEn': 'English',
-  'header.langAr': 'العربية',
   'header.account': 'Account',
 
   'health.up': 'Service responding',
@@ -59,6 +56,15 @@ export const en = {
   'read.councilWithPeriod': 'According to SCAI, {period}',
   'read.evidence': 'Data evidence',
   'read.disclaimerFallback': 'Generated from the readings above — not Council analysis.',
+
+  'analysis.attribution': 'SCAI analyst commentary',
+  'analysis.detailed': 'In detail',
+  'analysis.npc': 'NPC analysis',
+  'analysis.benchmark': 'Benchmark',
+
+  'passages.topic': 'Searched for',
+  'passages.show': 'Show sources ({n})',
+  'passages.attribution': 'From a SCAI article',
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',

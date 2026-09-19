@@ -166,3 +166,37 @@
   margin: 0;
   color: var(--ink);
 }
+
+.disclosure {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.disclosure:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+}
+
+.chevron {
+  transition: transform var(--t-hover) var(--ease);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+[dir='rtl'] .chevron:not(.chevronOpen) {
+  transform: rotate(180deg);
+}

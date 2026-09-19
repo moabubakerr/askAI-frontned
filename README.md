@@ -63,10 +63,13 @@ whatever `.env` says.
 | `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
 | A new conversation must `DELETE /session/{id}` | `reset()` — otherwise the old indicator leaks into an unrelated question |
 | Council analysis and generated prose must never share a block | `ReadPanel` — separate surfaces, attribution on one, disclaimer on the other |
+| The read view is offered **iff** `readable === true` | `AnswerCard` — the service decides; no client heuristic |
+| Ambiguity chips come from `facts.candidates`, resent verbatim | `factsCandidates()` — the message text is never parsed |
+| `facts.analysis[]` and `facts.passages[]` are SCAI's own writing | `CouncilText` — one shared quoted block, so they can never drift toward looking generated |
 | `facts.indicator` is named on every answer | `AnswerCard` — an unnamed indicator hides a wrong match |
 | `facts.note` is a caveat and must show | `AnswerCard`, except when a `note` is the whole payload (a greeting marker) |
 | "(approximate match)" is a low-confidence warning | `splitApproximateMatch()`, rendered as its own warning |
-| Direction follows the **reply**, not the UI language | `replyDir()` — a reader may type Arabic with the UI in English |
+| Direction follows the **reply** | `replyDir()`. There is no language toggle: the reader picks by typing, and the service answers in kind |
 | The first request after a restart takes ~10s | 90s client timeout, patient spinner, no 5s cutoff anywhere |
 | `GET /health` proves only that the process is up | the SubBar says "service responding" and nothing more |
 
@@ -90,7 +93,7 @@ src/
   i18n/         en.ts  ar.ts  useI18n.tsx  figures.ts  formatNumber.ts  LocalizedText.tsx
   state/        useConversation.tsx                  turns, session id, ask()
   components/   Header SubBar Composer Thread Turn FirstRun
-                AnswerCard FactsPanel Citations ReadPanel SessionPanel Segmented
+                AnswerCard FactsPanel Citations CouncilText ReadPanel SessionPanel Segmented
                 Chart/  (Chart LineView BarView TableView geometry)
   styles/       tokens.css  base.css  fonts.css   (bundled faces, no CDN)
   test/
@@ -121,6 +124,8 @@ Type any of these (substring matching, in either language):
 | `Give me the blunt version` | `verified: false` marker |
 | `What is the GDP forecast?` | ambiguous — clickable choices |
 | `What were the strongest quarters?` | period ranking + order |
+| `Show me the analyst commentary` | SCAI commentary, attributed, with bullets |
+| `Show me articles on diversification` | article excerpts behind "Show sources" |
 | `What is labor productivity?` | approximate-match warning |
 | `ما الناتج المحلي الإجمالي الحقيقي؟` | Arabic reply, RTL, with the UI still in English |
 | `Tell me about GDP Growth Demo` | no data, as an answer not an error |
@@ -141,10 +146,14 @@ Type any of these (substring matching, in either language):
 - an ambiguous match becomes clickable choices that resend
 - a timeout offers a retry and explains the slow first request
 - `session_id` is real, stable across turns, and prior turns go in `conversation_context`
+- the read view is offered only when `readable` is true, whatever shape the answer has
 - the read view keeps Council analysis and generated prose in separate blocks, with the disclaimer
+- ambiguity chips come from `facts.candidates` and resend the name verbatim on the same session
+- analyst commentary and article excerpts both render as attributed Council writing
 - summary bullets render as a list, and the raw readings stay behind a disclosure
 - the session id is stable, no transcript is sent, and a new conversation deletes the old session
-- direction follows the reply, so an Arabic answer is RTL with the UI in English
+- direction follows the reply, so an Arabic answer is RTL with the interface unchanged
+- there is no language control to get out of step with the answer
 - Arabic numerals, `dir`/`lang` flip on the toggle
 
 ## Local environment note

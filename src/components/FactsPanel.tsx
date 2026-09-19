@@ -1,7 +1,12 @@
+import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import {
   assertNever,
   countriesWithNoData,
+  factsAnalysis,
   factsKind,
+  factsPassages,
+  factsTopic,
   factsUnit,
   type CountryRow,
   type Facts,
@@ -9,6 +14,7 @@ import {
   type SeriesRow,
 } from '../api/types';
 import { formatChange, formatFigure, formatPercent, formatWithUnit, NO_VALUE } from '../i18n/figures';
+import { CouncilProse, CouncilText } from './CouncilText';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import styles from './FactsPanel.module.css';
@@ -46,6 +52,10 @@ export function FactsPanel({ facts }: { facts: Facts }) {
       return <CountryTable facts={facts} unit={unit} rowsKey="ranked" ranked />;
     case 'period-ranking':
       return <PeriodRanking facts={facts} unit={unit} />;
+    case 'analysis':
+      return <AnalysisList facts={facts} unit={unit} />;
+    case 'passages':
+      return <Passages facts={facts} />;
     case 'overview':
       return <Overview facts={facts} />;
     case 'capability':
@@ -346,6 +356,98 @@ function PeriodRanking({ facts, unit }: { facts: Facts; unit: string | null }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/**
+ * SCAI's analyst commentary, verbatim.
+ *
+ * The Council's own writing, so it renders in the shared quoted-and-attributed
+ * block rather than as the app's prose — and each field it carries keeps its own
+ * heading instead of being flattened into one summary.
+ */
+function AnalysisList({ facts, unit }: { facts: Facts; unit: string | null }) {
+  const { t, lang } = useI18n();
+  const entries = factsAnalysis(facts);
+  if (entries.length === 0) return null;
+
+  return (
+    <div className={styles.panel}>
+      {entries.map((entry, index) => {
+        const period = entry.period_label ?? '';
+        const value = entry.value ?? null;
+
+        return (
+          <CouncilText
+            key={index}
+            attribution={t('analysis.attribution')}
+            meta={
+              <>
+                {period}
+                {value !== null ? ` · ${formatWithUnit(value, unit, lang)}` : ''}
+              </>
+            }
+          >
+            {entry.summary ? <CouncilProse text={entry.summary} /> : null}
+            {entry.detailed ? (
+              <CouncilProse text={entry.detailed} label={t('analysis.detailed')} />
+            ) : null}
+            {entry.npc_analysis ? (
+              <CouncilProse text={entry.npc_analysis} label={t('analysis.npc')} />
+            ) : null}
+            {entry.benchmark ? (
+              <CouncilProse text={entry.benchmark} label={t('analysis.benchmark')} />
+            ) : null}
+          </CouncilText>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Excerpts from SCAI articles — also the Council's published writing, so the
+ * article each one came from is named with it. Collapsed by default: these are
+ * sources for the answer above, not the answer itself.
+ */
+function Passages({ facts }: { facts: Facts }) {
+  const { t } = useI18n();
+  const passages = factsPassages(facts);
+  const topic = factsTopic(facts);
+  const [open, setOpen] = useState(false);
+  if (passages.length === 0) return null;
+
+  return (
+    <div className={styles.panel}>
+      {topic ? <Stat label={t('passages.topic')} value={topic} /> : null}
+
+      <button
+        type="button"
+        className={styles.disclosure}
+        aria-expanded={open}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+      >
+        <ChevronRight
+          size={13}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className={open ? `${styles.chevron} ${styles.chevronOpen}` : styles.chevron}
+        />
+        {t('passages.show', { n: String(passages.length) })}
+      </button>
+
+      {open
+        ? passages.map((passage, index) => (
+            <CouncilText
+              key={index}
+              attribution={t('passages.attribution')}
+              meta={passage.article_title ?? passage.article_id ?? ''}
+            >
+              <CouncilProse text={passage.excerpt} />
+            </CouncilText>
+          ))
+        : null}
     </div>
   );
 }

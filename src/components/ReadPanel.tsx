@@ -1,16 +1,10 @@
-import { ChevronRight, Quote } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import {
-  bulletLines,
-  nonBulletText,
-  replyDir,
-  type CouncilAnalysis,
-  type ReadEvidence,
-  type ReadResponse,
-} from '../api/types';
+import { replyDir, type CouncilAnalysis, type ReadEvidence, type ReadResponse } from '../api/types';
 import { formatFigure, formatWithUnit } from '../i18n/figures';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
+import { CouncilProse, CouncilText } from './CouncilText';
 import styles from './ReadPanel.module.css';
 
 /**
@@ -98,39 +92,18 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
 }
 
 /**
- * SCAI analysts' own words, verbatim. Quoted and attributed, so it reads as a
- * citation rather than as the app's own voice. `summary` carries "• " bullet
- * lines, which become a list.
+ * SCAI analysts' own words, verbatim — the same shared block that analyst
+ * commentary uses elsewhere, so Council writing looks identical wherever it
+ * appears and never like the generated narration beside it.
  */
 function CouncilBlock({ item }: { item: CouncilAnalysis }) {
   const { t } = useI18n();
   const period = item.period_human || item.period_label || '';
-  const bullets = bulletLines(item.summary);
-  const lead = nonBulletText(item.summary);
 
   return (
-    <figure className={styles.council} dir={replyDir(item.summary)}>
-      <figcaption className={styles.attribution}>
-        <Quote size={12} strokeWidth={2} aria-hidden="true" />
-        {period ? t('read.councilWithPeriod', { period }) : t('read.council')}
-      </figcaption>
-
-      {lead ? (
-        <p className={styles.councilLead}>
-          <LocalizedText text={lead} />
-        </p>
-      ) : null}
-
-      {bullets.length > 0 ? (
-        <ul className={styles.bullets}>
-          {bullets.map((line, index) => (
-            <li key={index}>
-              <LocalizedText text={line} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </figure>
+    <CouncilText attribution={period ? t('read.councilWithPeriod', { period }) : t('read.council')}>
+      <CouncilProse text={item.summary} />
+    </CouncilText>
   );
 }
 

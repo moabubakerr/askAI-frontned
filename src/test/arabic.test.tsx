@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { formatNumber, localizeNumerals, splitRuns } from '../i18n/formatNumber';
+import { replyDir } from '../api/types';
 import { renderApp } from './render';
 
 describe('formatNumber', () => {
@@ -23,8 +24,6 @@ describe('formatNumber', () => {
   });
 
   it('isolates Latin-script runs inside Arabic prose without touching them', () => {
-    // Backend text: already Arabic, already localized. splitRuns only marks the
-    // Latin run so the line does not reorder around it.
     const runs = splitRuns('بلغ ٣٦٫٧ QAR bn في ٢٠٢٥', 'ar');
 
     expect(runs.find((run) => run.ltr)?.text).toBe('QAR bn');
@@ -40,30 +39,40 @@ describe('formatNumber', () => {
   });
 });
 
-describe('the Arabic path', () => {
-  it('mirrors the layout and localizes the figures it formats', async () => {
-    const { user } = renderApp('ar');
-
-    expect(document.documentElement.dir).toBe('rtl');
-    expect(document.documentElement.lang).toBe('ar');
-
-    // The service answers in Arabic when the question is Arabic; the client
-    // formats the figures it is given, in Arabic-Indic numerals.
-    await user.type(screen.getByLabelText('سؤالك'), 'ما الناتج المحلي الإجمالي الحقيقي؟');
-    await user.click(screen.getByRole('button', { name: 'اسأل' }));
-
-    await screen.findByText(/بلغ الناتج المحلي الإجمالي الحقيقي/);
-    expect(screen.getByText('١٨٥٫١٧')).toBeInTheDocument();
-    expect(screen.getByText('الفترة')).toBeInTheDocument();
+describe('direction', () => {
+  it('follows the text, not a setting', () => {
+    expect(replyDir('بلغ الناتج المحلي الإجمالي الحقيقي')).toBe('rtl');
+    expect(replyDir('Real GDP was 185.17')).toBe('ltr');
+    expect(replyDir(null)).toBe('ltr');
   });
+});
 
-  it('switches direction with the language toggle', async () => {
-    const { user } = renderApp('en');
+describe('the Arabic path', () => {
+  /**
+   * There is no language toggle: the reader picks the language by typing, and
+   * the service answers in kind. So the interface stays as it is and the
+   * *answer* is what flips direction.
+   */
+  it('answers an Arabic question in Arabic, RTL, with the interface unchanged', async () => {
+    const { user } = renderApp();
+
     expect(document.documentElement.dir).toBe('ltr');
 
-    await user.click(screen.getByRole('radio', { name: 'العربية' }));
-    expect(document.documentElement.dir).toBe('rtl');
-    expect(screen.getAllByText('اسأل الذكاء الاصطناعي').length).toBeGreaterThan(0);
-    expect(screen.getByPlaceholderText('اسأل عن مؤشر منشور')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Your question'), 'ما الناتج المحلي الإجمالي الحقيقي؟');
+    await user.click(screen.getByRole('button', { name: 'Ask' }));
+
+    const card = await screen.findByRole('article');
+    const prose = within(card).getByText(/بلغ الناتج المحلي/);
+
+    expect(prose.closest('[dir="rtl"]')).not.toBeNull();
+    // The chrome did not change language or direction.
+    expect(document.documentElement.dir).toBe('ltr');
+  });
+
+  it('offers no language control', () => {
+    renderApp();
+
+    expect(screen.queryByRole('radiogroup', { name: 'Interface language' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'العربية' })).toBeNull();
   });
 });

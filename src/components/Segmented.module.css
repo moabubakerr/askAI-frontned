@@ -54,10 +54,10 @@
   color: var(--blue-100);
 }
 
-.dark .option:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-}
+/* No hover state on the dark toggle — the language control in the header.
+   Which language is selected is the only thing it should signal; a highlight
+   that follows the pointer reads as a second kind of selection. Keyboard focus
+   is still shown, because that one is navigation rather than decoration. */
 
 .dark .option[aria-checked='true'] {
   background: var(--surface);

@@ -6,9 +6,6 @@ export const ar: Dict = {
   'app.product': 'اسأل الذكاء الاصطناعي',
   'app.skipToComposer': 'انتقل إلى مربع السؤال',
 
-  'header.langGroup': 'لغة الواجهة',
-  'header.langEn': 'English',
-  'header.langAr': 'العربية',
   'header.account': 'الحساب',
 
   'health.up': 'الخدمة تستجيب',
@@ -61,6 +58,15 @@ export const ar: Dict = {
   'read.councilWithPeriod': 'وفقًا للمجلس الأعلى، {period}',
   'read.evidence': 'أدلة البيانات',
   'read.disclaimerFallback': 'مُولَّد من القراءات أعلاه — وليس تحليلًا للمجلس.',
+
+  'analysis.attribution': 'تعليق محللي المجلس الأعلى',
+  'analysis.detailed': 'بالتفصيل',
+  'analysis.npc': 'تحليل مجلس التخطيط الوطني',
+  'analysis.benchmark': 'المرجعية',
+
+  'passages.topic': 'البحث عن',
+  'passages.show': 'إظهار المصادر ({n})',
+  'passages.attribution': 'من مقال للمجلس الأعلى',
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',
