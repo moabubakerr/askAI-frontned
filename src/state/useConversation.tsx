@@ -3,103 +3,80 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
-import { ask as askApi, health as healthApi, AskRejectedError } from '../api/client';
-import type {
-  AskRequest,
-  AskResponse,
-  Candidate,
-  Freshness,
-  Inheritance,
-  Lang,
-  SourceSel,
-} from '../api/types';
-
-export type Lens = 'explore' | 'executive';
-export type SourceChoice = 'approved' | 'external' | 'combined';
-
-export const SOURCE_SELECTION: Record<SourceChoice, SourceSel[]> = {
-  approved: ['approved'],
-  external: ['external'],
-  combined: ['approved', 'external'],
-};
+import { chat as chatApi, health as healthApi } from '../api/client';
+import type { ChatRequest, ChatResponse, Lang } from '../api/types';
 
 export interface Turn {
   index: number;
   question: string;
   lang: Lang;
-  source: SourceChoice;
-  request: AskRequest;
-  response: AskResponse | null;
+  response: ChatResponse | null;
   status: 'loading' | 'ready' | 'error';
   error: string | null;
-  /** 422: the request itself was rejected, so there are no packages at all. */
-  rejected: boolean;
-  inherited: Inheritance | null;
-  /** Set when the reader picked a candidate to complete this same question. */
-  resolvedWith: string | null;
+  /** The request timed out rather than failing outright. */
+  timedOut: boolean;
 }
 
-/** UI state that must survive re-render, keyed by turn index then package index. */
-interface TurnUi {
-  evidenceOpen: Record<number, boolean>;
-  chartView: Record<number, string>;
+/**
+ * Follow-ups ("and last year?") resolve against server-side state keyed on the
+ * session id, so it must be a real per-user value rather than the service's
+ * "default" — which would put every reader in one conversation.
+ *
+ * That state is an in-memory dict on a single process: it is lost on restart
+ * and nothing durable may depend on it. The id lives in sessionStorage so a
+ * refresh keeps the thread and a new tab starts its own.
+ */
+const SESSION_KEY = 'askai.session_id';
+
+function newSessionId(): string {
+  const random = globalThis.crypto?.randomUUID?.();
+  return random ?? `s-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
 }
+
+function loadSessionId(): string {
+  try {
+    const existing = sessionStorage.getItem(SESSION_KEY);
+    if (existing) return existing;
+    const created = newSessionId();
+    sessionStorage.setItem(SESSION_KEY, created);
+    return created;
+  } catch {
+    // Private mode, blocked storage: the id still works, it just does not
+    // survive a refresh.
+    return newSessionId();
+  }
+}
+
+/** How many prior turns go in `conversation_context`. */
+const CONTEXT_TURNS = 4;
 
 export interface ConversationStore {
   turns: Turn[];
-  lens: Lens;
-  setLens: (lens: Lens) => void;
-  source: SourceChoice;
-  setSource: (source: SourceChoice) => void;
-  /**
-   * Freshness of the most recent completed response, or of `GET /api/health`
-   * before the first question.
-   */
-  freshness: Freshness | null;
   busy: boolean;
+  /** null until the first health check answers. */
+  serviceUp: boolean | null;
   ask: (question: string, lang: Lang) => void;
-  /** Puts the cursor in the composer, for a clarification's follow-up. */
-  focusComposer: () => void;
-  resolveCandidate: (turn: Turn, candidate: Candidate, lang: Lang) => void;
-  disambiguate: (turn: Turn, lang: Lang) => void;
+  retry: (turn: Turn, lang: Lang) => void;
   reset: () => void;
-  isEvidenceOpen: (turnIndex: number, pkgIndex: number) => boolean;
-  toggleEvidence: (turnIndex: number, pkgIndex: number) => void;
-  chartView: (turnIndex: number, pkgIndex: number, fallback: string) => string;
-  setChartView: (turnIndex: number, pkgIndex: number, view: string) => void;
+  focusComposer: () => void;
 }
-
-const EMPTY_UI: TurnUi = { evidenceOpen: {}, chartView: {} };
 
 function useConversationStore(): ConversationStore {
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [lens, setLens] = useState<Lens>('explore');
-  const [source, setSource] = useState<SourceChoice>('approved');
-  const [ui, setUi] = useState<Record<number, TurnUi>>({});
-  const [health, setHealth] = useState<Freshness | null>(null);
-  const conversationId = useRef<string | null>(null);
+  const [serviceUp, setServiceUp] = useState<boolean | null>(null);
+  const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
+  const history = useRef<{ question: string; answer: string }[]>([]);
 
-  /**
-   * `GET /api/health` returns the same freshness block an answer carries, so
-   * staleness is on screen before the first question rather than after it.
-   */
   useEffect(() => {
     let live = true;
-    healthApi().then(
-      (res) => {
-        if (live) setHealth(res.freshness);
-      },
-      () => {
-        // A health check that fails says nothing about the data; the chip stays
-        // absent until an answer reports its own freshness.
-      },
-    );
+    healthApi().then((up) => {
+      if (live) setServiceUp(up);
+    });
     return () => {
       live = false;
     };
@@ -109,29 +86,36 @@ function useConversationStore(): ConversationStore {
     setTurns((prev) => prev.map((turn) => (turn.index === index ? { ...turn, ...patch } : turn)));
   }, []);
 
+  /** Prior turns as plain text. The service uses it only to spot a follow-up. */
+  const contextText = useCallback(
+    () =>
+      history.current
+        .slice(-CONTEXT_TURNS)
+        .map((entry) => `Q: ${entry.question}\nA: ${entry.answer}`)
+        .join('\n\n'),
+    [],
+  );
+
   const send = useCallback(
-    (index: number, request: AskRequest) => {
-      askApi(request).then(
+    (index: number, question: string) => {
+      const request: ChatRequest = {
+        message: question,
+        session_id: sessionId.current,
+        conversation_context: contextText(),
+      };
+
+      chatApi(request).then(
         (response) => {
-          conversationId.current = response.conversation_id;
-          patchTurn(index, {
-            response,
-            status: 'ready',
-            error: null,
-            rejected: false,
-            inherited: response.inherited ?? null,
-          });
+          history.current.push({ question, answer: response.answer });
+          patchTurn(index, { response, status: 'ready', error: null, timedOut: false });
         },
         (cause: unknown) => {
-          patchTurn(index, {
-            status: 'error',
-            error: cause instanceof Error ? cause.message : String(cause),
-            rejected: cause instanceof AskRejectedError,
-          });
+          const message = cause instanceof Error ? cause.message : String(cause);
+          patchTurn(index, { status: 'error', error: message, timedOut: message === 'timeout' });
         },
       );
     },
-    [patchTurn],
+    [contextText, patchTurn],
   );
 
   const ask = useCallback(
@@ -142,161 +126,54 @@ function useConversationStore(): ConversationStore {
       const index = nextIndex.current;
       nextIndex.current += 1;
 
-      const request: AskRequest = {
-        question: trimmed,
-        lang,
-        sources: SOURCE_SELECTION[source],
-        conversation_id: conversationId.current,
-        resolve_detail_id: null,
-      };
+      setTurns((prev) => [
+        ...prev,
+        {
+          index,
+          question: trimmed,
+          lang,
+          response: null,
+          status: 'loading',
+          error: null,
+          timedOut: false,
+        },
+      ]);
 
-      const turn: Turn = {
-        index,
-        question: trimmed,
-        lang,
-        source,
-        request,
-        response: null,
-        status: 'loading',
-        error: null,
-        rejected: false,
-        inherited: null,
-        resolvedWith: null,
-      };
-
-      setTurns((prev) => [...prev, turn]);
-      send(index, request);
+      send(index, trimmed);
     },
-    [send, source],
+    [send],
   );
 
-  /**
-   * Picking a candidate completes the original question. It replaces this
-   * turn's packages — it does not append a new question the reader never asked.
-   */
-  const resolveCandidate = useCallback(
-    (turn: Turn, candidate: Candidate, lang: Lang) => {
-      const request: AskRequest = {
-        ...turn.request,
-        lang,
-        conversation_id: conversationId.current,
-        resolve_detail_id: candidate.detail_id,
-      };
-
-      patchTurn(turn.index, {
-        request,
-        status: 'loading',
-        error: null,
-        rejected: false,
-        resolvedWith: candidate.name,
-      });
-      send(turn.index, request);
-    },
-    [patchTurn, send],
-  );
-
-  /** A wrong inheritance must be recoverable in one control, not retyped. */
-  const disambiguate = useCallback(
+  const retry = useCallback(
     (turn: Turn, lang: Lang) => {
-      const request: AskRequest = {
-        ...turn.request,
-        lang,
-        conversation_id: conversationId.current,
-        resolve_detail_id: null,
-        disambiguate: true,
-      };
-
-      patchTurn(turn.index, {
-        request,
-        status: 'loading',
-        error: null,
-        rejected: false,
-        resolvedWith: null,
-        inherited: null,
-      });
-      send(turn.index, request);
+      patchTurn(turn.index, { status: 'loading', error: null, timedOut: false, lang });
+      send(turn.index, turn.question);
     },
     [patchTurn, send],
   );
 
+  /** A new question is a new thread, so the service's state starts clean too. */
   const reset = useCallback(() => {
-    conversationId.current = null;
+    const created = newSessionId();
+    sessionId.current = created;
+    try {
+      sessionStorage.setItem(SESSION_KEY, created);
+    } catch {
+      // Nothing to do: the id is still used for this page's lifetime.
+    }
+    history.current = [];
     nextIndex.current = 0;
     setTurns([]);
-    setUi({});
   }, []);
 
-  const isEvidenceOpen = useCallback(
-    (turnIndex: number, pkgIndex: number) => ui[turnIndex]?.evidenceOpen[pkgIndex] ?? false,
-    [ui],
-  );
-
-  const toggleEvidence = useCallback((turnIndex: number, pkgIndex: number) => {
-    setUi((prev) => {
-      const current = prev[turnIndex] ?? EMPTY_UI;
-      return {
-        ...prev,
-        [turnIndex]: {
-          ...current,
-          evidenceOpen: {
-            ...current.evidenceOpen,
-            [pkgIndex]: !(current.evidenceOpen[pkgIndex] ?? false),
-          },
-        },
-      };
-    });
-  }, []);
-
-  const chartView = useCallback(
-    (turnIndex: number, pkgIndex: number, fallback: string) =>
-      ui[turnIndex]?.chartView[pkgIndex] ?? fallback,
-    [ui],
-  );
-
-  const setChartView = useCallback((turnIndex: number, pkgIndex: number, view: string) => {
-    setUi((prev) => {
-      const current = prev[turnIndex] ?? EMPTY_UI;
-      return {
-        ...prev,
-        [turnIndex]: { ...current, chartView: { ...current.chartView, [pkgIndex]: view } },
-      };
-    });
-  }, []);
-
-  /** A conversation continues on the same thread, so the composer is the reply box. */
   const focusComposer = useCallback(() => {
     const input = document.getElementById('composer-input');
     if (input instanceof HTMLInputElement) input.focus();
   }, []);
 
-  const freshness = useMemo(() => {
-    for (let i = turns.length - 1; i >= 0; i -= 1) {
-      const response = turns[i]?.response;
-      if (response) return response.freshness;
-    }
-    return health;
-  }, [turns, health]);
-
   const busy = turns.some((turn) => turn.status === 'loading');
 
-  return {
-    turns,
-    lens,
-    setLens,
-    source,
-    setSource,
-    freshness,
-    busy,
-    ask,
-    focusComposer,
-    resolveCandidate,
-    disambiguate,
-    reset,
-    isEvidenceOpen,
-    toggleEvidence,
-    chartView,
-    setChartView,
-  };
+  return { turns, busy, serviceUp, ask, retry, reset, focusComposer };
 }
 
 const ConversationContext = createContext<ConversationStore | null>(null);

@@ -1,0 +1,88 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: var(--stripe);
+  background: var(--accent-approved);
+}
+
+/* "No data" is an answer, not a failure — quieter, never red. */
+.card[data-ok='false']::before {
+  background: var(--neutral-300);
+}
+
+.prose {
+  font-size: var(--fs-sentence);
+  line-height: 1.65;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.unverified {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--amber-700);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.choicesTitle {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 7px 13px;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-pill);
+  background: var(--blue-50);
+  color: var(--blue-800);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: start;
+  transition:
+    background var(--t-hover) var(--ease),
+    border-color var(--t-hover) var(--ease);
+}
+
+.chip:hover {
+  background: var(--blue-100);
+  border-color: var(--blue-200);
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

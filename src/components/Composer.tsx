@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation } from '../state/useConversation';
-import { SourceSelector } from './SourceSelector';
 import styles from './Composer.module.css';
 
 export function Composer() {
@@ -49,7 +48,8 @@ export function Composer() {
         </div>
 
         <div className={styles.row}>
-          <SourceSelector />
+          {/* A new question starts a new session id, so the service's own
+              follow-up state starts clean with it. */}
           <button
             type="button"
             className={styles.reset}

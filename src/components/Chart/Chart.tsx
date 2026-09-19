@@ -1,4 +1,5 @@
-import type { AnswerElement, Chartable } from '../../api/types';
+import { useState } from 'react';
+import { chartPoints, type ChartSpec } from '../../api/types';
 import { useI18n } from '../../i18n/useI18n';
 import { Segmented } from '../Segmented';
 import { BarView } from './BarView';
@@ -6,68 +7,63 @@ import { LineView } from './LineView';
 import { TableView } from './TableView';
 import styles from './Chart.module.css';
 
-interface Props {
-  chartable: Chartable | undefined;
-  series: AnswerElement | undefined;
-  view: string;
-  onViewChange: (view: string) => void;
-}
-
 /**
- * Renders only where the backend declared a chart, and only the views it
- * declared. There is no client-side list of "views we support" — the buttons
- * are `default_view` followed by `alternate_views`, and nothing else.
+ * A chart arrives as a spec, not as a decision this client makes: the service
+ * sends one for trends automatically and whenever the reader asks for a chart,
+ * and `chart_type` says which. The reader can switch to the table — the same
+ * rows, no interpretation — but the declared type is always the default.
+ *
+ * `x_field` and `y_field` are read generically, so a spec over countries plots
+ * exactly like one over periods without a special case here. `decimal_places`
+ * and `unit` are honoured rather than guessed (QC finding F-004).
  */
-export function Chart({ chartable, series, view, onViewChange }: Props) {
+export function Chart({ spec }: { spec: ChartSpec }) {
   const { t, tOpen } = useI18n();
+  const declared = spec.chart_type === 'bar' ? 'bar' : 'line';
+  const [view, setView] = useState<string>(declared);
 
-  if (!chartable?.available) return null;
-  const points = series?.series;
-  if (!points || points.length === 0) return null;
+  const points = chartPoints(spec);
+  if (points.length === 0) return null;
 
-  // `default_view` is null when the service declares no preferred view.
-  const views = [
-    ...(chartable.default_view ? [chartable.default_view] : []),
-    ...chartable.alternate_views,
-  ];
-  if (views.length === 0) return null;
-
-  const fallback = views[0] as string;
-  const active = views.includes(view) ? view : fallback;
-  const title = series.text ?? t('chart.group');
+  const views = [declared, 'table'];
+  const active = views.includes(view) ? view : declared;
 
   return (
     <figure className={styles.figure}>
       <figcaption className={styles.caption}>
         <span className={styles.title}>
-          {title}
-          {series.unit ? <span className={styles.unit}> · {series.unit}</span> : null}
+          {spec.title}
+          {spec.unit ? <span className={styles.unit}> · {spec.unit}</span> : null}
         </span>
-        {views.length > 1 ? (
-          <Segmented<string>
-            label={t('chart.group')}
-            size="compact"
-            value={active}
-            onChange={onViewChange}
-            options={views.map((name) => ({
-              value: name,
-              label: tOpen(`chart.view.${name}`, name),
-            }))}
-          />
-        ) : null}
+        <Segmented<string>
+          label={t('chart.group')}
+          size="compact"
+          value={active}
+          onChange={setView}
+          options={views.map((name) => ({ value: name, label: tOpen(`chart.view.${name}`, name) }))}
+        />
       </figcaption>
 
-      {/* A declared view this client has no renderer for falls back to the line
-          view; it is never dropped from the control. */}
+      {/* A macro overview puts different units on different bars, so the
+          service warns that they are not on a shared scale. Shown above the
+          plot, where it can still change how the picture is read. */}
+      {spec.note ? <p className={styles.note}>{spec.note}</p> : null}
+
       <div className={styles.plot}>
         {active === 'table' ? (
-          <TableView series={points} unit={series.unit} />
+          <TableView series={points} unit={spec.unit} decimals={spec.decimal_places} />
         ) : active === 'bar' ? (
-          <BarView series={points} title={title} />
+          <BarView series={points} title={spec.title} decimals={spec.decimal_places} />
         ) : (
-          <LineView series={points} title={title} />
+          <LineView series={points} title={spec.title} decimals={spec.decimal_places} />
         )}
       </div>
+
+      {spec.missing_countries && spec.missing_countries.length > 0 ? (
+        <p className={styles.missing}>
+          {t('chart.missingCountries', { countries: spec.missing_countries.join(', ') })}
+        </p>
+      ) : null}
     </figure>
   );
 }

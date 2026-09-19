@@ -1,356 +1,318 @@
 /**
- * The Ask AI wire contract.
+ * The askAI v2 wire contract.
  *
- * The shapes here are the backend's, exactly: `POST /api/ask` and
- * `GET /api/health` on the Python service. Nothing in this file is invented by
- * the client — every figure, sentence, caveat and reason is composed once by
- * the service and rendered here as-is.
+ * `POST /chat` — one JSON response, no streaming. Every shape here is one the
+ * service sends; nothing is invented by the client.
  *
- * A few fields are marked EXTENSION. The service does not send them today; the
- * client renders them when a response carries them and never requires them.
+ * Three properties of this API drive most of the client:
+ *
+ *  1. A handled request is **always HTTP 200**, including "no data". The test
+ *     for success is `facts_payload.ok`, never the status code.
+ *  2. Numbers arrive as **strings** — SQL NUMERIC to Python Decimal to JSON
+ *     string — so every figure is parsed before it is formatted or plotted.
+ *  3. `facts` has **no type discriminator**. Which question was answered is
+ *     read from which keys are present.
  */
 
 export type Lang = 'en' | 'ar';
-export type SourceSel = 'approved' | 'external';
 
-export interface AskRequest {
-  question: string;
-  lang: Lang;
-  /** ['approved'] | ['external'] | ['approved','external']. Anything else: 422. */
-  sources: SourceSel[];
-  /** Echo the previous response's value to continue the thread. */
-  conversation_id: string | null;
+export interface ChatRequest {
+  message: string;
   /**
-   * EXTENSION. Set when the reader picks a candidate from a `clarification`
-   * package: complete the *original* question against that indicator.
+   * Per-user, and a real value: follow-ups ("and last year?") resolve against
+   * server-side state keyed on this. Omitting it puts every user in one
+   * conversation.
    */
-  resolve_detail_id?: string | null;
-  /**
-   * EXTENSION. Set by the "not this indicator" control on an inheritance
-   * banner: list the indicators this question could mean instead of carrying
-   * the previous turn's subject forward.
-   */
-  disambiguate?: boolean;
+  session_id: string;
+  /** Prior turns as plain text. Used only for follow-up detection. */
+  conversation_context: string;
 }
 
-/** Only these keys go on the wire. Extensions stay client-side. */
-export const WIRE_REQUEST_KEYS = ['question', 'lang', 'sources', 'conversation_id'] as const;
+export interface ChatResponse {
+  /** User-facing prose. Always present. Includes its own `Sources:` footer. */
+  answer: string;
+  facts_payload: FactsPayload;
+  chart: ChartSpec | null;
+  /**
+   * false means the numeric verifier rejected the model's phrasing and `answer`
+   * is a plain template fallback — correct data, blunt prose. Worth surfacing
+   * quietly, and worth logging.
+   */
+  verified: boolean;
+}
 
-export type Provenance = 'approved' | 'external';
-export type PackageKind = 'answer' | 'refusal' | 'clarification';
+export type FactsPayload = FactsFound | FactsMissing;
 
-/** How far the content can be trusted. Governs visual treatment only. */
-export type ElementClass =
-  | 'measured' // a published row
-  | 'derived' // computed, inputs stated
-  | 'attributed' // analyst text bound to a datapoint
-  | 'article' // published editorial
-  | 'external' // third-party content, always caveated
-  | 'absent'; // "no commentary published" — content, not a hole
+export interface FactsFound {
+  ok: true;
+  facts: Facts;
+  citations: Citation[];
+  chart?: ChartSpec | null;
+}
 
-/** Where the content goes on screen. Governs layout slot only. */
-export type ElementRole =
-  | 'headline'
-  | 'series'
-  | 'delta'
-  | 'evidence'
-  | 'analysis'
-  | 'commentary'
-  | 'scope'
-  | 'note';
+/** No data, ambiguous, or out of scope — with the honest reason. */
+export interface FactsMissing {
+  ok: false;
+  message: string;
+  citations?: Citation[];
+  chart?: ChartSpec | null;
+}
 
-/** The six refusals. Each reads differently; none of them is an error. */
-export type RefusalCode =
-  | 'no-such-indicator'
-  | 'not-approved-for-publication'
-  | 'published-with-no-data'
-  | 'no-data-for-this-selection'
-  | 'question-not-supported'
-  | 'data-could-not-be-reached';
+export interface Citation {
+  /** Null on catalog-level citations. */
+  indicator: string | null;
+  data_source: string;
+  /** 'published_data_points' is SCAI-vetted; 'indicator_values' is raw. */
+  table: string;
+  record_id: string;
+  period_label: string;
+  country: string;
+}
 
-/** EXTENSION. A charted series, when a response carries the points. */
+export const VETTED_TABLE = 'published_data_points';
+
+/* ------------------------------------------------------------------ */
+/* facts                                                               */
+/* ------------------------------------------------------------------ */
+
+/** A figure as it arrives: a string, or null where the service has none. */
+export type Figure = string | null;
+
+export interface SeriesRow {
+  period_label: string;
+  actual: Figure;
+}
+
+export interface CountryRow {
+  country: string;
+  period_label: string;
+  actual: Figure;
+}
+
+export interface OverviewRow {
+  [key: string]: unknown;
+}
+
+export interface FactsLatestValue {
+  period_label: string;
+  actual: Figure;
+  target: Figure;
+  unit?: string | null;
+}
+
+export interface FactsDefinition {
+  definition: string;
+  indicator: string;
+  unit?: string | null;
+}
+
+export interface FactsTrend {
+  series: SeriesRow[];
+  n_points: number;
+  unit?: string | null;
+}
+
+export interface FactsExtremes {
+  high_period: string;
+  high_value: Figure;
+  low_period: string;
+  low_value: Figure;
+  absolute_difference: Figure;
+  unit?: string | null;
+}
+
+export interface FactsComparison {
+  period_a: string;
+  value_a: Figure;
+  period_b: string;
+  value_b: Figure;
+  absolute_change: Figure;
+  percent_change: Figure;
+  unit?: string | null;
+}
+
+export interface FactsGrowth {
+  period_start: string;
+  value_start: Figure;
+  period_end: string;
+  value_end: Figure;
+  method: string;
+  growth_rate_percent: Figure;
+  unit?: string | null;
+}
+
+export interface FactsCountryComparison {
+  rows: CountryRow[];
+  countries_with_no_data: string[];
+  unit?: string | null;
+}
+
+export interface FactsCountryRanking {
+  ranked: CountryRow[];
+  countries_with_no_data: string[];
+  period_used: string;
+  unit?: string | null;
+}
+
+export interface FactsOverview {
+  overview: OverviewRow[];
+}
+
+export interface FactsCapability {
+  published_indicator_count: number;
+  sectors_covered: string[];
+  capability_note: string;
+}
+
+export interface FactsCount {
+  count: number;
+  names: string[];
+}
+
+export type Facts = Record<string, unknown>;
+
+/** What the payload turned out to be, once its keys have been read. */
+export type FactsKind =
+  | 'latest-value'
+  | 'definition'
+  | 'trend'
+  | 'extremes'
+  | 'comparison'
+  | 'growth'
+  | 'country-comparison'
+  | 'country-ranking'
+  | 'overview'
+  | 'capability'
+  | 'count'
+  | 'unknown';
+
+/**
+ * There is no type discriminator in the payload, so the kind is read from which
+ * keys exist. Order matters: the most specific signature wins, and anything
+ * unrecognised is 'unknown' rather than a guess — a new shape from the service
+ * then renders as a plain list instead of disappearing.
+ */
+export function factsKind(facts: Facts): FactsKind {
+  const has = (...keys: string[]) => keys.every((key) => key in facts);
+
+  if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
+  if (has('period_a', 'period_b')) return 'comparison';
+  if (has('high_period', 'low_period')) return 'extremes';
+  if (has('ranked')) return 'country-ranking';
+  if (has('rows')) return 'country-comparison';
+  if (has('series')) return 'trend';
+  if (has('definition')) return 'definition';
+  if (has('overview')) return 'overview';
+  if (has('published_indicator_count')) return 'capability';
+  if (has('count', 'names')) return 'count';
+  if (has('period_label')) return 'latest-value';
+  return 'unknown';
+}
+
+/** The unit, wherever a shape carries one. */
+export function factsUnit(facts: Facts): string | null {
+  const unit = facts['unit'];
+  return typeof unit === 'string' && unit.length > 0 ? unit : null;
+}
+
+/**
+ * Countries the service was asked about and holds no approved data for. This
+ * is how it reports them rather than silently dropping them, so it is never
+ * hidden — see QC finding F-001.
+ */
+export function countriesWithNoData(facts: Facts): string[] {
+  const value = facts['countries_with_no_data'];
+  return Array.isArray(value) ? value.filter((c): c is string => typeof c === 'string') : [];
+}
+
+/* ------------------------------------------------------------------ */
+/* charts                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface ChartSpec {
+  chart_type: 'line' | 'bar' | string;
+  title: string;
+  unit: string | null;
+  decimal_places: number;
+  /** Read the data generically through these, never by hard-coded key. */
+  x_field: string;
+  y_field: string;
+  data: Record<string, unknown>[];
+  /** Present on a macro overview: units differ per bar, so no shared axis. */
+  note?: string | null;
+  /** Present on comparison charts. */
+  missing_countries?: string[];
+}
+
+/** A plotted point. Values are parsed here, once, and never re-parsed. */
 export interface SeriesPoint {
-  label: string; // period label, e.g. '2026-04' or '2021'
+  label: string;
   value: number;
 }
 
-export interface AnswerElement {
-  class: ElementClass;
-  role: ElementRole;
-  /** Fully composed, already in the requested language. Rendered as-is. */
-  text: string;
-  /** 'detail|period|country|source'. Empty country means national. */
-  source_ref: string;
-
-  /* EXTENSIONS — rendered when present, never required. */
-  value?: string;
-  unit?: string;
-  period?: string;
-  publisher?: string;
-  article?: { title: string; date: string };
-  series?: SeriesPoint[];
-}
-
-/** A slot the service either bound to something, or could not bind. */
-export type Bound<T> = { bound: T };
-export type Unbound = { unbound: string };
-
-export type DetailIdSlot = Bound<string> | Unbound;
-export type CountryScope = 'national' | 'named' | 'declared_benchmarks';
-
 /**
- * A period is either pinned to an exact value, deferred to whatever is latest,
- * or something this client has not seen yet — hence the open third arm.
+ * Figures arrive as strings ("185.17"). This is the only place they become
+ * numbers; a NaN is dropped rather than plotted as zero, which would invent a
+ * data point the service never published.
  */
-export type PeriodSlot =
-  | { bound: { exact: string } }
-  | { bound: { range: { start: string; end: string } } }
-  | { deferred: { latest: true } }
-  | Record<string, unknown>;
-
-export interface AnswerSpec {
-  spec_version: number;
-  today: string; // '2026-09-17'
-  detail_id: DetailIdSlot;
-  period: PeriodSlot;
-  country_scope: Bound<CountryScope>;
-  measure: Bound<string>;
-  operation: Bound<string>;
-  /** Open vocabulary, e.g. {"detail":"named-in-question"}. */
-  bound_by: Record<string, string>;
-  /** What a deferred period ACTUALLY resolved to. */
-  resolved_period: string | null;
-  /** Present ONLY when country_scope is 'named'. */
-  countries?: string[];
+export function toNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
-export interface Chartable {
-  available: boolean;
-  default_view: string | null;
-  alternate_views: string[];
-}
-
-export interface Degradation {
-  kind: string;
-  where: string;
-  detail: string;
-}
-
-/** EXTENSION. A next step the service knows exists, rendered as a chip. */
-export interface Suggestion {
-  label: string;
-  question: string;
-}
-
-/** EXTENSION. One of the indicators a question could have meant. */
-export interface Candidate {
-  detail_id: string;
-  name: string;
-  /** Pre-rendered scope line: 'monthly · Qatar national · April 2026'. */
-  scope: string;
-  /** Latest published value, as a preview. Null when nothing is published. */
-  latest: { value: string; unit: string; period: string } | null;
-}
-
-interface PackageBase {
-  provenance: Provenance;
-  /** A rendered sentence, already in the requested language. */
-  agent: string;
-  spec: AnswerSpec;
-  /** EMPTY for refusal and clarification. */
-  elements: AnswerElement[];
-  chartable: Chartable;
-  /** null on approved; always a string on external content. */
-  caveat: string | null;
-  /** The sentence; null on an answer. */
-  reason: string | null;
-  degradations: Degradation[];
-  /** EXTENSION. */
-  suggestions?: Suggestion[];
-}
-
-export interface AnswerPackageAnswer extends PackageBase {
-  kind: 'answer';
-  /** Omitted on an answer — never null. */
-  reason: null;
-}
-
-export interface AnswerPackageRefusal extends PackageBase {
-  kind: 'refusal';
-  reason: string;
-  reason_id: string;
-  refusal_code: RefusalCode;
-}
-
-/**
- * A well-asked question the service cannot narrow on its own. It carries a
- * `reason_id` but no `refusal_code`, because it is not a failure and is not
- * counted as one.
- */
-export interface AnswerPackageClarification extends PackageBase {
-  kind: 'clarification';
-  reason: string;
-  reason_id: string;
-  /** EXTENSION. */
-  candidates?: Candidate[];
-}
-
-/**
- * Discriminated on `kind` so a new backend variant is a compile error in every
- * switch rather than a blank card.
- */
-export type AnswerPackage =
-  | AnswerPackageAnswer
-  | AnswerPackageRefusal
-  | AnswerPackageClarification;
-
-export type ExternalOutcome = 'success' | 'timeout' | 'unavailable' | 'abandoned';
-
-/**
- * The single home for third-party prose.
- *
- * The key being ABSENT from the response means no external agent was admitted.
- * An external agent that was asked and failed is PRESENT, saying so. Those are
- * different states and must not render the same way.
- */
-export interface ExternalBlock {
-  provenance: 'external';
-  agent: string;
-  /** Unconditional. Rendered above the prose, never hidden. */
-  caveat: string;
-  outcome: ExternalOutcome;
-  /** Text ONLY when outcome is 'success'. */
-  prose: string | null;
-  reason: string | null;
-  check: null | {
-    band: string;
-    limits: string;
-    found: string[];
-    beyond: string[];
-    flagged: boolean;
-  };
-  elapsed_seconds: number;
-  degradations: Degradation[];
-}
-
-export interface Freshness {
-  refreshed_at: string | null;
-  stale: boolean;
-  age_seconds: number;
-}
-
-/** EXTENSION. What the service carried over from an earlier turn. */
-export interface Inheritance {
-  carried: string; // 'Consumer price inflation · Qatar national'
-  changed: string[]; // ['frequency → quarterly', 'period → 2026-Q1']
-}
-
-export interface AskResponse {
-  conversation_id: string;
-  packages: AnswerPackage[];
-  freshness: Freshness;
-  /** PRESENT ONLY when an external agent was asked. */
-  external?: ExternalBlock;
-  /** EXTENSION. */
-  inherited?: Inheritance | null;
-}
-
-/** `GET /api/health` returns the same freshness block as an answer. */
-export interface HealthResponse {
-  freshness: Freshness;
+export function chartPoints(spec: ChartSpec): SeriesPoint[] {
+  const points: SeriesPoint[] = [];
+  for (const row of spec.data) {
+    const value = toNumber(row[spec.y_field]);
+    const label = row[spec.x_field];
+    if (value === null || typeof label !== 'string') continue;
+    points.push({ label, value });
+  }
+  return points;
 }
 
 /* ------------------------------------------------------------------ */
-/* reading the contract                                                 */
+/* reading the response                                                */
 /* ------------------------------------------------------------------ */
 
-/**
- * `refusal_code` is OMITTED on an answer and on a clarification, not null, so
- * presence is the test — never truthiness.
- */
-export function hasRefusalCode(pkg: AnswerPackage): pkg is AnswerPackageRefusal {
-  return 'refusal_code' in pkg;
-}
-
-export function isBound<T>(slot: Bound<T> | Unbound | Record<string, unknown>): slot is Bound<T> {
-  return typeof slot === 'object' && slot !== null && 'bound' in slot;
-}
-
-/** The indicator the spec bound to, or null when nothing was bound. */
-export function boundDetailId(spec: AnswerSpec): string | null {
-  return isBound<string>(spec.detail_id) ? spec.detail_id.bound : null;
-}
-
-/** Why the period slot could not be filled, when it could not be. */
-export function unboundReason(slot: DetailIdSlot): string | null {
-  return 'unbound' in slot ? slot.unbound : null;
-}
-
-/** True when the reader asked for "now" rather than a named period. */
-export function isDeferredPeriod(spec: AnswerSpec): boolean {
-  return typeof spec.period === 'object' && spec.period !== null && 'deferred' in spec.period;
-}
-
-/** The exact period asked for, when one was named. */
-export function exactPeriod(spec: AnswerSpec): string | null {
-  const period = spec.period as { bound?: { exact?: string } };
-  return period?.bound?.exact ?? null;
+export function isFound(payload: FactsPayload): payload is FactsFound {
+  return payload.ok;
 }
 
 /**
- * The span a series question covers. `resolved_period` reports only where the
- * series ends, so a range has to be read from the slot or the answer looks like
- * it is about one year when it covers seven.
- */
-export function periodRange(spec: AnswerSpec): { start: string; end: string } | null {
-  const period = spec.period as { bound?: { range?: { start?: string; end?: string } } };
-  const range = period?.bound?.range;
-  if (!range?.start || !range.end) return null;
-  return { start: range.start, end: range.end };
-}
-
-/**
- * What the answer is actually as of. `resolved_period` is what a deferred
- * period resolved to and is the most common question about an answer, so it
- * wins over the exact period whenever it is present.
- */
-export function asOfPeriod(spec: AnswerSpec): string | null {
-  return spec.resolved_period ?? exactPeriod(spec);
-}
-
-export interface SourceRefParts {
-  detail: string;
-  period: string;
-  /** Empty means national. */
-  country: string;
-  source: string;
-}
-
-/**
- * 'detail|period|country|source' — split, never reformatted.
+ * An ambiguous match names the candidates inside its message, in double quotes:
+ * `"GDP forecast" could match … "GDP", "GDP Growth Demo", "Real GDP".`
  *
- * Not every reference has that shape: a catalogue entry arrives as
- * 'catalogue:detail:<id>', with no period and no row behind it. Rather than
- * mis-reading that as a detail id, it is returned whole as the source.
+ * Pulling them out turns a dead end into one click. The first quoted run is the
+ * term the reader used, so it is excluded — offering it back would just repeat
+ * the ambiguous question.
  */
-export function parseSourceRef(ref: string | undefined): SourceRefParts | null {
-  if (!ref) return null;
-  if (!ref.includes('|')) return { detail: '', period: '', country: '', source: ref };
-  const [detail = '', period = '', country = '', source = ''] = ref.split('|');
-  return { detail, period, country, source };
+export function ambiguousChoices(message: string): string[] {
+  const quoted = [...message.matchAll(/"([^"]{1,80})"/g)].map((m) => m[1] ?? '');
+  if (quoted.length < 3) return [];
+  const [asked, ...rest] = quoted;
+  const unique = [...new Set(rest.filter((name) => name && name !== asked))];
+  return unique.length >= 2 ? unique : [];
 }
 
 /**
- * Known backend defect: the external answer currently appears in BOTH
- * `packages` and `external`. `external` is the single home for third-party
- * prose, so an external entry in `packages` is dropped here rather than being
- * rendered twice.
+ * `answer` already ends with its own `Sources:` footer. Rendering the citations
+ * underneath it as well shows every source twice, so the footer is split off
+ * and the citations are rendered properly instead.
+ *
+ * If the footer is not found — a different phrasing, another language — the
+ * answer is returned whole and untouched, and the caller shows no separate
+ * citation list.
  */
-export function approvedPackages(packages: AnswerPackage[]): AnswerPackage[] {
-  return packages.filter((pkg) => pkg.provenance !== 'external');
+export function splitSourcesFooter(answer: string): { body: string; hasFooter: boolean } {
+  const match = answer.match(/\n\s*(?:Sources|المصادر)\s*:\s*\n/);
+  if (!match || match.index === undefined) return { body: answer, hasFooter: false };
+  return { body: answer.slice(0, match.index).trimEnd(), hasFooter: true };
 }
 
-/** Exhaustiveness guard for `kind` / `class` switches. */
+/** Exhaustiveness guard. */
 export function assertNever(x: never): never {
   throw new Error(`Unhandled variant: ${JSON.stringify(x)}`);
 }

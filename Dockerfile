@@ -48,13 +48,18 @@ FROM nginxinc/nginx-unprivileged:1.27.2-alpine AS runtime
 # Read at container start by the base image's entrypoint, which renders
 # /etc/nginx/templates/*.template through envsubst.
 #
-# http://askai-api:8000     — the API by Compose service name on its container
-#                             port, over kap_shared_network. The intended path.
-# http://host.docker.internal:17900
-#                           — fallback only; needs extra_hosts in Compose.
+# http://host.docker.internal:18000
+#     — the v2 API on the VM host's published port. The default, because it
+#       survives the API being recreated under a different container name or on
+#       a different network, and because host.docker.internal always resolves
+#       (it comes from /etc/hosts via extra_hosts), so nginx always starts.
+# http://<service-name>:8000
+#     — by Compose service name, if both containers share a network. Tidier,
+#       but nginx resolves the name at startup and exits if it cannot, which
+#       takes the whole site down whenever the API is absent.
 #
 # Never localhost: inside a container that is this container, not the VM.
-ENV API_UPSTREAM=http://askai-api:8000
+ENV API_UPSTREAM=http://host.docker.internal:18000
 ENV CALLER_ID=askai-web
 
 # Only these two are substituted. Everything else in the template starting with

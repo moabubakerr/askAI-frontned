@@ -1,10 +1,19 @@
 import type { SeriesPoint } from '../../api/types';
-import { formatNumber, localizeNumerals } from '../../i18n/formatNumber';
+import { formatAtPrecision } from '../../i18n/figures';
+import { localizeNumerals } from '../../i18n/formatNumber';
 import { useI18n } from '../../i18n/useI18n';
 import { buildGeometry, VIEWBOX } from './geometry';
 import styles from './Chart.module.css';
 
-export function BarView({ series, title }: { series: SeriesPoint[]; title: string }) {
+export function BarView({
+  series,
+  title,
+  decimals,
+}: {
+  series: SeriesPoint[];
+  title: string;
+  decimals: number;
+}) {
   const { lang } = useI18n();
   const geometry = buildGeometry(series, true);
   if (!geometry) return null;
@@ -28,7 +37,7 @@ export function BarView({ series, title }: { series: SeriesPoint[]; title: strin
             className={styles.gridline}
           />
           <text x={plot.x - 10} y={tick.y + 4} className={styles.axisLabel} textAnchor="end">
-            {formatNumber(tick.value, lang)}
+            {formatAtPrecision(tick.value, decimals, lang)}
           </text>
         </g>
       ))}

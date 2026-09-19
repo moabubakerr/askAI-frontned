@@ -34,3 +34,28 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+/* "The service is responding" — never "the data is fine". */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  color: var(--ink-muted);
+  cursor: default;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--green-600);
+}
+
+.down .dot {
+  background: var(--amber-600);
+}
+
+.down {
+  color: var(--amber-700);
+}

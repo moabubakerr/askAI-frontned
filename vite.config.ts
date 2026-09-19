@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
  * Where the dev server forwards /api. Development only — this never reaches the
  * bundle. In the container, nginx does the same job with the same variable name.
  */
-const API_UPSTREAM = process.env.API_UPSTREAM ?? 'http://localhost:17900';
+const API_UPSTREAM = process.env.API_UPSTREAM ?? 'http://localhost:18000';
 
 /** Asserted server-side in both places, so the browser can never forge it. */
 const CALLER_ID = process.env.CALLER_ID ?? 'askai-web';
@@ -20,6 +20,9 @@ export default defineConfig({
       '/api': {
         target: API_UPSTREAM,
         changeOrigin: true,
+        // The service's routes are at its root (/chat, /health); the app calls
+        // them under /api. nginx strips the prefix the same way in production.
+        rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
             proxyReq.setHeader('X-Caller-Id', CALLER_ID);

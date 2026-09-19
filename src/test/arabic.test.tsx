@@ -41,17 +41,20 @@ describe('formatNumber', () => {
 });
 
 describe('the Arabic path', () => {
-  it('mirrors the layout and localizes every figure', async () => {
+  it('mirrors the layout and localizes the figures it formats', async () => {
     const { user } = renderApp('ar');
 
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ar');
 
-    await user.click(screen.getByRole('button', { name: /ما تضخم أسعار المستهلك/ }));
-    await screen.findByText(/ارتفعت أسعار المستهلك/);
+    // The service answers in Arabic when the question is Arabic; the client
+    // formats the figures it is given, in Arabic-Indic numerals.
+    await user.type(screen.getByLabelText('سؤالك'), 'ما الناتج المحلي الإجمالي الحقيقي؟');
+    await user.click(screen.getByRole('button', { name: 'اسأل' }));
 
-    expect(screen.getByText('٢٫١')).toBeInTheDocument();
-    expect(screen.getByText(/شهري · قطر الوطني · أبريل ٢٠٢٦/)).toBeInTheDocument();
+    await screen.findByText(/بلغ الناتج المحلي الإجمالي الحقيقي/);
+    expect(screen.getByText('١٨٥٫١٧')).toBeInTheDocument();
+    expect(screen.getByText('الفترة')).toBeInTheDocument();
   });
 
   it('switches direction with the language toggle', async () => {

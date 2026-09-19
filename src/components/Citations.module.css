@@ -1,0 +1,66 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.title {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.indicator {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.meta {
+  color: var(--ink-muted);
+}
+
+.period {
+  font-family: var(--font-mono);
+  color: var(--ink-muted);
+}
+
+/* Approved data and raw working data must not look alike. */
+.table {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.vetted {
+  border: 1px solid var(--blue-100);
+  background: var(--blue-50);
+  color: var(--blue-800);
+}
+
+.raw {
+  border: 1px solid var(--gold-200);
+  background: var(--gold-50);
+  color: var(--gold-700);
+}

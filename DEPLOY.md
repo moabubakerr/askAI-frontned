@@ -2,15 +2,16 @@
 
 A static SPA served by nginx, in a container, on the same VM as the API. The
 container serves the app **and** proxies `/api` to the API, so the browser only
-ever talks to one origin and the API's missing CORS middleware never matters.
+ever talks to one origin. That is what makes the API's missing CORS middleware a
+non-issue: no cross-origin request is ever made, so no preflight is ever sent.
 
 | | |
 | --- | --- |
-| Host port | **17000** (17900 is the API, 17800 is taken) |
+| Host port | **17000** (17900 and 17800 are taken) |
 | Container port | 8080 (nginx, unprivileged) |
 | Image | `askai-web:latest`, built on the VM |
-| Network | `kap_shared_network`, external — the API is already on it |
-| Upstream | `API_UPSTREAM`, default `http://askai-api:8000` |
+| Upstream | `API_UPSTREAM`, default `http://host.docker.internal:18000` |
+| Path mapping | `/api/chat` → `<upstream>/chat`, `/api/health` → `<upstream>/health` |
 | Caller identity | `CALLER_ID`, default `askai-web`, set on the proxied request server-side |
 
 ## Deploy
@@ -35,8 +36,13 @@ Then open `http://<vm-host>:17000/` and ask a question.
 # The app itself
 curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:17000/
 
-# The API, through the proxy, on the same origin as the app
+# The API through the proxy, on the same origin as the app
 curl -sS http://localhost:17000/api/health
+
+# A real question — what the browser does. Allow up to ~15s for the first one.
+curl -sS -X POST http://localhost:17000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What is the latest value of Real GDP?","session_id":"smoke","conversation_context":""}'
 
 # Not root
 docker exec askai-web whoami        # -> nginx
@@ -45,37 +51,41 @@ docker exec askai-web whoami        # -> nginx
 docker inspect --format '{{.State.Health.Status}}' askai-web
 ```
 
-If `/api/health` returns JSON, the proxy and the network are both right.
+`/api/health` returning `{"status":"ok"}` means the proxy and the route mapping
+are both right. Note what it does *not* mean: that endpoint answers as soon as
+the process is up and proves nothing about the database or the models — the UI
+says "service responding" for the same reason, and never more than that.
 
 ## The upstream
 
-`localhost` inside the container is *that container*, never the VM — so the
-upstream is a service name, not a port on the host.
+`localhost` inside the container is *that container*, never the VM, so the
+upstream is never `localhost`.
 
-- **`http://askai-api:8000`** (default) — the frontend joins
-  `kap_shared_network` and reaches the API by its Compose service name, on the
-  API's own container port. This is the intended path and needs nothing extra.
+- **`http://host.docker.internal:18000`** (default) — the API on the VM host's
+  published port. `extra_hosts: host-gateway` in the compose file is what makes
+  that name resolve on Linux.
 
-- **`http://host.docker.internal:17900`** — fallback, only if the two cannot
-  share a network. Uncomment the `extra_hosts` block in
-  `docker-compose.frontend.yml`, then:
+  This is the default on purpose. It does not depend on the API's container name
+  or on the two sharing a network, and the name always resolves from
+  `/etc/hosts`, so **nginx always starts**. An API that is down then shows as a
+  502 on `/api` while the app itself keeps serving.
+
+- **`http://<api-service-name>:8000`** — over a shared Docker network instead,
+  if you prefer service names:
 
   ```bash
-  API_UPSTREAM=http://host.docker.internal:17900 \
+  API_UPSTREAM=http://<api-service-name>:8000 \
     docker compose -f docker-compose.frontend.yml up -d --force-recreate
   ```
 
-`API_UPSTREAM` takes no trailing slash: `/api/ask` is appended to it as-is.
+  Tidier, with one real cost: nginx resolves that name **at startup** and exits
+  if it cannot, so the whole site goes down — not just `/api` — whenever the API
+  is absent or has been recreated under a different name. It also caches the
+  address for the container's lifetime, so an API that comes back on a new IP
+  needs `docker compose -f docker-compose.frontend.yml restart` here.
 
-Two things to know about nginx and DNS. It resolves the upstream name when it
-starts, so if the API container is not up yet the frontend exits with
-`host not found in upstream` — `restart: unless-stopped` retries until the API
-is there. And it caches that address for the container's lifetime, so **if the
-API container is recreated and lands on a new IP, restart the frontend**:
-
-```bash
-docker compose -f docker-compose.frontend.yml restart
-```
+`API_UPSTREAM` takes no trailing slash: the proxy adds one when it strips the
+`/api` prefix.
 
 ## If the VM cannot reach the npm registry
 
@@ -110,11 +120,13 @@ docker compose -f docker-compose.frontend.yml up -d --force-recreate --no-build
 
 | Symptom | Cause |
 | --- | --- |
-| Container restarts, log says `host not found in upstream "askai-api"` | The API is not running, or is not on `kap_shared_network` |
-| App loads, every question fails with a 502 | The upstream name resolves but nothing answers on that port — check `API_UPSTREAM` and that the API listens on 8000 *inside* its container |
-| App loads, questions fail with 404 | `API_UPSTREAM` has a trailing slash, so the path was rewritten |
-| `network kap_shared_network declared as external, but could not be found` | Bring the API stack up first; it owns the network |
-| Deploy ran, browser still shows the old app | The `--force-recreate` was skipped, or the browser cached `index.html` — it is served `no-store`, so hard-refresh once |
+| App loads, every question fails with a 502 | Nothing is answering on `API_UPSTREAM` — check the API is up and published on 18000 |
+| App loads, questions fail with 404 | `API_UPSTREAM` has a trailing slash, so the path was rewritten wrongly |
+| Container restarts, log says `host not found in upstream` | Only happens on the service-name upstream: the API is down, renamed, or off the shared network. The default upstream cannot fail this way |
+| Questions time out after ~90s | The service is not answering. The first request after an API restart is slow (~10s) but not that slow |
+| `network kap_shared_network declared as external, but could not be found` | Bring up whichever stack owns that network first |
+| Deploy ran, browser still shows the old app | `--force-recreate` was skipped, or the browser held the old JS — `index.html` is served `no-store`, so hard-refresh once |
+| A pulled commit did not change anything | You are on a branch that is not tracking the one that moved. `git branch -vv`, and check the build does **not** report `CACHED` for `COPY . .` |
 
 ## What is in the image
 
