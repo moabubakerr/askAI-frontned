@@ -59,8 +59,20 @@ function loadSessionId(): string {
   }
 }
 
+/** One answer whose wording the numeric verifier rejected. */
+export interface VerificationMiss {
+  question: string;
+  at: string;
+}
+
 export interface ConversationStore {
   turns: Turn[];
+  /**
+   * Answers that came back `verified: false`. Not shown to the reader — the
+   * data is correct — but kept so the gap is visible to whoever is looking for
+   * it, in the Session panel and in the console.
+   */
+  verificationMisses: VerificationMiss[];
   busy: boolean;
   /** null until the first health check answers. */
   serviceUp: boolean | null;
@@ -77,6 +89,7 @@ export interface ConversationStore {
 function useConversationStore(): ConversationStore {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [serviceUp, setServiceUp] = useState<boolean | null>(null);
+  const [verificationMisses, setVerificationMisses] = useState<VerificationMiss[]>([]);
   const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
 
@@ -100,6 +113,15 @@ function useConversationStore(): ConversationStore {
 
       chatApi(request).then(
         (response) => {
+          if (response.verified === false) {
+            // Evidence of a payload that did not carry a number the model
+            // wanted. Logged rather than shown: the reader's figure is right.
+            console.warn('[askai] answer returned verified:false', { question });
+            setVerificationMisses((prev) => [
+              ...prev,
+              { question, at: new Date().toISOString() },
+            ]);
+          }
           patchTurn(index, { response, status: 'ready', error: null, timedOut: false });
         },
         (cause: unknown) => {
@@ -188,6 +210,7 @@ function useConversationStore(): ConversationStore {
 
   return {
     turns,
+    verificationMisses,
     busy,
     serviceUp,
     ask,

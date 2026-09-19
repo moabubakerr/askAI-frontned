@@ -14,6 +14,8 @@ export const en = {
   'session.loading': 'Reading the server’s memory…',
   'session.none': 'The server remembers nothing for this session yet.',
 
+  'session.verificationMisses': 'Templated wording: {n}',
+
   'composer.label': 'Your question',
   'composer.placeholder': 'Ask about a published indicator',
   'composer.send': 'Ask',
@@ -39,6 +41,8 @@ export const en = {
   'facts.country': 'Country',
   'facts.rank': '#',
   'facts.count': 'Count',
+  'facts.first': 'First · {period}',
+  'facts.last': 'Latest · {period}',
   'facts.high': 'Highest · {period}',
   'facts.low': 'Lowest · {period}',
   'facts.difference': 'Difference',
@@ -65,6 +69,9 @@ export const en = {
   'passages.topic': 'Searched for',
   'passages.show': 'Show sources ({n})',
   'passages.attribution': 'From a SCAI article',
+
+  'read.councilAttached': 'SCAI commentary attached to the {period} data point',
+  'read.periodMismatch': 'This commentary refers to a different period than the data point it is filed against.',
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',

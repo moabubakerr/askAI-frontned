@@ -14,7 +14,7 @@ import styles from './SessionPanel.module.css';
  */
 export function SessionPanel() {
   const { t } = useI18n();
-  const { sessionId } = useConversation();
+  const { sessionId, verificationMisses } = useConversation();
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +43,23 @@ export function SessionPanel() {
           {!loading && state === null ? <p className={styles.empty}>{t('session.none')}</p> : null}
           {!loading && state !== null ? (
             <pre className={styles.dump}>{JSON.stringify(state, null, 2)}</pre>
+          ) : null}
+
+          {/* Answers the numeric verifier rejected. Never shown in the answer
+              itself — the figure is correct — but each one is a payload that
+              did not carry a number the model wanted, so it is counted here
+              rather than lost. */}
+          {verificationMisses.length > 0 ? (
+            <div className={styles.misses}>
+              <p className={styles.missesTitle}>
+                {t('session.verificationMisses', { n: String(verificationMisses.length) })}
+              </p>
+              <ul className={styles.missList}>
+                {verificationMisses.map((miss, index) => (
+                  <li key={index}>{miss.question}</li>
+                ))}
+              </ul>
+            </div>
           ) : null}
         </div>
       ) : null}

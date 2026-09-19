@@ -71,14 +71,15 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
         </p>
       ) : null}
 
-      {/* The verifier rejected the model's phrasing and fell back to a template.
-          The data is still correct; the prose is just blunt. Said quietly. */}
-      {!response.verified ? (
-        <p className={styles.unverified}>
-          <AlertTriangle size={13} strokeWidth={1.75} aria-hidden="true" />
-          {t('answer.unverified')}
-        </p>
-      ) : null}
+      {/* `verified: false` is deliberately NOT shown to the reader. It means the
+          numeric verifier rejected the model's wording and the service
+          substituted a deterministic template — the data is correct either way,
+          which is the point of the mechanism. Saying an answer was "replaced"
+          only invites doubt about a figure that is right.
+
+          It is not swallowed either: every occurrence is a payload that did not
+          carry a number the model wanted, which is a backend gap worth closing.
+          The store logs it and the Session panel counts it. */}
 
       {/* pre-wrap: refusals are multi-line with "• " bullets, in both
           languages, and the line breaks are the service's own. */}
@@ -101,7 +102,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
         </p>
       ) : null}
 
-      {found ? <FactsPanel facts={payload.facts} /> : null}
+      {found ? <FactsPanel facts={payload.facts} hasChart={chart !== null} /> : null}
 
       {/* Not found is a legitimate answer, so it gets no error styling — but an
           ambiguous match carries its candidates, and those become one click. */}

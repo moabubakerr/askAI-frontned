@@ -16,6 +16,8 @@ export const ar: Dict = {
   'session.loading': 'جارٍ قراءة ذاكرة الخادم…',
   'session.none': 'لا يتذكر الخادم شيئًا لهذه الجلسة بعد.',
 
+  'session.verificationMisses': 'صياغة مُقولبة: {n}',
+
   'composer.label': 'سؤالك',
   'composer.placeholder': 'اسأل عن مؤشر منشور',
   'composer.send': 'اسأل',
@@ -41,6 +43,8 @@ export const ar: Dict = {
   'facts.country': 'الدولة',
   'facts.rank': '#',
   'facts.count': 'العدد',
+  'facts.first': 'الأولى · {period}',
+  'facts.last': 'الأحدث · {period}',
   'facts.high': 'الأعلى · {period}',
   'facts.low': 'الأدنى · {period}',
   'facts.difference': 'الفارق',
@@ -67,6 +71,9 @@ export const ar: Dict = {
   'passages.topic': 'البحث عن',
   'passages.show': 'إظهار المصادر ({n})',
   'passages.attribution': 'من مقال للمجلس الأعلى',
+
+  'read.councilAttached': 'تعليق المجلس الأعلى المرفق بنقطة بيانات {period}',
+  'read.periodMismatch': 'يشير هذا التعليق إلى فترة مختلفة عن نقطة البيانات المرفق بها.',
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',

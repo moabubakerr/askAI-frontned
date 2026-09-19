@@ -1,6 +1,12 @@
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { replyDir, type CouncilAnalysis, type ReadEvidence, type ReadResponse } from '../api/types';
+import {
+  replyDir,
+  sameProse,
+  type CouncilAnalysis,
+  type ReadEvidence,
+  type ReadResponse,
+} from '../api/types';
 import { formatFigure, formatWithUnit } from '../i18n/figures';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
@@ -28,6 +34,11 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
   const council = read.council_analysis ?? [];
   const evidence = read.evidence ?? [];
 
+  // There is no `answer` field here: the generated prose is `narration`, and
+  // `one_liner` sometimes repeats it word for word. Rendered once, at the
+  // bottom, where its disclaimer travels with it.
+  const oneLiner = sameProse(read.one_liner, read.narration) ? null : read.one_liner;
+
   return (
     <section className={styles.panel} aria-label={t('read.title')}>
       {/* Null for trends and rankings, which have no single figure. */}
@@ -46,9 +57,9 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
         </header>
       ) : null}
 
-      {read.one_liner ? (
-        <p className={styles.oneLiner} dir={replyDir(read.one_liner)}>
-          <LocalizedText text={read.one_liner} />
+      {oneLiner ? (
+        <p className={styles.oneLiner} dir={replyDir(oneLiner)}>
+          <LocalizedText text={oneLiner} />
         </p>
       ) : null}
 
@@ -99,9 +110,22 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
 function CouncilBlock({ item }: { item: CouncilAnalysis }) {
   const { t } = useI18n();
   const period = item.period_human || item.period_label || '';
+  const mismatched = item.period_mismatch === true;
+
+  // When the text is about another period, the label must not put the Council's
+  // name to a claim about this one. It says what is actually true — commentary
+  // filed against this data point — and warns that the text refers elsewhere.
+  const attribution = mismatched
+    ? period
+      ? t('read.councilAttached', { period })
+      : t('read.council')
+    : period
+      ? t('read.councilWithPeriod', { period })
+      : t('read.council');
 
   return (
-    <CouncilText attribution={period ? t('read.councilWithPeriod', { period }) : t('read.council')}>
+    <CouncilText attribution={attribution}>
+      {mismatched ? <p className={styles.mismatch}>{t('read.periodMismatch')}</p> : null}
       <CouncilProse text={item.summary} />
     </CouncilText>
   );

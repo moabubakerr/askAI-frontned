@@ -120,7 +120,23 @@ const trend = (): ChatResponse => {
   return found(
     'Real GDP rose from 181.20 QAR billion in 2024-Q1 to 185.17 in 2025-Q4, across eight published quarters.' +
       sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
-    { indicator: 'Real GDP', series: TREND_ROWS, n_points: TREND_ROWS.length, unit: 'QAR' },
+    {
+      indicator: 'Real GDP',
+      series: TREND_ROWS,
+      n_points: TREND_ROWS.length,
+      unit: 'QAR',
+      // Computed server-side, not by the model — safe to show as stat tiles.
+      first_period: '2024-Q1',
+      first_value: '181.204',
+      last_period: '2025-Q4',
+      last_value: '185.170',
+      highest_period: '2025-Q4',
+      highest_value: '185.170',
+      lowest_period: '2024-Q1',
+      lowest_value: '181.204',
+      change_percent: 2.1888,
+      absolute_change: 3.966,
+    },
     [citation('Real GDP', '2025-Q4')],
     chart,
   );
@@ -461,8 +477,16 @@ const READ_WITH_HEADLINE: ReadResponse = {
   one_liner: 'Real GDP reached 185.17 QAR billion in the fourth quarter of 2025.',
   council_analysis: [
     {
+      period_label: '2019-Q1',
+      period_human: 'the first quarter of 2019',
+      // The text below discusses Q4 2024, not Q1 2019.
+      period_mismatch: true,
+      summary: 'Real GDP grew by 6.1% YoY in Q4 2024.',
+    },
+    {
       period_label: '2025-Q4',
       period_human: 'the fourth quarter of 2025',
+      period_mismatch: false,
       summary: [
         'Growth held steady through the quarter.',
         '• Non-hydrocarbon activity carried most of the increase.',
@@ -483,7 +507,8 @@ const READ_WITH_HEADLINE: ReadResponse = {
 /** Trends and rankings have no single figure, so `headline` is null. */
 const READ_WITHOUT_HEADLINE: ReadResponse = {
   headline: null,
-  one_liner: 'Real GDP rose across the eight published quarters.',
+  // The service sometimes repeats the narration here word for word.
+  one_liner: 'The series moves within a narrow band, with no quarter falling below 181.',
   council_analysis: [],
   evidence: TREND_ROWS.map((row) => ({ ...row, unit: 'QAR', indicator: 'Real GDP' })),
   narration: 'The series moves within a narrow band, with no quarter falling below 181.',

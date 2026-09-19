@@ -63,3 +63,26 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.misses {
+  margin-block-start: 10px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.missesTitle {
+  margin: 0 0 4px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--amber-700);
+}
+
+.missList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--fs-small);
+  color: var(--ink-muted);
+}

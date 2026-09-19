@@ -189,3 +189,16 @@
   font-family: var(--font-mono);
   white-space: nowrap;
 }
+
+/* The commentary text refers to a different period than the point it is filed
+   against. Said before the text, not after it. */
+.mismatch {
+  margin: 0 0 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius);
+  background: var(--gold-50);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--amber-700);
+}

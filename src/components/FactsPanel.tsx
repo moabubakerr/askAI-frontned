@@ -27,7 +27,7 @@ import styles from './FactsPanel.module.css';
  * through to a plain key/value list, so a new question type the service learns
  * still shows its data instead of vanishing.
  */
-export function FactsPanel({ facts }: { facts: Facts }) {
+export function FactsPanel({ facts, hasChart = false }: { facts: Facts; hasChart?: boolean }) {
   const kind = factsKind(facts);
   const unit = factsUnit(facts);
 
@@ -39,7 +39,7 @@ export function FactsPanel({ facts }: { facts: Facts }) {
     case 'definition':
       return <Definition facts={facts} unit={unit} />;
     case 'trend':
-      return <Trend facts={facts} unit={unit} />;
+      return <Trend facts={facts} unit={unit} hasChart={hasChart} />;
     case 'extremes':
       return <Extremes facts={facts} unit={unit} />;
     case 'comparison':
@@ -75,6 +75,13 @@ export function FactsPanel({ facts }: { facts: Facts }) {
 
 const str = (facts: Facts, key: string): string =>
   typeof facts[key] === 'string' ? (facts[key] as string) : '';
+
+/** These summary fields can arrive as a JSON number rather than a string. */
+const numberish = (value: unknown): Figure => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+};
 
 const fig = (facts: Facts, key: string): Figure => {
   const value = facts[key];
@@ -160,33 +167,99 @@ function Definition({ facts, unit }: { facts: Facts; unit: string | null }) {
   );
 }
 
-function Trend({ facts, unit }: { facts: Facts; unit: string | null }) {
+/**
+ * A trend.
+ *
+ * The summary figures are computed server-side rather than by the model, so
+ * they are safe to show as tiles: first to last, the change between them, and
+ * the peak and trough.
+ *
+ * The readings themselves are shown **once**. When a chart is rendering beside
+ * this panel it already offers a table view of the same rows, so printing them
+ * here as well would put the same 28 readings on screen twice.
+ */
+function Trend({
+  facts,
+  unit,
+  hasChart,
+}: {
+  facts: Facts;
+  unit: string | null;
+  hasChart: boolean;
+}) {
   const { t, lang } = useI18n();
   const series = Array.isArray(facts['series']) ? (facts['series'] as SeriesRow[]) : [];
   const points = typeof facts['n_points'] === 'number' ? (facts['n_points'] as number) : series.length;
 
+  const first = str(facts, 'first_period');
+  const last = str(facts, 'last_period');
+  const highest = str(facts, 'highest_period');
+  const lowest = str(facts, 'lowest_period');
+
   return (
     <div className={styles.panel}>
       <div className={styles.row}>
+        {first ? (
+          <Stat label={t('facts.first', { period: first })} value={formatWithUnit(fig(facts, 'first_value'), unit, lang)} />
+        ) : null}
+        {last ? (
+          <Stat
+            label={t('facts.last', { period: last })}
+            value={formatWithUnit(fig(facts, 'last_value'), unit, lang)}
+            strong
+          />
+        ) : null}
+        {facts['change_percent'] !== undefined ? (
+          <Stat
+            label={t('facts.percentChange')}
+            value={formatPercent(numberish(facts['change_percent']), lang)}
+            strong
+          />
+        ) : null}
+        {facts['absolute_change'] !== undefined ? (
+          <Stat
+            label={t('facts.change')}
+            value={formatChange(numberish(facts['absolute_change']), unit, lang)}
+          />
+        ) : null}
+      </div>
+
+      <div className={styles.row}>
+        {highest ? (
+          <Stat
+            label={t('facts.high', { period: highest })}
+            value={formatWithUnit(fig(facts, 'highest_value'), unit, lang)}
+          />
+        ) : null}
+        {lowest ? (
+          <Stat
+            label={t('facts.low', { period: lowest })}
+            value={formatWithUnit(fig(facts, 'lowest_value'), unit, lang)}
+          />
+        ) : null}
         <Stat label={t('facts.points')} value={String(points)} />
         {unit ? <Stat label={t('facts.unit')} value={unit} /> : null}
       </div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th scope="col">{t('facts.period')}</th>
-            <th scope="col">{t('facts.value')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {series.map((row, index) => (
-            <tr key={`${row.period_label}-${index}`}>
-              <td className={styles.mono}>{row.period_label}</td>
-              <td className={`${styles.mono} num`}>{formatFigure(row.actual, lang)}</td>
+
+      {/* The chart's own Table view is the other half of this toggle. */}
+      {!hasChart && series.length > 0 ? (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th scope="col">{t('facts.period')}</th>
+              <th scope="col">{t('facts.value')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {series.map((row, index) => (
+              <tr key={`${row.period_label}-${index}`}>
+                <td className={styles.mono}>{row.period_label}</td>
+                <td className={`${styles.mono} num`}>{formatFigure(row.actual, lang)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
     </div>
   );
 }

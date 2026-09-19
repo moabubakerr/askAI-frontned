@@ -58,7 +58,11 @@ whatever `.env` says.
 | `countries_with_no_data` must be displayed | `FactsPanel` → `NoDataCountries` (QC finding F-001) |
 | Charts honour `unit` and `decimal_places` | `Chart` and the three views (F-004) |
 | An ambiguous match must not be a dead end | `ambiguousChoices()` → clickable chips that resend (F-003 / F-012) |
-| `verified: false` is worth surfacing | the marker at the top of `AnswerCard` |
+| `verified: false` is **not** shown to the reader — the data is correct | logged by `useConversation` and counted in the Session panel, so the backend gap stays visible |
+| `/read` prose lives in `narration` only | `sameProse()` drops a `one_liner` that repeats it |
+| `period_mismatch` must not carry the Council's name to another period | `ReadPanel` — neutral label plus a caution |
+| A trend shows its readings once | `FactsPanel` skips the table when a chart is rendering; the chart's Table view is the other half of the toggle |
+| Trend summary figures are computed server-side | stat tiles: first → latest, % change, peak, trough |
 | `table` distinguishes approved from raw | `Citations`, which badges each row |
 | `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
 | A new conversation must `DELETE /session/{id}` | `reset()` — otherwise the old indicator leaks into an unrelated question |

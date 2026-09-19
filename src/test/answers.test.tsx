@@ -88,9 +88,21 @@ describe('what the reader must not be allowed to miss', () => {
     expect(within(card).getByText('Oman')).toBeInTheDocument();
   });
 
-  it('marks an answer whose wording the verifier rejected', async () => {
+  it('never tells the reader an answer was "replaced" — the data is correct', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     await ask('Give me the blunt version');
-    expect(await screen.findByText(/replaced with a plain template/i)).toBeInTheDocument();
+    await screen.findByRole('article');
+
+    // verified:false means the wording was templated, not that the figure is
+    // doubtful. Saying so would invite doubt about an answer that is right.
+    expect(screen.queryByText(/replaced with a plain template/i)).toBeNull();
+    expect(screen.queryByText(/wording/i)).toBeNull();
+
+    // But the evidence is not swallowed: it is a backend gap worth closing.
+    expect(warn).toHaveBeenCalledWith(
+      '[askai] answer returned verified:false',
+      expect.objectContaining({ question: 'Give me the blunt version' }),
+    );
   });
 
   it('builds the chips from facts.candidates, not from the message text', async () => {
@@ -317,7 +329,30 @@ describe('the read-it-for-me view', () => {
   it('handles a null headline, which trends and rankings have', async () => {
     await openRead('Show the Real GDP trend over time');
 
-    expect(await screen.findByText(/rose across the eight published quarters/)).toBeInTheDocument();
+    expect(await screen.findByText(/moves within a narrow band/)).toBeInTheDocument();
+  });
+
+  it('renders the generated prose once, even when one_liner repeats it', async () => {
+    await openRead('Show the Real GDP trend over time');
+    await screen.findByText(/moves within a narrow band/);
+
+    // /read has no `answer` field: the prose is `narration`, and `one_liner`
+    // sometimes repeats it word for word.
+    expect(screen.getAllByText(/moves within a narrow band/)).toHaveLength(1);
+  });
+
+  it('does not put the Council’s name to commentary about another period', async () => {
+    await openRead();
+    await screen.findByText(/Real GDP grew by 6.1% YoY in Q4 2024/);
+
+    // The row is filed against Q1 2019 but its text is about Q4 2024.
+    expect(
+      screen.getByText(/SCAI commentary attached to the the first quarter of 2019 data point/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/refers to a different period/)).toBeInTheDocument();
+
+    // The matching entry keeps the plain attribution.
+    expect(screen.getByText(/According to SCAI, the fourth quarter of 2025/)).toBeInTheDocument();
   });
 });
 
@@ -458,5 +493,77 @@ describe('SCAI’s own writing', () => {
     const excerpt = screen.getByText(/share of non-hydrocarbon activity has risen/);
     expect(excerpt.closest('figure')).not.toBeNull();
     expect(screen.getAllByText(/From a SCAI article/).length).toBeGreaterThan(0);
+  });
+});
+
+describe('trend answers', () => {
+  it('shows the server-computed summary figures as tiles', async () => {
+    await ask('Show the Real GDP trend over time');
+    const card = await screen.findByRole('article');
+
+    // Computed server-side, not by the model.
+    expect(within(card).getByText('First · 2024-Q1')).toBeInTheDocument();
+    expect(within(card).getByText('Latest · 2025-Q4')).toBeInTheDocument();
+    expect(within(card).getByText('Highest · 2025-Q4')).toBeInTheDocument();
+    expect(within(card).getByText('Lowest · 2024-Q1')).toBeInTheDocument();
+    expect(within(card).getByText('+2.19%')).toBeInTheDocument();
+  });
+
+  it('renders the readings once, not as a chart and a table at the same time', async () => {
+    const user = await ask('Show the Real GDP trend over time');
+    await screen.findByRole('figure');
+
+    // The chart is showing; its Table view is the other half of the toggle, so
+    // the same rows must not also be printed below it.
+    expect(screen.queryAllByRole('cell', { name: '2024-Q2' })).toHaveLength(0);
+
+    await user.click(screen.getByRole('radio', { name: 'Table' }));
+    expect(screen.getAllByRole('cell', { name: '2024-Q2' })).toHaveLength(1);
+  });
+
+  it('falls back to the table when there is no chart', async () => {
+    const response: ChatResponse = {
+      answer: 'A trend with no chart spec.',
+      facts_payload: {
+        ok: true,
+        facts: {
+          indicator: 'Real GDP',
+          series: [
+            { period_label: '2024-Q1', actual: '181.204' },
+            { period_label: '2024-Q2', actual: '182.870' },
+          ],
+          n_points: 2,
+          unit: 'QAR',
+        },
+        citations: [],
+      },
+      chart: null,
+      verified: true,
+      readable: true,
+    };
+    vi.spyOn(client, 'chat').mockResolvedValue(response);
+
+    await ask('a trend with no chart');
+    await screen.findByRole('article');
+
+    // No chart to carry them, so the readings are shown here.
+    expect(screen.getByRole('cell', { name: '2024-Q2' })).toBeInTheDocument();
+  });
+});
+
+describe('the internal record of templated wording', () => {
+  it('counts verified:false answers in the session panel', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const user = await ask('Give me the blunt version');
+    await screen.findByRole('article');
+
+    await user.click(screen.getByRole('button', { name: 'Session' }));
+
+    const label = await screen.findByText('Templated wording: 1');
+    const panel = label.closest('div');
+    expect(panel).not.toBeNull();
+    // The question is listed alongside the count (it also appears as the turn's
+    // own heading, hence the scoped lookup).
+    expect(within(panel as HTMLElement).getByText('Give me the blunt version')).toBeInTheDocument();
   });
 });

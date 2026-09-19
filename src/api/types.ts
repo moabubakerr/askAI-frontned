@@ -101,7 +101,28 @@ export interface CouncilAnalysis {
   period_human?: string;
   /** Carries "• " bullet lines, which render as a list. */
   summary: string;
+  /**
+   * True when the commentary text discusses a **different period** than the
+   * data point it is filed against — real in the current data, where the row on
+   * Real GDP's 2019-Q1 point reads "Real GDP grew by 6.1% YoY in Q4 2024".
+   *
+   * Labelling that "According to SCAI, Q1 2019" would put the Council's name to
+   * a claim about the wrong period, so the label goes neutral and says so.
+   */
+  period_mismatch?: boolean;
   [key: string]: unknown;
+}
+
+/**
+ * True when two pieces of prose are the same text.
+ *
+ * `/read` has no `answer` field: the generated prose lives in `narration`, and
+ * `one_liner` sometimes repeats it. Rendering both would print it twice.
+ */
+export function sameProse(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim().toLowerCase();
+  return normalize(a) === normalize(b);
 }
 
 export interface ReadEvidence {
