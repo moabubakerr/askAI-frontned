@@ -79,13 +79,16 @@ const latestValue = (): ChatResponse =>
     [citation('Real GDP', '2025-Q4')],
   );
 
+const DEFINITION_TEXT =
+  'The increase in the general level of prices of goods and services during a specific period. ' +
+  'Inflation is also defined as an impairment in the actual value of money when the general level of prices increases.';
+
 const definition = (): ChatResponse =>
   found(
-    'Inflation is the increase in the general level of prices of goods and services during a specific period.' +
-      sourcesFooter('Inflation', 'catalog'),
+    // `answer` and `facts.definition` carry the same string now.
+    DEFINITION_TEXT + sourcesFooter('Inflation', 'catalog'),
     {
-      definition:
-        'The increase in the general level of prices of goods and services during a specific period. Inflation is also defined as an impairment in the actual value of money when the general level of prices increases.',
+      definition: DEFINITION_TEXT,
       indicator: 'Inflation',
       unit: '%',
     },

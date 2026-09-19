@@ -31,7 +31,6 @@ describe('every facts shape renders its own structure', () => {
   it.each([
     ['What is the latest value of Real GDP?', 'Target'],
     ['Show the Real GDP trend over time', 'Published points'],
-    ['What does inflation mean?', 'Indicator'],
     ['Compare Real GDP across Qatar and Saudi Arabia', 'Country'],
     ['Rank the countries by Real GDP', 'Period used'],
     ['What was the growth rate of Real GDP?', 'Growth rate'],
@@ -141,6 +140,17 @@ describe('what the reader must not be allowed to miss', () => {
     // or a click. (The hover itself is CSS, so only the control is asserted.)
     const trigger = within(card).getByRole('button', { name: /Sources/ });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders a definition once — `answer` and `facts.definition` are the same string', async () => {
+    await ask('What does inflation mean?');
+    const card = await screen.findByRole('article');
+
+    expect(
+      within(card).getAllByText(/impairment in the actual value of money/),
+    ).toHaveLength(1);
+    // The indicator is still named, above the prose.
+    expect(within(card).getByText('Inflation')).toBeInTheDocument();
   });
 
   it('renders a catalog citation with no indicator as a fallback, never "None"', async () => {

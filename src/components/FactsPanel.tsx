@@ -37,7 +37,11 @@ export function FactsPanel({ facts, hasChart = false }: { facts: Facts; hasChart
     case 'latest-value':
       return <LatestValue facts={facts} unit={unit} />;
     case 'definition':
-      return <Definition facts={facts} unit={unit} />;
+      // `answer` and `facts.definition` are the same string, and the prose is
+      // already on screen. Rendering the panel too would only reproduce the
+      // duplication here. The indicator still shows — AnswerCard names it above
+      // the prose on every successful answer.
+      return null;
     case 'trend':
       return <Trend facts={facts} unit={unit} hasChart={hasChart} />;
     case 'extremes':
@@ -147,22 +151,6 @@ function LatestValue({ facts, unit }: { facts: Facts; unit: string | null }) {
         <Stat label={t('facts.period')} value={str(facts, 'period_label')} />
         {target !== null ? <Stat label={t('facts.target')} value={formatFigure(target, lang)} /> : null}
       </div>
-    </div>
-  );
-}
-
-function Definition({ facts, unit }: { facts: Facts; unit: string | null }) {
-  const { t } = useI18n();
-
-  return (
-    <div className={styles.panel}>
-      <div className={styles.row}>
-        <Stat label={t('facts.indicator')} value={str(facts, 'indicator')} />
-        {unit ? <Stat label={t('facts.unit')} value={unit} /> : null}
-      </div>
-      <p className={styles.definition}>
-        <LocalizedText text={str(facts, 'definition')} />
-      </p>
     </div>
   );
 }

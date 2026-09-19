@@ -60,6 +60,7 @@ whatever `.env` says.
 | An ambiguous match must not be a dead end | `ambiguousChoices()` → clickable chips that resend (F-003 / F-012) |
 | `verified: false` is **not** shown to the reader — the data is correct | logged by `useConversation` and counted in the Session panel, so the backend gap stays visible |
 | `/read` prose lives in `narration` only | `sameProse()` drops a `one_liner` that repeats it |
+| `answer` and `facts.definition` are the same string | `FactsPanel` renders nothing for a definition; the prose is already on screen |
 | `period_mismatch` must not carry the Council's name to another period | `ReadPanel` — neutral label plus a caution |
 | A trend shows its readings once | `FactsPanel` skips the table when a chart is rendering; the chart's Table view is the other half of the toggle |
 | Trend summary figures are computed server-side | stat tiles: first → latest, % change, peak, trough |
@@ -116,7 +117,7 @@ Type any of these (substring matching, in either language):
 | --- | --- |
 | `What is the latest value of Real GDP?` | value + target |
 | `Show the Real GDP trend over time` | 8-point series, line chart, table view |
-| `What does inflation mean?` | definition, catalog-level citation |
+| `What does inflation mean?` | definition — prose only, catalog-level citation |
 | `What are the highest and lowest values?` | extremes + difference |
 | `Compare 2025-Q1 against 2025-Q4` | period comparison, signed change |
 | `What was the growth rate of Real GDP?` | growth rate + method |
