@@ -274,7 +274,7 @@ describe('the session', () => {
     await screen.findByRole('article');
     const firstSession = chatSpy.mock.calls[0]?.[0]?.session_id;
 
-    await user.click(screen.getByRole('button', { name: /New conversation/ }));
+    await user.click(screen.getByRole('button', { name: 'New conversation' }));
 
     // Without the DELETE the old session keeps its indicator and period, and
     // the next unrelated question silently inherits them.
@@ -562,6 +562,20 @@ describe('trend answers', () => {
 });
 
 describe('the chrome', () => {
+  it('starts a new conversation from the logo', async () => {
+    const endSpy = vi.spyOn(client, 'endSession').mockResolvedValue();
+    const chatSpy = vi.spyOn(client, 'chat');
+
+    const user = await ask('What is the latest value of Real GDP?');
+    await screen.findByRole('article');
+    const firstSession = chatSpy.mock.calls[0]?.[0]?.session_id;
+
+    await user.click(screen.getByRole('button', { name: 'Start a new conversation' }));
+
+    expect(endSpy).toHaveBeenCalledWith(firstSession);
+    expect(screen.queryByRole('article')).toBeNull();
+  });
+
   it('shows no session control and no service-status chip', async () => {
     await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');

@@ -4,6 +4,7 @@ export const en = {
   'app.product': 'Ask AI',
   'app.skipToComposer': 'Skip to the question box',
 
+  'header.home': 'Start a new conversation',
   'header.account': 'Account',
 
 

@@ -1,0 +1,9 @@
+/* Height-led: the lockup is wide, so the header sets the height and the width
+   follows from the artwork's own ratio. */
+.logo {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  color: inherit;
+}

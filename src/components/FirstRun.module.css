@@ -1,9 +1,14 @@
+/* Centred: on an empty thread this is the whole page, and a block pinned to the
+   left edge of a wide canvas reads as the start of a list rather than as the
+   invitation it is. */
 .wrap {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 20px;
   padding-block: 56px 20px;
   max-width: 760px;
+  margin-inline: auto;
 }
 
 .heading {
@@ -12,12 +17,14 @@
   line-height: 1.35;
   color: var(--neutral-950);
   letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 10px;
+  width: 100%;
 }
 
 .item {
@@ -29,7 +36,7 @@
   background: var(--surface);
   color: var(--ink-soft);
   font-size: var(--fs-body);
-  text-align: start;
+  text-align: center;
   cursor: pointer;
   box-shadow: var(--shadow-1);
   transition:

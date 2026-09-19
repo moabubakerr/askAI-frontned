@@ -1,38 +1,33 @@
 import { UserRound } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
+import { useConversation } from '../state/useConversation';
+import { Logo } from './Logo';
 import styles from './Header.module.css';
 
 /**
- * No language toggle.
+ * No language toggle: the service answers in the language of the *question*, so
+ * the reader picks by typing. A control here would only restate the interface
+ * language while appearing to govern the reply.
  *
- * The service answers in the language of the *question*, so the reader picks by
- * typing: an Arabic question gets an Arabic answer, rendered RTL, whatever the
- * chrome around it says. A toggle here would only restate the interface
- * language, and would suggest it controls the reply — which it does not.
+ * The lockup is a button — the one place people already click to get back to
+ * the start — and it begins a new conversation, server-side session and all.
  */
 export function Header() {
   const { t } = useI18n();
+  const { reset } = useConversation();
 
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <div className={styles.lockup}>
-          <span className={styles.mark} aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-              <path
-                d="M12 2.5 3.5 6.2v6.1c0 5 3.6 8.4 8.5 9.2 4.9-.8 8.5-4.2 8.5-9.2V6.2Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-              <path d="M8.5 12.4h2.2V16m2.6-6.2h2.2V16" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          </span>
-          <span className={styles.names}>
-            <span className={styles.brand}>{t('app.brand')}</span>
-            <span className={styles.product}>{t('app.product')}</span>
-          </span>
-        </div>
+        <button
+          type="button"
+          className={styles.lockup}
+          onClick={reset}
+          aria-label={t('header.home')}
+          title={t('header.home')}
+        >
+          <Logo title={t('app.brand')} />
+        </button>
 
         <div className={styles.controls}>
           <button type="button" className={styles.avatar} aria-label={t('header.account')}>

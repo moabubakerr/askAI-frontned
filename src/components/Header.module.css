@@ -19,44 +19,31 @@
   gap: 16px;
 }
 
+/* The lockup is the way back to a blank conversation, so it is a real button —
+   focusable, labelled, and with a hit area rather than just an image. */
 .lockup {
   display: flex;
   align-items: center;
-  gap: 10px;
+  height: 38px;
   min-width: 0;
-}
-
-.mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
+  padding: 2px 8px;
+  margin-inline-start: -8px;
+  border: 0;
   border-radius: var(--radius);
+  background: transparent;
+  /* The logo inherits this, through currentColor in its filter. */
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--t-hover) var(--ease);
+}
+
+.lockup:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--gold-500);
 }
 
-.names {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.brand {
-  font-size: var(--fs-eyebrow);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--blue-200);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.25;
+.lockup:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .controls {

@@ -6,6 +6,7 @@ export const ar: Dict = {
   'app.product': 'اسأل الذكاء الاصطناعي',
   'app.skipToComposer': 'انتقل إلى مربع السؤال',
 
+  'header.home': 'ابدأ محادثة جديدة',
   'header.account': 'الحساب',
 
 
