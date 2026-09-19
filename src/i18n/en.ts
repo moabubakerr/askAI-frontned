@@ -13,6 +13,10 @@ export const en = {
   'health.down': 'Service not responding',
   'health.caveat': 'The process is up. This does not prove the data or models are reachable.',
 
+  'session.title': 'Session',
+  'session.loading': 'Reading the server’s memory…',
+  'session.none': 'The server remembers nothing for this session yet.',
+
   'composer.label': 'Your question',
   'composer.placeholder': 'Ask about a published indicator',
   'composer.send': 'Ask',
@@ -45,7 +49,16 @@ export const en = {
   'facts.percentChange': 'Percent change',
   'facts.growthRate': 'Growth rate',
   'facts.method': 'Method',
+  'facts.order': 'Order',
   'facts.noDataFor': 'No approved data for',
+  'read.action': 'Read this for me',
+  'read.title': 'Read this for me',
+  'read.loading': 'Reading…',
+  'read.retry': 'Try reading it again',
+  'read.council': 'According to SCAI',
+  'read.councilWithPeriod': 'According to SCAI, {period}',
+  'read.evidence': 'Data evidence',
+  'read.disclaimerFallback': 'Generated from the readings above — not Council analysis.',
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',

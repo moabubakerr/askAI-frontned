@@ -40,7 +40,11 @@ export function Turn({ turn }: { turn: TurnModel }) {
       ) : null}
 
       {turn.status === 'ready' && turn.response ? (
-        <AnswerCard response={turn.response} onAsk={(question) => ask(question, lang)} />
+        <AnswerCard
+          turn={turn}
+          response={turn.response}
+          onAsk={(question) => ask(question, lang)}
+        />
       ) : null}
     </section>
   );

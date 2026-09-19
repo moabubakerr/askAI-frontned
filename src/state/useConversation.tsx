@@ -7,8 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { chat as chatApi, health as healthApi } from '../api/client';
-import type { ChatRequest, ChatResponse, Lang } from '../api/types';
+import {
+  chat as chatApi,
+  endSession as endSessionApi,
+  health as healthApi,
+  read as readApi,
+} from '../api/client';
+import type { ChatRequest, ChatResponse, Lang, ReadResponse } from '../api/types';
 
 export interface Turn {
   index: number;
@@ -19,16 +24,19 @@ export interface Turn {
   error: string | null;
   /** The request timed out rather than failing outright. */
   timedOut: boolean;
+  /** The read-it-for-me view of this same question, once asked for. */
+  read: ReadResponse | null;
+  readStatus: 'idle' | 'loading' | 'ready' | 'error';
 }
 
 /**
- * Follow-ups ("and last year?") resolve against server-side state keyed on the
- * session id, so it must be a real per-user value rather than the service's
- * "default" — which would put every reader in one conversation.
+ * The server holds the transcript now, keyed on this id, so the id *is* the
+ * conversation: follow-ups like "and for Saudi Arabia?" inherit the previous
+ * indicator and period from it. It must be stable per reader, and must not be
+ * the service's "default" — that is one shared conversation for everybody.
  *
- * That state is an in-memory dict on a single process: it is lost on restart
- * and nothing durable may depend on it. The id lives in sessionStorage so a
- * refresh keeps the thread and a new tab starts its own.
+ * It lives in sessionStorage so a refresh keeps the thread and a new tab starts
+ * its own.
  */
 const SESSION_KEY = 'askai.session_id';
 
@@ -51,9 +59,6 @@ function loadSessionId(): string {
   }
 }
 
-/** How many prior turns go in `conversation_context`. */
-const CONTEXT_TURNS = 4;
-
 export interface ConversationStore {
   turns: Turn[];
   busy: boolean;
@@ -61,8 +66,12 @@ export interface ConversationStore {
   serviceUp: boolean | null;
   ask: (question: string, lang: Lang) => void;
   retry: (turn: Turn, lang: Lang) => void;
+  /** Fetch the read-it-for-me view of a turn's question. */
+  readTurn: (turn: Turn) => void;
+  /** Ends the conversation here and on the server. */
   reset: () => void;
   focusComposer: () => void;
+  sessionId: string;
 }
 
 function useConversationStore(): ConversationStore {
@@ -70,7 +79,6 @@ function useConversationStore(): ConversationStore {
   const [serviceUp, setServiceUp] = useState<boolean | null>(null);
   const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
-  const history = useRef<{ question: string; answer: string }[]>([]);
 
   useEffect(() => {
     let live = true;
@@ -86,27 +94,12 @@ function useConversationStore(): ConversationStore {
     setTurns((prev) => prev.map((turn) => (turn.index === index ? { ...turn, ...patch } : turn)));
   }, []);
 
-  /** Prior turns as plain text. The service uses it only to spot a follow-up. */
-  const contextText = useCallback(
-    () =>
-      history.current
-        .slice(-CONTEXT_TURNS)
-        .map((entry) => `Q: ${entry.question}\nA: ${entry.answer}`)
-        .join('\n\n'),
-    [],
-  );
-
   const send = useCallback(
     (index: number, question: string) => {
-      const request: ChatRequest = {
-        message: question,
-        session_id: sessionId.current,
-        conversation_context: contextText(),
-      };
+      const request: ChatRequest = { message: question, session_id: sessionId.current };
 
       chatApi(request).then(
         (response) => {
-          history.current.push({ question, answer: response.answer });
           patchTurn(index, { response, status: 'ready', error: null, timedOut: false });
         },
         (cause: unknown) => {
@@ -115,7 +108,7 @@ function useConversationStore(): ConversationStore {
         },
       );
     },
-    [contextText, patchTurn],
+    [patchTurn],
   );
 
   const ask = useCallback(
@@ -136,6 +129,8 @@ function useConversationStore(): ConversationStore {
           status: 'loading',
           error: null,
           timedOut: false,
+          read: null,
+          readStatus: 'idle',
         },
       ]);
 
@@ -152,8 +147,26 @@ function useConversationStore(): ConversationStore {
     [patchTurn, send],
   );
 
-  /** A new question is a new thread, so the service's state starts clean too. */
+  const readTurn = useCallback(
+    (turn: Turn) => {
+      if (turn.readStatus === 'loading' || turn.readStatus === 'ready') return;
+      patchTurn(turn.index, { readStatus: 'loading' });
+
+      readApi({ message: turn.question, session_id: sessionId.current }).then(
+        (response) => patchTurn(turn.index, { read: response, readStatus: 'ready' }),
+        () => patchTurn(turn.index, { readStatus: 'error' }),
+      );
+    },
+    [patchTurn],
+  );
+
+  /**
+   * A new conversation has to be new on the server too. Without the DELETE, the
+   * old session keeps its indicator and period, and the next unrelated question
+   * silently inherits them.
+   */
   const reset = useCallback(() => {
+    const previous = sessionId.current;
     const created = newSessionId();
     sessionId.current = created;
     try {
@@ -161,9 +174,9 @@ function useConversationStore(): ConversationStore {
     } catch {
       // Nothing to do: the id is still used for this page's lifetime.
     }
-    history.current = [];
     nextIndex.current = 0;
     setTurns([]);
+    void endSessionApi(previous);
   }, []);
 
   const focusComposer = useCallback(() => {
@@ -173,7 +186,17 @@ function useConversationStore(): ConversationStore {
 
   const busy = turns.some((turn) => turn.status === 'loading');
 
-  return { turns, busy, serviceUp, ask, retry, reset, focusComposer };
+  return {
+    turns,
+    busy,
+    serviceUp,
+    ask,
+    retry,
+    readTurn,
+    reset,
+    focusComposer,
+    sessionId: sessionId.current,
+  };
 }
 
 const ConversationContext = createContext<ConversationStore | null>(null);

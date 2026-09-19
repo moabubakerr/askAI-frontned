@@ -218,12 +218,12 @@ describe('failures that are actually failures', () => {
 });
 
 describe('the session', () => {
-  it('sends a real session id and the prior turns as context', async () => {
+  it('sends a stable session id, and no transcript — the server holds that', async () => {
     const spy = vi.spyOn(client, 'chat');
     const user = await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
 
-    await askAgain(user, 'and last year?');
+    await askAgain(user, 'and for Saudi Arabia?');
 
     const first = spy.mock.calls[0]?.[0];
     const second = spy.mock.calls[1]?.[0];
@@ -231,7 +231,132 @@ describe('the session', () => {
     expect(first?.session_id).toBeTruthy();
     // 'default' would put every reader in one server-side conversation.
     expect(first?.session_id).not.toBe('default');
+    // The follow-up inherits on the server, keyed on this id.
     expect(second?.session_id).toBe(first?.session_id);
-    expect(second?.conversation_context).toContain('What is the latest value of Real GDP?');
+    // The client no longer sends the transcript back.
+    expect(second).not.toHaveProperty('conversation_context');
+  });
+
+  it('ends the server-side conversation when a new one is started', async () => {
+    const endSpy = vi.spyOn(client, 'endSession').mockResolvedValue();
+    const chatSpy = vi.spyOn(client, 'chat');
+
+    const user = await ask('What is the latest value of Real GDP?');
+    await screen.findByRole('article');
+    const firstSession = chatSpy.mock.calls[0]?.[0]?.session_id;
+
+    await user.click(screen.getByRole('button', { name: /New conversation/ }));
+
+    // Without the DELETE the old session keeps its indicator and period, and
+    // the next unrelated question silently inherits them.
+    expect(endSpy).toHaveBeenCalledWith(firstSession);
+
+    await askAgain(user, 'What is the latest value of Real GDP?');
+    const secondSession = chatSpy.mock.calls[1]?.[0]?.session_id;
+    expect(secondSession).not.toBe(firstSession);
+  });
+});
+
+describe('the read-it-for-me view', () => {
+  async function openRead(question = 'What is the latest value of Real GDP?') {
+    const user = await ask(question);
+    await screen.findByRole('article');
+    await user.click(screen.getByRole('button', { name: /Read this for me/ }));
+    return user;
+  }
+
+  it('keeps the Council’s words and the generated prose in separate blocks', async () => {
+    await openRead();
+
+    const council = await screen.findByText(/Non-hydrocarbon activity carried most/);
+    const narration = screen.getByText(/gradual upward path/);
+
+    // The separation is a correctness requirement: generated text must never
+    // appear to carry the Council's authority.
+    const councilBlock = council.closest('figure');
+    expect(councilBlock).not.toBeNull();
+    expect(councilBlock?.contains(narration)).toBe(false);
+    expect(screen.getByText(/According to SCAI/)).toBeInTheDocument();
+  });
+
+  it('shows the disclaimer with the narration', async () => {
+    await openRead();
+    await screen.findByText(/gradual upward path/);
+
+    expect(
+      screen.getByText('Generated from the readings above — not Council analysis.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the summary bullets as a list', async () => {
+    await openRead();
+    await screen.findByText(/Non-hydrocarbon activity carried most/);
+
+    const items = screen.getAllByRole('listitem').map((node) => node.textContent);
+    expect(items).toContain('The hydrocarbon component was broadly flat.');
+    // The bullet character itself is the list's job, not the text's.
+    expect(items.some((text) => text?.startsWith('•'))).toBe(false);
+  });
+
+  it('puts the raw readings behind a disclosure', async () => {
+    const user = await openRead();
+    await screen.findByText(/According to SCAI/);
+
+    expect(screen.queryByText('184.905 QAR')).toBeNull();
+    await user.click(screen.getByRole('button', { name: /Data evidence/ }));
+    expect(screen.getByText('184.905 QAR')).toBeInTheDocument();
+  });
+
+  it('handles a null headline, which trends and rankings have', async () => {
+    await openRead('Show the Real GDP trend over time');
+
+    expect(await screen.findByText(/rose across the eight published quarters/)).toBeInTheDocument();
+  });
+});
+
+describe('the v2 answer additions', () => {
+  it('names the indicator it matched on every successful answer', async () => {
+    await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    // An answer that describes an indicator without naming it hides a wrong match.
+    expect(within(card).getAllByText('Real GDP').length).toBeGreaterThan(0);
+  });
+
+  it('shows the caveat in facts.note', async () => {
+    await ask('Compare Real GDP across Qatar and Saudi Arabia');
+    await screen.findByRole('article');
+
+    expect(
+      screen.getByText(/the most recent period all of these countries report/),
+    ).toBeInTheDocument();
+  });
+
+  it('separates a low-confidence approximate match from the answer', async () => {
+    await ask('What is labor productivity?');
+    await screen.findByRole('article');
+
+    const warning = screen.getByText(/\(approximate match\)/);
+    expect(warning).toBeInTheDocument();
+    // Not left trailing off the end of the prose.
+    expect(warning.closest('p')).not.toBeNull();
+  });
+
+  it('renders a period ranking', async () => {
+    await ask('What were the strongest quarters?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('Order')).toBeInTheDocument();
+    expect(within(card).getByText('descending')).toBeInTheDocument();
+    expect(within(card).getByRole('cell', { name: '2025-Q3' })).toBeInTheDocument();
+  });
+
+  it('sets direction from the reply, not from the interface language', async () => {
+    // UI in English, question in Arabic — the reply comes back Arabic.
+    await ask('ما الناتج المحلي الإجمالي الحقيقي؟');
+    const card = await screen.findByRole('article');
+
+    const prose = within(card).getByText(/بلغ الناتج المحلي/);
+    expect(prose.closest('[dir="rtl"]')).not.toBeNull();
   });
 });

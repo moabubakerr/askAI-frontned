@@ -13,8 +13,8 @@
  * Set `VITE_USE_FIXTURES=true` to resolve from the sample fixtures instead.
  */
 
-import { resolveFixture } from './fixtures';
-import type { ChatRequest, ChatResponse } from './types';
+import { resolveFixture, resolveReadFixture, fixtureSession } from './fixtures';
+import type { ChatRequest, ChatResponse, ReadResponse, SessionState } from './types';
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
 
@@ -41,17 +41,12 @@ export function isFixtureMode(): boolean {
   return USE_FIXTURES;
 }
 
-export async function chat(req: ChatRequest): Promise<ChatResponse> {
-  if (USE_FIXTURES) {
-    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS));
-    return resolveFixture(req);
-  }
-
+async function post<T>(path: string, req: ChatRequest): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),
@@ -63,7 +58,7 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
     // failure, not an answer.
     if (!res.ok) throw new ChatError(`${res.status} ${res.statusText}`, res.status);
 
-    return (await res.json()) as ChatResponse;
+    return (await res.json()) as T;
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') {
       throw new ChatError('timeout');
@@ -71,6 +66,54 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
     throw cause;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+export async function chat(req: ChatRequest): Promise<ChatResponse> {
+  if (USE_FIXTURES) {
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS));
+    return resolveFixture(req);
+  }
+  return post<ChatResponse>('/api/chat', req);
+}
+
+/** The read-it-for-me view of the same question. Same request shape. */
+export async function read(req: ChatRequest): Promise<ReadResponse> {
+  if (USE_FIXTURES) {
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS));
+    return resolveReadFixture(req);
+  }
+  return post<ReadResponse>('/api/read', req);
+}
+
+/**
+ * Ends the server-side conversation.
+ *
+ * Without this, a reused session id carries the previous indicator into an
+ * unrelated topic — the reader asks about something new and silently gets the
+ * old subject back.
+ */
+export async function endSession(sessionId: string): Promise<void> {
+  if (USE_FIXTURES) return;
+
+  try {
+    await fetch(`/api/session/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+  } catch {
+    // A session the server never had, or a network blip. The client has already
+    // moved to a new id either way, so there is nothing to recover.
+  }
+}
+
+/** What the server remembers for a session. For the debug panel. */
+export async function getSession(sessionId: string): Promise<SessionState | null> {
+  if (USE_FIXTURES) return fixtureSession(sessionId);
+
+  try {
+    const res = await fetch(`/api/session/${encodeURIComponent(sessionId)}`);
+    if (!res.ok) return null;
+    return (await res.json()) as SessionState;
+  } catch {
+    return null;
   }
 }
 

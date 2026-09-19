@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n/useI18n';
 import { useConversation } from '../state/useConversation';
+import { SessionPanel } from './SessionPanel';
 import styles from './SubBar.module.css';
 
 /**
@@ -16,6 +17,8 @@ export function SubBar() {
     <div className={styles.bar}>
       <div className={styles.inner}>
         <h1 className={styles.title}>{t('app.product')}</h1>
+        <div className={styles.controls}>
+          <SessionPanel />
         {serviceUp === null ? null : (
           <span
             className={serviceUp ? styles.status : `${styles.status} ${styles.down}`}
@@ -26,6 +29,7 @@ export function SubBar() {
             {serviceUp ? t('health.up') : t('health.down')}
           </span>
         )}
+        </div>
       </div>
     </div>
   );

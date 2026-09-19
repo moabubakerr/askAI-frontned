@@ -2,7 +2,8 @@
 
 Bilingual (English / Arabic) question-answering UI over Qatar's national economic indicator data,
 for the Supreme Council for Economic Affairs and Investment. It talks to the askAI v2 service:
-one `POST /chat` per question, one JSON response, no streaming.
+`POST /chat` per question, `POST /read` for the read-it-for-me view, and the
+`/session/{id}` endpoints for the conversation the server now keeps. One JSON response each, no streaming.
 
 Every figure on screen comes from the approved dataset, and the UI's job is to keep that visible:
 the reader sees the answer immediately, the structured facts behind it, and where each row came
@@ -59,7 +60,13 @@ whatever `.env` says.
 | An ambiguous match must not be a dead end | `ambiguousChoices()` → clickable chips that resend (F-003 / F-012) |
 | `verified: false` is worth surfacing | the marker at the top of `AnswerCard` |
 | `table` distinguishes approved from raw | `Citations`, which badges each row |
-| `session_id` must be a real per-user value | `useConversation`, one per browser session; a new conversation mints a new one |
+| `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
+| A new conversation must `DELETE /session/{id}` | `reset()` — otherwise the old indicator leaks into an unrelated question |
+| Council analysis and generated prose must never share a block | `ReadPanel` — separate surfaces, attribution on one, disclaimer on the other |
+| `facts.indicator` is named on every answer | `AnswerCard` — an unnamed indicator hides a wrong match |
+| `facts.note` is a caveat and must show | `AnswerCard`, except when a `note` is the whole payload (a greeting marker) |
+| "(approximate match)" is a low-confidence warning | `splitApproximateMatch()`, rendered as its own warning |
+| Direction follows the **reply**, not the UI language | `replyDir()` — a reader may type Arabic with the UI in English |
 | The first request after a restart takes ~10s | 90s client timeout, patient spinner, no 5s cutoff anywhere |
 | `GET /health` proves only that the process is up | the SubBar says "service responding" and nothing more |
 
@@ -83,7 +90,7 @@ src/
   i18n/         en.ts  ar.ts  useI18n.tsx  figures.ts  formatNumber.ts  LocalizedText.tsx
   state/        useConversation.tsx                  turns, session id, ask()
   components/   Header SubBar Composer Thread Turn FirstRun
-                AnswerCard FactsPanel Citations Segmented
+                AnswerCard FactsPanel Citations ReadPanel SessionPanel Segmented
                 Chart/  (Chart LineView BarView TableView geometry)
   styles/       tokens.css  base.css  fonts.css   (bundled faces, no CDN)
   test/
@@ -113,6 +120,9 @@ Type any of these (substring matching, in either language):
 | `How many indicators are there?` | count + names |
 | `Give me the blunt version` | `verified: false` marker |
 | `What is the GDP forecast?` | ambiguous — clickable choices |
+| `What were the strongest quarters?` | period ranking + order |
+| `What is labor productivity?` | approximate-match warning |
+| `ما الناتج المحلي الإجمالي الحقيقي؟` | Arabic reply, RTL, with the UI still in English |
 | `Tell me about GDP Growth Demo` | no data, as an answer not an error |
 | anything unmatched | no match, honestly |
 
@@ -131,6 +141,10 @@ Type any of these (substring matching, in either language):
 - an ambiguous match becomes clickable choices that resend
 - a timeout offers a retry and explains the slow first request
 - `session_id` is real, stable across turns, and prior turns go in `conversation_context`
+- the read view keeps Council analysis and generated prose in separate blocks, with the disclaimer
+- summary bullets render as a list, and the raw readings stay behind a disclosure
+- the session id is stable, no transcript is sent, and a new conversation deletes the old session
+- direction follows the reply, so an Arabic answer is RTL with the UI in English
 - Arabic numerals, `dir`/`lang` flip on the toggle
 
 ## Local environment note

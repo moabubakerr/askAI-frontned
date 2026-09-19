@@ -19,13 +19,23 @@ export type Lang = 'en' | 'ar';
 export interface ChatRequest {
   message: string;
   /**
-   * Per-user, and a real value: follow-ups ("and last year?") resolve against
-   * server-side state keyed on this. Omitting it puts every user in one
-   * conversation.
+   * Stable, and per user. The server keeps the transcript itself now, so this
+   * id *is* the conversation: follow-ups like "and for Saudi Arabia?" inherit
+   * the previous indicator and period from it.
+   *
+   * Omitting it puts every reader in the server's one "default" conversation,
+   * where they would inherit each other's context.
+   *
+   * There is deliberately no `conversation_context` field: the client no longer
+   * sends the transcript back, because the server is the one that holds it.
    */
   session_id: string;
-  /** Prior turns as plain text. Used only for follow-up detection. */
-  conversation_context: string;
+}
+
+/** What the server remembers for a session. */
+export interface SessionState {
+  session_id?: string;
+  [key: string]: unknown;
 }
 
 export interface ChatResponse {
@@ -39,6 +49,75 @@ export interface ChatResponse {
    * quietly, and worth logging.
    */
   verified: boolean;
+}
+
+/* ------------------------------------------------------------------ */
+/* POST /read                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The read-it-for-me view. Same request shape as `/chat`, but the text comes
+ * back split by **who wrote it**, and that split is a correctness requirement
+ * rather than a layout preference: generated prose must never appear to carry
+ * the Council's authority.
+ *
+ * So `council_analysis` and `narration` are rendered in separate blocks, with
+ * different treatments, and are never merged — see `ReadPanel`.
+ */
+export interface ReadResponse {
+  /** Null for trends and rankings, which have no single figure. */
+  headline: ReadHeadline | null;
+  one_liner?: string | null;
+  /** SCAI analysts' own words, verbatim. Quoted and attributed. */
+  council_analysis: CouncilAnalysis[];
+  /** The raw readings, behind a disclosure. */
+  evidence: ReadEvidence[];
+  /** LLM-generated prose. Never presented as Council analysis. */
+  narration?: string | null;
+  /** Shown with the narration, always. */
+  disclaimer?: string | null;
+}
+
+export interface ReadHeadline {
+  value: Figure;
+  unit: string | null;
+  indicator: string;
+  period_label: string;
+  period_human: string;
+}
+
+export interface CouncilAnalysis {
+  period_label?: string;
+  period_human?: string;
+  /** Carries "• " bullet lines, which render as a list. */
+  summary: string;
+  [key: string]: unknown;
+}
+
+export interface ReadEvidence {
+  period_label?: string;
+  actual?: Figure;
+  unit?: string | null;
+  indicator?: string;
+  [key: string]: unknown;
+}
+
+/** "• " bullet lines inside a summary, split for rendering as a list. */
+export function bulletLines(summary: string): string[] {
+  return summary
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('•'))
+    .map((line) => line.replace(/^•\s*/, ''));
+}
+
+/** Whatever is not a bullet — the lead-in above the list. */
+export function nonBulletText(summary: string): string {
+  return summary
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('•'))
+    .join('\n')
+    .trim();
 }
 
 export type FactsPayload = FactsFound | FactsMissing;
@@ -182,6 +261,7 @@ export type FactsKind =
   | 'growth'
   | 'country-comparison'
   | 'country-ranking'
+  | 'period-ranking'
   | 'overview'
   | 'capability'
   | 'count'
@@ -205,6 +285,7 @@ export function factsKind(facts: Facts): FactsKind {
   if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
   if (has('period_a', 'period_b')) return 'comparison';
   if (has('high_period', 'low_period')) return 'extremes';
+  if (has('ranked_periods')) return 'period-ranking';
   if (has('ranked')) return 'country-ranking';
   if (has('rows')) return 'country-comparison';
   if (has('series')) return 'trend';
@@ -220,6 +301,60 @@ export function factsKind(facts: Facts): FactsKind {
 export function factsUnit(facts: Facts): string | null {
   const unit = facts['unit'];
   return typeof unit === 'string' && unit.length > 0 ? unit : null;
+}
+
+/**
+ * The indicator the service actually matched.
+ *
+ * Present on every successful answer now, and always shown: an answer that
+ * describes an indicator without naming it hides a wrong match, which is the
+ * one error a reader cannot catch on their own.
+ */
+export function factsIndicator(facts: Facts): string | null {
+  const indicator = facts['indicator'];
+  return typeof indicator === 'string' && indicator.length > 0 ? indicator : null;
+}
+
+/**
+ * A caveat attached to the figures — "Compared at 2025-12, the most recent
+ * period all of these countries report". It changes how the answer should be
+ * read, so it is never dropped.
+ */
+export function factsNote(facts: Facts): string | null {
+  const note = facts['note'];
+  return typeof note === 'string' && note.length > 0 ? note : null;
+}
+
+/* ------------------------------------------------------------------ */
+/* language of the reply                                               */
+/* ------------------------------------------------------------------ */
+
+const ARABIC = /[؀-ۿ]/;
+
+/**
+ * The service answers in the language of the *question*, which is not
+ * necessarily the language of the interface: a reader can type Arabic while the
+ * UI is in English. So direction is decided per reply, from its own characters,
+ * never from the language toggle.
+ */
+export function containsArabic(text: string | null | undefined): boolean {
+  return typeof text === 'string' && ARABIC.test(text);
+}
+
+export function replyDir(text: string | null | undefined): 'rtl' | 'ltr' {
+  return containsArabic(text) ? 'rtl' : 'ltr';
+}
+
+/**
+ * "… I matched your question to Real GDP (approximate match)" — a
+ * low-confidence warning the service appends to the prose. Split out so it can
+ * be said plainly instead of trailing off the end of an otherwise confident
+ * answer.
+ */
+export function splitApproximateMatch(answer: string): { body: string; warning: string | null } {
+  const match = answer.match(/(^|\n)([^\n]*\(approximate match\)[^\n]*)\s*$/i);
+  if (!match || match.index === undefined) return { body: answer, warning: null };
+  return { body: answer.slice(0, match.index).trimEnd(), warning: (match[2] ?? '').trim() };
 }
 
 /**

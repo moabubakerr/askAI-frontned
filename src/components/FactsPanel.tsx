@@ -44,6 +44,8 @@ export function FactsPanel({ facts }: { facts: Facts }) {
       return <CountryTable facts={facts} unit={unit} rowsKey="rows" />;
     case 'country-ranking':
       return <CountryTable facts={facts} unit={unit} rowsKey="ranked" ranked />;
+    case 'period-ranking':
+      return <PeriodRanking facts={facts} unit={unit} />;
     case 'overview':
       return <Overview facts={facts} />;
     case 'capability':
@@ -303,6 +305,47 @@ function CountryTable({
       </table>
 
       <NoDataCountries countries={countriesWithNoData(facts)} />
+    </div>
+  );
+}
+
+/** Periods ranked against each other — highest or lowest years, say. */
+function PeriodRanking({ facts, unit }: { facts: Facts; unit: string | null }) {
+  const { t, lang } = useI18n();
+  const rows = Array.isArray(facts['ranked_periods'])
+    ? (facts['ranked_periods'] as SeriesRow[])
+    : [];
+  const order = str(facts, 'order');
+  const points = typeof facts['n_points'] === 'number' ? (facts['n_points'] as number) : rows.length;
+
+  return (
+    <div className={styles.panel}>
+      <div className={styles.row}>
+        {/* The service's own word for the direction — ascending, descending —
+            rather than one inferred from the row order. */}
+        {order ? <Stat label={t('facts.order')} value={order} /> : null}
+        <Stat label={t('facts.points')} value={String(points)} />
+        {unit ? <Stat label={t('facts.unit')} value={unit} /> : null}
+      </div>
+
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th scope="col">{t('facts.rank')}</th>
+            <th scope="col">{t('facts.period')}</th>
+            <th scope="col">{t('facts.value')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={`${row.period_label}-${index}`}>
+              <td className={styles.mono}>{index + 1}</td>
+              <td className={styles.mono}>{row.period_label}</td>
+              <td className={`${styles.mono} num`}>{formatWithUnit(row.actual, unit, lang)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -1,0 +1,191 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--neutral-50);
+}
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.indicator {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.figure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.unit {
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.period {
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.oneLiner {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* ---- the Council's own words ------------------------------------- */
+/* Quoted, attributed, and visibly not the app talking. */
+.council {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--class-attributed-accent);
+  border-inline-start: var(--stripe) solid var(--class-attributed-accent);
+  border-radius: var(--radius);
+  background: var(--class-attributed-bg);
+}
+
+.attribution {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-block-end: 7px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--class-attributed-accent);
+}
+
+.councilLead {
+  margin: 0 0 6px;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding-inline-start: 18px;
+  list-style: disc;
+  font-size: var(--fs-sentence);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* ---- generated prose --------------------------------------------- */
+/* Plain surface, no quote marks, no attribution — and the disclaimer is
+   attached to it rather than floating at the bottom of the card. */
+.narration {
+  padding: 12px 14px;
+  border: 1px dashed var(--neutral-300);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.narrationText {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  line-height: 1.65;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+.disclaimer {
+  margin: 8px 0 0;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--hairline);
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+/* ---- the readings ------------------------------------------------- */
+.evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evidenceTrigger {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.evidenceTrigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+}
+
+.chevron {
+  transition: transform var(--t-hover) var(--ease);
+}
+
+.open {
+  transform: rotate(90deg);
+}
+
+[dir='rtl'] .chevron:not(.open) {
+  transform: rotate(180deg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  background: var(--surface);
+}
+
+.table th {
+  text-align: start;
+  padding: 6px 10px;
+  border-block-end: 1px solid var(--hairline);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.table td {
+  padding: 6px 10px;
+  border-block-end: 1px solid var(--neutral-150);
+  color: var(--ink);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

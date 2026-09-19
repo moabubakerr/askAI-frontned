@@ -15,6 +15,10 @@ export const ar: Dict = {
   'health.down': 'الخدمة لا تستجيب',
   'health.caveat': 'العملية تعمل. هذا لا يثبت إمكانية الوصول إلى البيانات أو النماذج.',
 
+  'session.title': 'الجلسة',
+  'session.loading': 'جارٍ قراءة ذاكرة الخادم…',
+  'session.none': 'لا يتذكر الخادم شيئًا لهذه الجلسة بعد.',
+
   'composer.label': 'سؤالك',
   'composer.placeholder': 'اسأل عن مؤشر منشور',
   'composer.send': 'اسأل',
@@ -47,7 +51,16 @@ export const ar: Dict = {
   'facts.percentChange': 'نسبة التغيّر',
   'facts.growthRate': 'معدل النمو',
   'facts.method': 'الطريقة',
+  'facts.order': 'الترتيب',
   'facts.noDataFor': 'لا توجد بيانات معتمدة لـ',
+  'read.action': 'اقرأ هذا نيابة عني',
+  'read.title': 'اقرأ هذا نيابة عني',
+  'read.loading': 'جارٍ القراءة…',
+  'read.retry': 'أعد المحاولة',
+  'read.council': 'وفقًا للمجلس الأعلى',
+  'read.councilWithPeriod': 'وفقًا للمجلس الأعلى، {period}',
+  'read.evidence': 'أدلة البيانات',
+  'read.disclaimerFallback': 'مُولَّد من القراءات أعلاه — وليس تحليلًا للمجلس.',
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',

@@ -86,3 +86,74 @@
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* The indicator the service matched, named on every successful answer. */
+.indicator {
+  margin: 0;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Low confidence: distinct from the answer, not hidden inside it. */
+.approximate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius);
+  background: var(--gold-50);
+  font-size: var(--fs-body);
+  color: var(--amber-700);
+}
+
+/* A caveat on how the figures compare — part of reading them correctly. */
+.note {
+  margin: 0;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--hairline);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.readBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.readButton {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--t-hover) var(--ease);
+}
+
+.readButton:hover {
+  border-color: var(--neutral-300);
+}
+
+.readButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.readLoading {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}

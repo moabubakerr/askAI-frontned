@@ -9,7 +9,15 @@
  * Nothing outside `src/api/` imports this file.
  */
 
-import type { ChartSpec, ChatRequest, ChatResponse, Citation, Facts } from './types';
+import type {
+  ChartSpec,
+  ChatRequest,
+  ChatResponse,
+  Citation,
+  Facts,
+  ReadResponse,
+  SessionState,
+} from './types';
 
 const SOURCE = 'National Planning Council';
 
@@ -60,7 +68,7 @@ const latestValue = (): ChatResponse =>
   found(
     'The actual Real GDP of Qatar for the period 2025-Q4 was 185.17 QAR billion, against a target of 190.00.' +
       sourcesFooter('Real GDP', '2025-Q4'),
-    { period_label: '2025-Q4', actual: '185.17', target: '190.00', unit: 'QAR' },
+    { indicator: 'Real GDP', period_label: '2025-Q4', actual: '185.17', target: '190.00', unit: 'QAR' },
     [citation('Real GDP', '2025-Q4')],
   );
 
@@ -101,7 +109,7 @@ const trend = (): ChatResponse => {
   return found(
     'Real GDP rose from 181.20 QAR billion in 2024-Q1 to 185.17 in 2025-Q4, across eight published quarters.' +
       sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
-    { series: TREND_ROWS, n_points: TREND_ROWS.length, unit: 'QAR' },
+    { indicator: 'Real GDP', series: TREND_ROWS, n_points: TREND_ROWS.length, unit: 'QAR' },
     [citation('Real GDP', '2025-Q4')],
     chart,
   );
@@ -112,6 +120,7 @@ const extremes = (): ChatResponse =>
     'Real GDP was highest in 2025-Q4 at 185.17 and lowest in 2024-Q1 at 181.20 — a difference of 3.97.' +
       sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
     {
+      indicator: 'Real GDP',
       high_period: '2025-Q4',
       high_value: '185.170',
       low_period: '2024-Q1',
@@ -127,6 +136,7 @@ const comparison = (): ChatResponse =>
     'Real GDP was 183.63 in 2025-Q1 and 185.17 in 2025-Q4, an increase of 1.54 (0.84%).' +
       sourcesFooter('Real GDP', '2025-Q1 vs 2025-Q4'),
     {
+      indicator: 'Real GDP',
       period_a: '2025-Q1',
       value_a: '183.631',
       period_b: '2025-Q4',
@@ -143,6 +153,7 @@ const growth = (): ChatResponse =>
     'Real GDP grew 2.19% between 2024-Q1 and 2025-Q4, measured as total growth over the period.' +
       sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
     {
+      indicator: 'Real GDP',
       period_start: '2024-Q1',
       value_start: '181.204',
       period_end: '2025-Q4',
@@ -172,7 +183,14 @@ const countryComparison = (): ChatResponse => {
   return found(
     'Real GDP for 2025-Q4 was 185.17 in Qatar and 1,102.40 in Saudi Arabia.' +
       sourcesFooter('Real GDP', '2025-Q4'),
-    { rows, countries_with_no_data: ['Kuwait', 'Oman'], unit: 'QAR' },
+    {
+      indicator: 'Real GDP',
+      rows,
+      countries_with_no_data: ['Kuwait', 'Oman'],
+      unit: 'QAR',
+      // A caveat on how the figures compare — part of reading them correctly.
+      note: 'Compared at 2025-Q4, the most recent period all of these countries report.',
+    },
     [citation('Real GDP', '2025-Q4')],
     chart,
   );
@@ -182,6 +200,7 @@ const countryRanking = (): ChatResponse =>
   found(
     'For 2025-Q4, Saudi Arabia ranks above Qatar on Real GDP.' + sourcesFooter('Real GDP', '2025-Q4'),
     {
+      indicator: 'Real GDP',
       ranked: [
         { country: 'Saudi Arabia', period_label: '2025-Q4', actual: '1102.400' },
         { country: 'Qatar', period_label: '2025-Q4', actual: '185.170' },
@@ -240,11 +259,45 @@ const countList = (): ChatResponse =>
     [],
   );
 
+const periodRanking = (): ChatResponse =>
+  found(
+    'The three strongest quarters for Real GDP were 2025-Q4, 2025-Q3 and 2025-Q2.' +
+      sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
+    {
+      indicator: 'Real GDP',
+      ranked_periods: [
+        { period_label: '2025-Q4', actual: '185.170' },
+        { period_label: '2025-Q3', actual: '184.905' },
+        { period_label: '2025-Q2', actual: '184.402' },
+      ],
+      order: 'descending',
+      n_points: 8,
+      unit: 'QAR',
+    },
+    [citation('Real GDP', '2025-Q4')],
+  );
+
+/** The service matched loosely and says so at the end of the prose. */
+const approximateMatch = (): ChatResponse =>
+  found(
+    'Annual Growth in Labor Productivity was 1.42% in 2022.' +
+      sourcesFooter('Annual Growth in Labor Productivity', '2022') +
+      '\n\nI matched your question to Annual Growth in Labor Productivity (approximate match)',
+    {
+      indicator: 'Annual Growth in Labor Productivity',
+      period_label: '2022',
+      actual: '1.42',
+      target: null,
+      unit: '%',
+    },
+    [citation('Annual Growth in Labor Productivity', '2022')],
+  );
+
 /** The verifier rejected the model's phrasing, so the prose is a template. */
 const unverified = (): ChatResponse =>
   found(
     'Real GDP, 2025-Q4: 185.17 QAR.' + sourcesFooter('Real GDP', '2025-Q4'),
-    { period_label: '2025-Q4', actual: '185.17', target: null, unit: 'QAR' },
+    { indicator: 'Real GDP', period_label: '2025-Q4', actual: '185.17', target: null, unit: 'QAR' },
     [citation('Real GDP', '2025-Q4')],
     null,
     false,
@@ -254,7 +307,13 @@ const arabicAnswer = (): ChatResponse =>
   found(
     'بلغ الناتج المحلي الإجمالي الحقيقي لقطر في الربع الرابع من 2025 نحو 185.17 مليار ريال قطري.' +
       '\n\nالمصادر:\n• الناتج المحلي الإجمالي الحقيقي — بيانات معتمدة — 2025-Q4',
-    { period_label: '2025-Q4', actual: '185.17', target: null, unit: 'QAR' },
+    {
+      indicator: 'الناتج المحلي الإجمالي الحقيقي',
+      period_label: '2025-Q4',
+      actual: '185.17',
+      target: null,
+      unit: 'QAR',
+    },
     [citation('الناتج المحلي الإجمالي الحقيقي', '2025-Q4')],
   );
 
@@ -281,6 +340,8 @@ const FIXTURES: Fixture[] = [
   // countries — and both questions start with the word "compare".
   { keywords: ['against', 'between', 'مقارنة بين'], respond: comparison },
   { keywords: ['across', 'compare', 'versus', ' vs ', 'قارن'], respond: countryComparison },
+  { keywords: ['best quarters', 'strongest', 'top periods', 'أفضل الفترات'], respond: periodRanking },
+  { keywords: ['productivity', 'إنتاجية'], respond: approximateMatch },
   { keywords: ['trend', 'each quarter', 'over time', 'chart', 'اتجاه'], respond: trend },
   { keywords: ['blunt', 'unverified'], respond: unverified },
   { keywords: ['بالعربية', 'الناتج المحلي'], respond: arabicAnswer },
@@ -300,6 +361,68 @@ const FIXTURES: Fixture[] = [
 
 const FALLBACK = (): ChatResponse =>
   missing('I could not match that to a published indicator in the approved dataset.');
+
+/* ------------------------------------------------------------------ */
+/* POST /read                                                          */
+/* ------------------------------------------------------------------ */
+
+const READ_WITH_HEADLINE: ReadResponse = {
+  headline: {
+    value: '185.17',
+    unit: 'QAR',
+    indicator: 'Real GDP',
+    period_label: '2025-Q4',
+    period_human: 'the fourth quarter of 2025',
+  },
+  one_liner: 'Real GDP reached 185.17 QAR billion in the fourth quarter of 2025.',
+  council_analysis: [
+    {
+      period_label: '2025-Q4',
+      period_human: 'the fourth quarter of 2025',
+      summary: [
+        'Growth held steady through the quarter.',
+        '• Non-hydrocarbon activity carried most of the increase.',
+        '• Construction and services both expanded against the previous quarter.',
+        '• The hydrocarbon component was broadly flat.',
+      ].join('\n'),
+    },
+  ],
+  evidence: [
+    { period_label: '2025-Q3', actual: '184.905', unit: 'QAR', indicator: 'Real GDP' },
+    { period_label: '2025-Q4', actual: '185.170', unit: 'QAR', indicator: 'Real GDP' },
+  ],
+  narration:
+    'The quarter continued a gradual upward path, with each of the last four quarters higher than the one before it.',
+  disclaimer: 'Generated from the readings above — not Council analysis.',
+};
+
+/** Trends and rankings have no single figure, so `headline` is null. */
+const READ_WITHOUT_HEADLINE: ReadResponse = {
+  headline: null,
+  one_liner: 'Real GDP rose across the eight published quarters.',
+  council_analysis: [],
+  evidence: TREND_ROWS.map((row) => ({ ...row, unit: 'QAR', indicator: 'Real GDP' })),
+  narration: 'The series moves within a narrow band, with no quarter falling below 181.',
+  disclaimer: 'Generated from the readings above — not Council analysis.',
+};
+
+export function resolveReadFixture(req: ChatRequest): ReadResponse {
+  const q = req.message.toLowerCase();
+  const trendish = ['trend', 'over time', 'each quarter', 'rank', 'compare'].some((k) =>
+    q.includes(k),
+  );
+  return trendish ? READ_WITHOUT_HEADLINE : READ_WITH_HEADLINE;
+}
+
+/** What the server would remember for this session. For the debug panel. */
+export function fixtureSession(sessionId: string): SessionState {
+  return {
+    session_id: sessionId,
+    last_indicator: 'Real GDP',
+    last_period: '2025-Q4',
+    turns: 1,
+  };
+}
 
 /** Resolve a request against the sample data. */
 export function resolveFixture(req: ChatRequest): ChatResponse {
