@@ -105,12 +105,23 @@ describe('what the reader must not be allowed to miss', () => {
     expect(await screen.findByText('Target')).toBeInTheDocument();
   });
 
-  it('separates approved rows from raw working data in the citations', async () => {
+  it('flags raw working data, and leaves approved rows unlabelled', async () => {
     await ask('Give me a macro overview');
     const card = await screen.findByRole('article');
 
-    expect(within(card).getByText('Approved')).toBeInTheDocument();
+    // Approved is the norm and carries no badge; the exception is what is named.
     expect(within(card).getByText('Working data')).toBeInTheDocument();
+    expect(within(card).queryByText('Approved')).toBeNull();
+  });
+
+  it('keeps the sources behind a disclosure rather than under the answer', async () => {
+    await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    // Collapsed by default: the trigger is what shows, opened by hover, focus
+    // or a click. (The hover itself is CSS, so only the control is asserted.)
+    const trigger = within(card).getByRole('button', { name: /Sources/ });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders a catalog citation with no indicator as a fallback, never "None"', async () => {
@@ -171,6 +182,23 @@ describe('failures that are actually failures', () => {
 
     expect(await screen.findByText(/did not answer in time/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ask again' })).toBeInTheDocument();
+  });
+
+  it('renders nothing structured for a greeting', async () => {
+    const response: ChatResponse = {
+      answer: 'Hello. Ask me about a published indicator.',
+      facts_payload: { ok: true, facts: { note: 'Greeting — no data needed.' }, citations: [] },
+      chart: null,
+      verified: true,
+    };
+    vi.spyOn(client, 'chat').mockResolvedValue(response);
+
+    await ask('hello');
+    await screen.findByText(/Ask me about a published indicator/);
+
+    // That note is the service talking to itself, not an answer to show.
+    expect(screen.queryByText(/Greeting — no data needed/)).toBeNull();
+    expect(screen.queryByText('note')).toBeNull();
   });
 
   it('renders an unknown facts shape rather than dropping it', async () => {

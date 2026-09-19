@@ -26,6 +26,8 @@ export function FactsPanel({ facts }: { facts: Facts }) {
   const unit = factsUnit(facts);
 
   switch (kind) {
+    case 'none':
+      return null;
     case 'latest-value':
       return <LatestValue facts={facts} unit={unit} />;
     case 'definition':

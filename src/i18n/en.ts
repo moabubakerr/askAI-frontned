@@ -49,7 +49,6 @@ export const en = {
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',
-  'citations.vetted': 'Approved',
   'citations.raw': 'Working data',
 
   'chart.group': 'Chart view',

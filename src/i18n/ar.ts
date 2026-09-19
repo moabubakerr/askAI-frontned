@@ -51,7 +51,6 @@ export const ar: Dict = {
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',
-  'citations.vetted': 'معتمد',
   'citations.raw': 'بيانات عمل',
 
   'chart.group': 'عرض الرسم',

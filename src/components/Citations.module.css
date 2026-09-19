@@ -1,23 +1,82 @@
 .wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding-block-start: 12px;
+  padding-block-start: 10px;
   border-block-start: 1px solid var(--hairline);
 }
 
-.title {
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
   font-size: var(--fs-eyebrow);
   font-weight: 600;
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: var(--ink-muted);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: normal;
   color: var(--ink-faint);
 }
 
+.chevron {
+  transition: transform var(--t-hover) var(--ease);
+}
+
+/* Closed by default; opened by hover, by keyboard focus, or pinned by a click.
+   Hover alone would strand touch and keyboard readers. */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--t-move) var(--ease),
+    opacity var(--t-move) var(--ease);
+}
+
+.wrap:hover .collapse,
+.wrap:focus-within .collapse,
+.pinned .collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+/* Overflow hidden is what makes the 0fr row actually collapse. */
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.wrap:hover .chevron,
+.wrap:focus-within .chevron,
+.pinned .chevron {
+  transform: rotate(90deg);
+}
+
+[dir='rtl'] .chevron {
+  transform: rotate(180deg);
+}
+
+[dir='rtl'] .wrap:hover .chevron,
+[dir='rtl'] .wrap:focus-within .chevron,
+[dir='rtl'] .pinned .chevron {
+  transform: rotate(90deg);
 }
 
 .item {
@@ -25,8 +84,14 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 10px;
+  padding-block: 3px;
   font-size: var(--fs-body);
   color: var(--ink-muted);
+  min-height: 0;
+}
+
+.item:first-child {
+  padding-block-start: 7px;
 }
 
 .indicator {
@@ -43,24 +108,16 @@
   color: var(--ink-muted);
 }
 
-/* Approved data and raw working data must not look alike. */
-.table {
+/* Approved data is the norm and carries no badge. Raw working data is the
+   exception, and says so. */
+.raw {
   padding: 1px 8px;
+  border: 1px solid var(--gold-200);
   border-radius: var(--radius-pill);
+  background: var(--gold-50);
+  color: var(--gold-700);
   font-size: var(--fs-eyebrow);
   font-weight: 600;
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
-}
-
-.vetted {
-  border: 1px solid var(--blue-100);
-  background: var(--blue-50);
-  color: var(--blue-800);
-}
-
-.raw {
-  border: 1px solid var(--gold-200);
-  background: var(--gold-50);
-  color: var(--gold-700);
 }

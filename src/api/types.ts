@@ -173,6 +173,7 @@ export type Facts = Record<string, unknown>;
 
 /** What the payload turned out to be, once its keys have been read. */
 export type FactsKind =
+  | 'none'
   | 'latest-value'
   | 'definition'
   | 'trend'
@@ -194,6 +195,12 @@ export type FactsKind =
  */
 export function factsKind(facts: Facts): FactsKind {
   const has = (...keys: string[]) => keys.every((key) => key in facts);
+  const keys = Object.keys(facts);
+
+  // A greeting or a small-talk turn answers with prose and a marker such as
+  // {"note": "Greeting — no data needed."}. That marker is the service talking
+  // to itself, not data the reader asked for, so nothing is rendered for it.
+  if (keys.length === 0 || (keys.length === 1 && keys[0] === 'note')) return 'none';
 
   if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
   if (has('period_a', 'period_b')) return 'comparison';
