@@ -58,7 +58,7 @@ whatever `.env` says.
 | `countries_with_no_data` must be displayed | `FactsPanel` → `NoDataCountries` (QC finding F-001) |
 | Charts honour `unit` and `decimal_places` | `Chart` and the three views (F-004) |
 | An ambiguous match must not be a dead end | `ambiguousChoices()` → clickable chips that resend (F-003 / F-012) |
-| `verified: false` is **not** shown to the reader — the data is correct | logged by `useConversation` and counted in the Session panel, so the backend gap stays visible |
+| `verified: false` is **not** shown to the reader — the data is correct | `useConversation` logs it to the console, so the backend gap is still evidenced |
 | `/read` prose lives in `narration` only | `sameProse()` drops a `one_liner` that repeats it |
 | `answer` and `facts.definition` are the same string | `FactsPanel` renders nothing for a definition; the prose is already on screen |
 | `period_mismatch` must not carry the Council's name to another period | `ReadPanel` — neutral label plus a caution |
@@ -76,7 +76,6 @@ whatever `.env` says.
 | "(approximate match)" is a low-confidence warning | `splitApproximateMatch()`, rendered as its own warning |
 | Direction follows the **reply** | `replyDir()`. There is no language toggle: the reader picks by typing, and the service answers in kind |
 | The first request after a restart takes ~10s | 90s client timeout, patient spinner, no 5s cutoff anywhere |
-| `GET /health` proves only that the process is up | the SubBar says "service responding" and nothing more |
 
 ## Deployment
 
@@ -98,7 +97,7 @@ src/
   i18n/         en.ts  ar.ts  useI18n.tsx  figures.ts  formatNumber.ts  LocalizedText.tsx
   state/        useConversation.tsx                  turns, session id, ask()
   components/   Header SubBar Composer Thread Turn FirstRun
-                AnswerCard FactsPanel Citations CouncilText ReadPanel SessionPanel Segmented
+                AnswerCard FactsPanel Citations CouncilText ReadPanel Segmented
                 Chart/  (Chart LineView BarView TableView geometry)
   styles/       tokens.css  base.css  fonts.css   (bundled faces, no CDN)
   test/

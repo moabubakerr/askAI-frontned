@@ -6,15 +6,8 @@ export const en = {
 
   'header.account': 'Account',
 
-  'health.up': 'Service responding',
-  'health.down': 'Service not responding',
-  'health.caveat': 'The process is up. This does not prove the data or models are reachable.',
 
-  'session.title': 'Session',
-  'session.loading': 'Reading the server’s memory…',
-  'session.none': 'The server remembers nothing for this session yet.',
 
-  'session.verificationMisses': 'Templated wording: {n}',
 
   'composer.label': 'Your question',
   'composer.placeholder': 'Ask about a published indicator',

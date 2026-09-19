@@ -1,18 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
-import {
-  chat as chatApi,
-  endSession as endSessionApi,
-  health as healthApi,
-  read as readApi,
-} from '../api/client';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { chat as chatApi, endSession as endSessionApi, read as readApi } from '../api/client';
 import type { ChatRequest, ChatResponse, Lang, ReadResponse } from '../api/types';
 
 export interface Turn {
@@ -59,23 +46,9 @@ function loadSessionId(): string {
   }
 }
 
-/** One answer whose wording the numeric verifier rejected. */
-export interface VerificationMiss {
-  question: string;
-  at: string;
-}
-
 export interface ConversationStore {
   turns: Turn[];
-  /**
-   * Answers that came back `verified: false`. Not shown to the reader — the
-   * data is correct — but kept so the gap is visible to whoever is looking for
-   * it, in the Session panel and in the console.
-   */
-  verificationMisses: VerificationMiss[];
   busy: boolean;
-  /** null until the first health check answers. */
-  serviceUp: boolean | null;
   ask: (question: string, lang: Lang) => void;
   retry: (turn: Turn, lang: Lang) => void;
   /** Fetch the read-it-for-me view of a turn's question. */
@@ -88,20 +61,8 @@ export interface ConversationStore {
 
 function useConversationStore(): ConversationStore {
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [serviceUp, setServiceUp] = useState<boolean | null>(null);
-  const [verificationMisses, setVerificationMisses] = useState<VerificationMiss[]>([]);
   const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
-
-  useEffect(() => {
-    let live = true;
-    healthApi().then((up) => {
-      if (live) setServiceUp(up);
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
 
   const patchTurn = useCallback((index: number, patch: Partial<Turn>) => {
     setTurns((prev) => prev.map((turn) => (turn.index === index ? { ...turn, ...patch } : turn)));
@@ -115,12 +76,10 @@ function useConversationStore(): ConversationStore {
         (response) => {
           if (response.verified === false) {
             // Evidence of a payload that did not carry a number the model
-            // wanted. Logged rather than shown: the reader's figure is right.
+            // wanted — a backend gap worth closing. Logged rather than shown:
+            // the reader's figure is correct either way, and saying an answer
+            // was "replaced" would only invite doubt about it.
             console.warn('[askai] answer returned verified:false', { question });
-            setVerificationMisses((prev) => [
-              ...prev,
-              { question, at: new Date().toISOString() },
-            ]);
           }
           patchTurn(index, { response, status: 'ready', error: null, timedOut: false });
         },
@@ -210,9 +169,7 @@ function useConversationStore(): ConversationStore {
 
   return {
     turns,
-    verificationMisses,
     busy,
-    serviceUp,
     ask,
     retry,
     readTurn,

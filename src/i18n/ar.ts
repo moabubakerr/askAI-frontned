@@ -8,15 +8,8 @@ export const ar: Dict = {
 
   'header.account': 'الحساب',
 
-  'health.up': 'الخدمة تستجيب',
-  'health.down': 'الخدمة لا تستجيب',
-  'health.caveat': 'العملية تعمل. هذا لا يثبت إمكانية الوصول إلى البيانات أو النماذج.',
 
-  'session.title': 'الجلسة',
-  'session.loading': 'جارٍ قراءة ذاكرة الخادم…',
-  'session.none': 'لا يتذكر الخادم شيئًا لهذه الجلسة بعد.',
 
-  'session.verificationMisses': 'صياغة مُقولبة: {n}',
 
   'composer.label': 'سؤالك',
   'composer.placeholder': 'اسأل عن مؤشر منشور',

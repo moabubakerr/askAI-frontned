@@ -561,19 +561,12 @@ describe('trend answers', () => {
   });
 });
 
-describe('the internal record of templated wording', () => {
-  it('counts verified:false answers in the session panel', async () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const user = await ask('Give me the blunt version');
+describe('the chrome', () => {
+  it('shows no session control and no service-status chip', async () => {
+    await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
 
-    await user.click(screen.getByRole('button', { name: 'Session' }));
-
-    const label = await screen.findByText('Templated wording: 1');
-    const panel = label.closest('div');
-    expect(panel).not.toBeNull();
-    // The question is listed alongside the count (it also appears as the turn's
-    // own heading, hence the scoped lookup).
-    expect(within(panel as HTMLElement).getByText('Give me the blunt version')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Session' })).toBeNull();
+    expect(screen.queryByText(/Service responding/)).toBeNull();
   });
 });
