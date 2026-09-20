@@ -18,17 +18,15 @@ import styles from './Logo.module.css';
  * this component is the only thing that changes.
  */
 /*
- * Cropped to the artwork's own ink box, measured from the file: x 157–1997,
- * y 159–767 of 2153×928. The JPEG carries wide white margins which the filter
- * correctly drops, but which would otherwise eat a third of whatever height the
- * header gives it.
+ * The crest alone, measured from the file: x 912–1242, y 159–503 of 2153×928.
  *
- * Within that box the four bands are the crest (345px), the Arabic wordmark
- * (88px), the English wordmark (76px) and "State of Qatar" (44px). Those ratios
- * are what set the header height: at anything under ~56px of rendered lockup
- * the two wordmarks stop being readable.
+ * The supplied artwork is a stacked lockup — crest, Arabic wordmark (88px tall),
+ * English wordmark (76px), "State of Qatar" (44px). In a header bar the whole
+ * thing renders at around 60px, which puts those last two lines at 8px and 4px:
+ * present, but a smudge rather than words. Setting the name in real type beside
+ * a crisp crest reads at any size, and stays sharp on any screen.
  */
-const VIEWBOX = '147 149 1860 628';
+const VIEWBOX = '902 149 350 364';
 
 export function Logo({ title }: { title: string }) {
   const id = useId();

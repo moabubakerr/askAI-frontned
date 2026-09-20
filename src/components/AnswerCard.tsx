@@ -1,4 +1,5 @@
-import { AlertTriangle, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, BookOpen, X } from 'lucide-react';
 import {
   factsCandidates,
   factsIndicator,
@@ -37,6 +38,9 @@ interface Props {
 export function AnswerCard({ turn, response, onAsk }: Props) {
   const { t } = useI18n();
   const { readTurn, lens } = useConversation();
+  // Opening the retelling should be reversible: it is long, and a reader who
+  // has finished with it should be able to put it away without losing it.
+  const [readOpen, setReadOpen] = useState(true);
   // Executive is the answer and its figures; Explore adds the chart behind them
   // and the sources under them. Both are the same response — switching costs no
   // round trip, and nothing that changes the meaning of a figure is ever hidden.
@@ -125,7 +129,14 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
       {response.readable === true ? (
         <div className={styles.readBlock}>
           {turn.readStatus === 'idle' ? (
-            <button type="button" className={styles.readButton} onClick={() => readTurn(turn)}>
+            <button
+              type="button"
+              className={styles.readButton}
+              onClick={() => {
+                setReadOpen(true);
+                readTurn(turn);
+              }}
+            >
               <BookOpen size={14} strokeWidth={1.75} aria-hidden="true" />
               {t('read.action')}
             </button>
@@ -141,7 +152,28 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
             </button>
           ) : null}
 
-          {turn.readStatus === 'ready' && turn.read ? <ReadPanel read={turn.read} /> : null}
+          {/* Already fetched, so reopening it costs nothing. */}
+          {turn.readStatus === 'ready' && !readOpen ? (
+            <button type="button" className={styles.readButton} onClick={() => setReadOpen(true)}>
+              <BookOpen size={14} strokeWidth={1.75} aria-hidden="true" />
+              {t('read.action')}
+            </button>
+          ) : null}
+
+          {turn.readStatus === 'ready' && turn.read && readOpen ? (
+            <div className={styles.readOpen}>
+              <button
+                type="button"
+                className={styles.readDismiss}
+                onClick={() => setReadOpen(false)}
+                aria-label={t('read.hide')}
+                title={t('read.hide')}
+              >
+                <X size={14} strokeWidth={2} aria-hidden="true" />
+              </button>
+              <ReadPanel read={turn.read} />
+            </div>
+          ) : null}
         </div>
       ) : null}
 

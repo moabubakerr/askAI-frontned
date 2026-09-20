@@ -27,6 +27,12 @@ export function Header() {
           title={t('header.home')}
         >
           <Logo title={t('app.brand')} />
+          {/* Set in type rather than cropped out of the artwork: at header size
+              the wordmark in the file is a smudge, and this stays sharp. */}
+          <span className={styles.names}>
+            <span className={styles.brandAr}>{t('app.brandAr')}</span>
+            <span className={styles.brandEn}>{t('app.brand')}</span>
+          </span>
         </button>
 
         <div className={styles.controls}>

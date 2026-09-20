@@ -14,9 +14,6 @@ const PRIORITY: MsgKey[] = [
   'firstrun.q6',
 ];
 
-/** Subjects rather than questions: a starting point, not a whole sentence. */
-const TOPICS: MsgKey[] = ['topic.t1', 'topic.t2', 'topic.t3', 'topic.t4'];
-
 export function FirstRun() {
   const { t, lang } = useI18n();
   const { ask } = useConversation();
@@ -34,19 +31,6 @@ export function FirstRun() {
           {PRIORITY.map((key) => (
             <li key={key}>
               <button type="button" className={styles.item} onClick={() => ask(t(key), lang)}>
-                {t(key)}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.section}>
-        <h3 className={styles.label}>{t('firstrun.topics')}</h3>
-        <ul className={styles.chips}>
-          {TOPICS.map((key) => (
-            <li key={key}>
-              <button type="button" className={styles.chip} onClick={() => ask(t(key), lang)}>
                 {t(key)}
               </button>
             </li>

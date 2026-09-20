@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
-  padding: 18px;
+  padding: 22px 24px;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
@@ -156,4 +156,45 @@
   margin: 0;
   font-size: var(--fs-body);
   color: var(--ink-muted);
+}
+
+/* The dismiss sits over the panel's own corner, out of the reading line. */
+.readOpen {
+  position: relative;
+}
+
+.readDismiss {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--t-hover) var(--ease),
+    color var(--t-hover) var(--ease);
+}
+
+/* Revealed on hover, and always present for keyboard users. */
+.readOpen:hover .readDismiss,
+.readOpen:focus-within .readDismiss {
+  opacity: 1;
+}
+
+.readDismiss:hover {
+  color: var(--ink);
+}
+
+.readDismiss:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: var(--focus-ring);
 }

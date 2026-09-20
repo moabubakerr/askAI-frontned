@@ -2,43 +2,59 @@
   position: sticky;
   bottom: 0;
   z-index: 20;
-  background: linear-gradient(to bottom, rgba(244, 246, 249, 0) 0%, var(--page-bg) 26%);
-  padding-block-start: 22px;
+  background: linear-gradient(to bottom, rgba(244, 246, 249, 0) 0%, var(--page-bg) 30%);
+  padding-block-start: 24px;
 }
 
 .inner {
-  max-width: 840px;
+  max-width: var(--canvas-max);
   margin-inline: auto;
   padding-inline: var(--gutter);
-  padding-block-end: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding-block-end: 20px;
 }
 
-/* One card: the field and its controls belong together. */
+/* One surface for the field and its controls, which lifts on focus so the
+   composer reads as the active thing on the page. */
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 14px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 18px;
   background: var(--surface);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-1);
+  transition:
+    border-color var(--t-hover) var(--ease),
+    box-shadow var(--t-hover) var(--ease);
+}
+
+.card:hover {
+  border-color: var(--neutral-300);
+}
+
+.card:focus-within {
+  border-color: var(--blue-400);
+  box-shadow:
+    var(--shadow-2),
+    0 0 0 3px rgba(46, 111, 191, 0.14);
 }
 
 .input {
   width: 100%;
+  min-height: 46px;
+  padding-inline: 12px;
+  padding-block: 12px;
   border: 0;
   background: transparent;
-  font-size: var(--fs-sentence);
+  font-family: inherit;
+  font-size: 15.5px;
+  line-height: 1.5;
   color: var(--ink);
-  padding-inline: 4px;
 }
 
 .input::placeholder {
-  color: var(--ink-faint);
+  color: var(--neutral-400);
 }
 
 .input:focus-visible {
@@ -51,14 +67,15 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  padding-inline: 4px;
 }
 
+/* Reading depth, as a segmented pill. */
 .lens {
   display: inline-flex;
   padding: 3px;
-  border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
-  background: var(--neutral-50);
+  background: var(--neutral-100);
 }
 
 .lensOption {
@@ -67,11 +84,16 @@
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--ink-muted);
+  font-family: inherit;
   font-size: var(--fs-body);
   cursor: pointer;
   transition:
     background var(--t-hover) var(--ease),
     color var(--t-hover) var(--ease);
+}
+
+.lensOption:hover {
+  color: var(--ink);
 }
 
 .lensOption[aria-checked='true'] {
@@ -87,20 +109,29 @@
 .right {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
+/* The one source, stated as a quiet tag rather than a control that promises a
+   choice which does not exist. */
 .source {
-  font-size: var(--fs-body);
-  color: var(--ink-muted);
+  padding: 5px 11px;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-pill);
+  background: var(--blue-50);
+  color: var(--blue-800);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .reset,
 .send {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  flex: none;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   transition:
@@ -110,24 +141,25 @@
 }
 
 .reset {
-  border: 1px solid var(--hairline);
-  background: var(--surface);
-  color: var(--ink-muted);
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
 }
 
 .reset:hover:not(:disabled) {
+  background: var(--neutral-100);
   color: var(--ink);
-  border-color: var(--neutral-300);
 }
 
 .send {
   border: 0;
-  background: var(--neutral-300);
-  color: #fff;
+  background: var(--neutral-200);
+  color: var(--neutral-500);
 }
 
 .send:not(:disabled) {
   background: var(--blue-900);
+  color: #fff;
 }
 
 .send:hover:not(:disabled) {
@@ -136,8 +168,11 @@
 
 .reset:disabled,
 .send:disabled {
-  opacity: 0.5;
   cursor: default;
+}
+
+.reset:disabled {
+  opacity: 0.4;
 }
 
 .reset:focus-visible,
@@ -146,9 +181,12 @@
   box-shadow: var(--focus-ring);
 }
 
-.poc {
-  margin: 0;
-  text-align: center;
-  font-size: var(--fs-small);
-  color: var(--ink-faint);
+@media (max-width: 560px) {
+  .controls {
+    gap: 8px;
+  }
+
+  .source {
+    display: none;
+  }
 }

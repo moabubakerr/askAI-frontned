@@ -1,6 +1,7 @@
 export const en = {
   'app.brand': 'Supreme Council for Economic Affairs and Investment',
   'app.brandShort': 'SCEAI',
+  'app.brandAr': 'المجلس الأعلى للشؤون الاقتصادية والاستثمار',
   'app.product': 'Ask AI',
   'app.skipToComposer': 'Skip to the question box',
 
@@ -52,6 +53,7 @@ export const en = {
   'facts.vsYearEarlier': 'vs a year earlier',
   'facts.noDataFor': 'No approved data for',
   'read.action': 'Read this for me',
+  'read.hide': 'Hide the retelling',
   'read.title': 'Read this for me',
   'read.loading': 'Reading it out — this takes longer than an answer',
   'read.retry': 'Try reading it again',
@@ -110,23 +112,16 @@ export const en = {
   'lens.exploreHint': 'Full detail: charts, evidence and related content',
 
   'composer.source': 'SCEAI Indicators',
-  'composer.pocNote':
-    'Note: user roles and privileges are not enforced in this POC; role-based access will be applied upon production integration.',
 
   'firstrun.welcome': 'Welcome to Ask AI',
   'firstrun.intro':
     'Ask about Qatar’s economic indicators and their approved descriptions. Every value comes from the approved indicator database — never estimated.',
   'firstrun.priority': 'Priority questions',
-  'firstrun.topics': 'Topics',
   'firstrun.note': 'Responses are based on the approved indicator data warehouse.',
   'firstrun.help': 'Help',
   'firstrun.footnote':
     'Ask AI is an assistive layer. Verify figures against the Economic Monitoring Dashboard as the source of truth.',
 
-  'topic.t1': 'GDP growth',
-  'topic.t2': 'Trade balance',
-  'topic.t3': 'Non-hydrocarbon exports',
-  'topic.t4': 'Workforce',
 
   'a11y.answerReady': 'Answer ready for question {n}',
   'a11y.asking': 'Asking question {n}',

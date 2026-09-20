@@ -1,11 +1,8 @@
-/* Height-led: the lockup is wide, so its container sets the height and the width
-   follows. The explicit ratio matches the cropped viewBox, because `width: auto`
-   on an inline SVG is not reliably derived from the viewBox everywhere. */
+/* Square-ish: the crest alone, sized by its container's height. */
 .logo {
   display: block;
   height: 100%;
   width: auto;
-  aspect-ratio: 1860 / 628;
-  max-width: 100%;
+  aspect-ratio: 350 / 364;
   color: inherit;
 }

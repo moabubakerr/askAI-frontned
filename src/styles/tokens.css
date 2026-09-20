@@ -93,11 +93,10 @@
   --focus-ring: 0 0 0 3px rgba(46, 111, 191, 0.35);
 
   /* ---- layout --------------------------------------------------- */
-  --canvas-max: 840px;
+  --canvas-max: 1080px;
   --gutter: 20px;
-  /* Set by the lockup: crest plus three lines of type, which stop being legible
-     below about 56px of rendered height. */
-  --header-h: 80px;
+  /* The crest plus two lines of type beside it. */
+  --header-h: 66px;
   --subbar-h: 48px;
 
   /* ---- motion --------------------------------------------------- */

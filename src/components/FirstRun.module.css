@@ -72,35 +72,6 @@
   box-shadow: var(--focus-ring);
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  padding: 7px 14px;
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--radius-pill);
-  background: var(--neutral-100);
-  color: var(--ink-soft);
-  font-size: var(--fs-body);
-  cursor: pointer;
-  transition:
-    background var(--t-hover) var(--ease),
-    border-color var(--t-hover) var(--ease);
-}
-
-.chip:hover {
-  background: var(--neutral-150);
-  border-color: var(--neutral-300);
-}
-
-.chip:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
 .note {
   margin: 0;
   font-size: var(--fs-body);

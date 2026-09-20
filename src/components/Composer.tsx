@@ -60,7 +60,6 @@ export function Composer() {
               {/* One source, named rather than implied: everything here comes
                   from the approved indicator database. */}
               <span className={styles.source}>{t('composer.source')}</span>
-
               <button
                 type="button"
                 className={styles.reset}
@@ -83,8 +82,6 @@ export function Composer() {
             </div>
           </div>
         </form>
-
-        <p className={styles.poc}>{t('composer.pocNote')}</p>
       </div>
     </div>
   );

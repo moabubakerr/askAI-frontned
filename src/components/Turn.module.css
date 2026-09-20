@@ -9,29 +9,35 @@
   animation: rise-fade 320ms var(--ease) both;
 }
 
-.ask {
-  display: flex;
-  align-items: baseline;
-  gap: 4px 12px;
-  flex-wrap: wrap;
-  padding-block-end: 2px;
-}
-
-.number {
-  font-family: var(--font-mono);
-  font-size: var(--fs-eyebrow);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
+/* A conversation: what was asked sits on the reader's side, what came back on
+   the other. `flex-end` rather than a fixed side, so Arabic mirrors it. */
 .question {
-  flex: 1 1 320px;
+  align-self: flex-end;
+  max-width: min(62%, 620px);
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: var(--blue-900);
+  color: #fff;
+  font-size: var(--fs-sentence);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.answer {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 82%;
   min-width: 0;
-  font-size: 19px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--neutral-950);
+}
+
+@media (max-width: 780px) {
+  .question {
+    max-width: 88%;
+  }
+
+  .answer {
+    max-width: 100%;
+  }
 }
 
 .against {
