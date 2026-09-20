@@ -23,19 +23,22 @@
   line-height: 1.45;
 }
 
+/* The card fills the column rather than shrinking to its text: a one-line
+   answer in a narrow card reads as an aside, not as the answer. */
 .answer {
   align-self: flex-start;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 8px;
   width: 100%;
   max-width: 82%;
   min-width: 0;
 }
 
-/* The source, above the card it answered from. */
+/* The source, above the card it answered from. It keeps its own width. */
 .source {
+  align-self: flex-start;
   padding: 5px 12px;
   border: 1px solid var(--blue-100);
   border-radius: var(--radius-pill);
