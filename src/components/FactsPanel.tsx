@@ -18,7 +18,6 @@ import {
   type SeriesRow,
 } from '../api/types';
 import {
-  formatAtPrecision,
   formatChange,
   formatFigure,
   formatPercent,
@@ -641,12 +640,13 @@ function Overview({ facts }: { facts: Facts }) {
  * behind "how is the economy doing?" is whether it moved, so the comparison is
  * the substance of the row rather than a footnote to it.
  *
- * Three things are deliberate. Each row is rounded to its own
- * `decimal_places` — SCAI's Format column — rather than to a number chosen
- * here. Each row's `unit` already carries its scale ('QAR bn'), so nothing is
- * appended to it. And each row keeps its own period: 2025-Q4 next to 2026-04 is
- * correct, because these indicators report on different schedules, so no shared
- * "as of" is ever stated.
+ * Three things are deliberate. Figures are rendered at the precision they
+ * arrive with: the service now sends them display-rounded, so rounding again on
+ * top could only restate a published figure — 185.17 shown as 185.2 is a
+ * different number. Each row's `unit` already carries its scale ('Bn QAR'), so
+ * nothing is appended to it and no unit is composed here. And each row keeps
+ * its own period: 2025-Q4 next to 2026-04 is correct, because these indicators
+ * report on different schedules, so no shared "as of" is ever stated.
  *
  * The change is **not** coloured green and red. Up and down is a fact; good and
  * bad is not — a fall in inflation is the desirable direction, and the field
@@ -674,26 +674,17 @@ function MacroOverview({ facts, rows }: { facts: Facts; rows: OverviewEntry[] })
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const decimals = typeof row.decimal_places === 'number' ? row.decimal_places : undefined;
               const unit = typeof row.unit === 'string' && row.unit.length > 0 ? row.unit : null;
 
               const now = toNumber(row.actual ?? null);
               const before = toNumber(row.previous_value ?? null);
               const yoy = toNumber(row.change_yoy_percent ?? null);
 
-              const value =
-                now === null
-                  ? NO_VALUE
-                  : decimals === undefined
-                    ? formatFigure(String(row.actual), lang)
-                    : formatAtPrecision(now, decimals, lang);
-
+              // As sent. `decimal_places` is still on the row, but the figures
+              // already carry the precision they are meant to be shown at.
+              const value = now === null ? NO_VALUE : formatFigure(String(row.actual), lang);
               const previous =
-                before === null
-                  ? NO_VALUE
-                  : decimals === undefined
-                    ? formatFigure(String(row.previous_value), lang)
-                    : formatAtPrecision(before, decimals, lang);
+                before === null ? NO_VALUE : formatFigure(String(row.previous_value), lang);
 
               return (
                 <tr key={index}>

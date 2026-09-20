@@ -4,13 +4,12 @@ import {
   factsUnit,
   replyDir,
   sameProse,
-  toNumber,
   type CouncilAnalysis,
   type Figure,
   type ReadEvidence,
   type ReadResponse,
 } from '../api/types';
-import { formatAtPrecision, formatFigure, formatWithUnit, NO_VALUE } from '../i18n/figures';
+import { formatFigure, formatWithUnit } from '../i18n/figures';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import { CouncilProse, CouncilText } from './CouncilText';
@@ -137,29 +136,19 @@ function CouncilBlock({ item }: { item: CouncilAnalysis }) {
 /**
  * The readings the retelling was built from.
  *
- * The rows carry no unit or precision of their own, so both come from the facts
- * the answer was composed from — otherwise a figure would be shown bare, or at
- * a precision nobody chose.
+ * The rows carry no unit of their own, so it comes from the facts the answer
+ * was composed from — otherwise every figure would read bare. The figures
+ * themselves arrive display-rounded and are shown exactly as sent.
  */
 function EvidenceTable({ rows, read }: { rows: ReadEvidence[]; read: ReadResponse }) {
   const { t, lang } = useI18n();
 
   const facts = read.facts_payload && read.facts_payload.ok ? read.facts_payload.facts : undefined;
   const unit = facts ? factsUnit(facts) : null;
-  const decimals =
-    facts && typeof facts['decimal_places'] === 'number'
-      ? (facts['decimal_places'] as number)
-      : undefined;
 
   const hasTarget = rows.some((row) => row.target !== null && row.target !== undefined);
 
-  const show = (figure: Figure | undefined): string => {
-    if (figure === null || figure === undefined || figure === '') return NO_VALUE;
-    const parsed = toNumber(figure);
-    if (parsed === null || decimals === undefined) return formatWithUnit(figure, unit, lang);
-    const formatted = formatAtPrecision(parsed, decimals, lang);
-    return unit ? `${formatted} ${unit}` : formatted;
-  };
+  const show = (figure: Figure | undefined): string => formatWithUnit(figure ?? null, unit, lang);
 
   return (
     <table className={styles.table}>

@@ -331,13 +331,14 @@ describe('the read-it-for-me view', () => {
     const user = await openRead();
     await screen.findByText(/According to SCAI/);
 
-    expect(screen.queryByText(/185\.2 QAR bn/)).toBeNull();
+    expect(screen.queryByText(/185\.17 QAR bn/)).toBeNull();
     await user.click(screen.getByRole('button', { name: /Data evidence/ }));
 
     // `/read` names the reading `value`, not `actual`; reading only `actual`
-    // renders a column of dashes. Unit and precision come from the facts.
-    expect(screen.getByText('185.2 QAR bn')).toBeInTheDocument();
-    expect(screen.getByText('181.5 QAR bn')).toBeInTheDocument();
+    // renders a column of dashes. The unit comes from the facts; the figure is
+    // shown exactly as sent.
+    expect(screen.getByText('185.17 QAR bn')).toBeInTheDocument();
+    expect(screen.getByText('181.49 QAR bn')).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'Q4 2025' })).toBeInTheDocument();
   });
 
@@ -725,17 +726,18 @@ describe('the macro snapshot', () => {
     // The question is whether it moved, so the comparison is the substance of
     // the row rather than a footnote to it.
     expect(within(card).getByText('vs a year earlier')).toBeInTheDocument();
-    expect(within(card).getByText(/181\.5/)).toBeInTheDocument();
+    expect(within(card).getByText(/181\.49/)).toBeInTheDocument();
     // Two rows have a year-earlier reading; both name the period compared.
     expect(within(card).getAllByText(/\(2024-Q4\)/)).toHaveLength(2);
   });
 
-  it('rounds each row to its own decimal_places', async () => {
+  it('shows each figure at the precision it arrived with', async () => {
     await ask('How is Qatar’s economy doing?');
     const card = await screen.findByRole('article');
 
-    // SCAI's own Format column: Real GDP to 1, inflation to 4.
-    expect(within(card).getByText('185.2')).toBeInTheDocument();
+    // The service sends them display-rounded. Rounding again on top could only
+    // restate a published figure — 185.17 shown as 185.2 is a different number.
+    expect(within(card).getByText('185.17')).toBeInTheDocument();
     expect(within(card).getByText('2.6162')).toBeInTheDocument();
   });
 

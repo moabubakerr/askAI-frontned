@@ -18,7 +18,13 @@ import type { ChatRequest, ChatResponse, ReadResponse, SessionState } from './ty
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
 
-const FIXTURE_LATENCY_MS = 2500;
+/**
+ * How long a fixture answer pretends to take, so the loading states are real
+ * while developing offline. `VITE_FIXTURE_LATENCY` overrides it — the test
+ * suite sets 0, because a wait that makes the dev app feel like the service
+ * only makes the suite slow.
+ */
+const FIXTURE_LATENCY_MS = Number(import.meta.env.VITE_FIXTURE_LATENCY ?? 2500);
 
 /**
  * The first request after a service restart embeds the indicator catalog and

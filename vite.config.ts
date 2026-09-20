@@ -38,6 +38,6 @@ export default defineConfig({
     css: true,
     // The suite always runs on the fixtures, whatever a local .env says. That
     // is what makes it deterministic and offline.
-    env: { VITE_USE_FIXTURES: 'true' },
+    env: { VITE_USE_FIXTURES: 'true', VITE_FIXTURE_LATENCY: '0' },
   },
 });

@@ -10,6 +10,8 @@ interface ImportMetaEnv {
    * in front of this app is what makes the API same-origin.
    */
   readonly VITE_USE_FIXTURES?: string;
+  /** Milliseconds a fixture answer waits. The tests set 0. */
+  readonly VITE_FIXTURE_LATENCY?: string;
 }
 
 interface ImportMeta {
