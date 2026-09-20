@@ -72,6 +72,11 @@ export const en = {
   'read.councilAttached': 'SCAI commentary attached to the {period} data point',
   'read.periodMismatch': 'This commentary refers to a different period than the data point it is filed against.',
 
+  'direction.rose': 'Rose ({n})',
+  'direction.fell': 'Fell ({n})',
+  'direction.unchanged': 'Unchanged ({n})',
+  'direction.noComparison': 'No year-on-year comparison available for {n} of {total}',
+
   'ranking.rankedOf': '{n} of {total} ranked',
   'ranking.notAssessable': '{n} of {total} could not be ranked',
   'ranking.targetFor': 'target for {year}',

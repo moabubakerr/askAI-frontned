@@ -382,6 +382,93 @@ const countList = (): ChatResponse =>
     false,
   );
 
+/** A group split by direction of travel, year on year. */
+const directionSplit = (): ChatResponse =>
+  found(
+    'Of the 8 National Indicators, 2 rose and 4 fell compared with a year earlier.',
+    {
+      scope: 'National Indicator',
+      scope_kind: 'type',
+      comparison: "year-on-year, at each indicator's most recent reading",
+      n_increasing: 2,
+      n_declining: 4,
+      n_total: 8,
+      increasing: [
+        {
+          indicator: 'Real GDP',
+          change_yoy_percent: 2.0277,
+          actual: 185.17,
+          unit: 'QAR bn',
+          period_label: '2025-Q4',
+          polarity: 'Increase',
+        },
+        {
+          indicator: 'Visitor Arrivals',
+          change_yoy_percent: 8.4119,
+          actual: 5.2,
+          unit: 'million',
+          period_label: '2025',
+          polarity: 'Increase',
+        },
+      ],
+      declining: [
+        {
+          indicator: 'Government Revenues',
+          change_yoy_percent: -23.4946,
+          actual: 37.799,
+          unit: 'QAR bn',
+          period_label: '2026-Q1',
+          polarity: 'Increase',
+        },
+        {
+          indicator: 'Trade Balance',
+          change_yoy_percent: -17.6797,
+          actual: 37.972,
+          unit: 'QAR bn',
+          period_label: '2025-Q4',
+          polarity: 'Increase',
+        },
+        {
+          // A fall is the welcome direction here.
+          indicator: 'Cost per Student',
+          change_yoy_percent: -5.1204,
+          actual: 84.055,
+          unit: 'QAR k',
+          period_label: '2025',
+          polarity: 'Decrease',
+        },
+        {
+          indicator: 'PISA Rank',
+          change_yoy_percent: -2.0408,
+          actual: 48,
+          unit: 'Rank',
+          period_label: '2022',
+          polarity: 'Decrease',
+        },
+      ],
+      unchanged: [],
+      no_comparison: [
+        {
+          indicator: 'Inflation',
+          reason: 'no year-on-year figure published',
+          actual: 2.6162,
+          unit: '%',
+          period_label: '2026-04',
+          polarity: 'Decrease',
+        },
+        {
+          indicator: 'Adult Literacy Rate',
+          reason: 'no reading a year earlier',
+          actual: 97.8,
+          unit: '%',
+          period_label: '2024',
+          polarity: 'Increase',
+        },
+      ],
+    },
+    [citation('Real GDP', '2025-Q4')],
+  );
+
 /** Indicators ranked by progress against their own targets. */
 const performanceRanking = (): ChatResponse =>
   found(
@@ -593,6 +680,13 @@ const FIXTURES: Fixture[] = [
     keywords: ['overview', 'macro', 'economy doing', 'economy growing', 'نظرة عامة'],
     respond: overview,
   },
+  // Ahead of the comparison fixtures: "…declining compared with the previous
+  // year?" contains "compare", which would otherwise match a country comparison.
+  {
+    keywords: ['increasing', 'declining', 'rising and which are falling', 'ارتفعت وأيها انخفضت'],
+    respond: directionSplit,
+  },
+
   // Order is the disambiguation here: "highest and lowest" is a question about
   // extremes in one series, while "rank" is a question across countries.
   // Not bare 'min'/'max': "best performing" contains "min".

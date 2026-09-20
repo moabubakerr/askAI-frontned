@@ -772,3 +772,74 @@ describe('the macro snapshot', () => {
     expect(fall).toHaveAttribute('data-direction', 'down');
   });
 });
+
+describe('indicators split by direction', () => {
+  it.each([
+    'Which national indicators are increasing, and which are declining compared with the previous year?',
+    'which indicators are rising and which are falling',
+    'أي المؤشرات ارتفعت وأيها انخفضت',
+  ])('is reached by: %s', async (question) => {
+    await ask(question);
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('Rose (2)')).toBeInTheDocument();
+    expect(within(card).getByText('Fell (4)')).toBeInTheDocument();
+  });
+
+  it('keeps the order the service sorted them in', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    const fell = within(card)
+      .getByText('Fell (4)')
+      .closest('section') as HTMLElement;
+    const names = within(fell)
+      .getAllByRole('listitem')
+      .map((node) => node.textContent ?? '');
+
+    // Largest fall first, exactly as sent.
+    expect(names[0]).toContain('Government Revenues');
+    expect(names[3]).toContain('PISA Rank');
+  });
+
+  it('shows what has no year-on-year figure, and never as "unchanged"', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    // An answer silently covering 6 of 8 would be a false picture.
+    expect(
+      within(card).getByText('No year-on-year comparison available for 2 of 8'),
+    ).toBeInTheDocument();
+    expect(within(card).getByText('no year-on-year figure published')).toBeInTheDocument();
+    expect(within(card).queryByText(/Unchanged/)).toBeNull();
+  });
+
+  it('never assumes up is good: each row says which way is welcome', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    // Cost per Student and PISA Rank fell, which is the welcome direction.
+    expect(within(card).getAllByText('lower is better').length).toBeGreaterThan(0);
+    expect(within(card).getAllByText('higher is better').length).toBeGreaterThan(0);
+  });
+
+  it('keeps each row’s own unit and period', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('185.17 QAR bn')).toBeInTheDocument();
+    expect(within(card).getByText('5.2 million')).toBeInTheDocument();
+    // Different schedules, so no shared period is shown.
+    expect(within(card).getAllByText('2025-Q4').length).toBeGreaterThan(0);
+    expect(within(card).getByText('2026-Q1')).toBeInTheDocument();
+  });
+
+  it('shows the change at reading precision, not the stored four places', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('+2.03%')).toBeInTheDocument();
+    expect(within(card).getByText('−23.49%')).toBeInTheDocument();
+    expect(within(card).queryByText(/2\.0277/)).toBeNull();
+  });
+});

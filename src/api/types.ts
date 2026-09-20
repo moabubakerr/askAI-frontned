@@ -295,6 +295,7 @@ export type FactsKind =
   | 'country-comparison'
   | 'country-ranking'
   | 'period-ranking'
+  | 'direction-split'
   | 'performance-ranking'
   | 'analysis'
   | 'passages'
@@ -321,6 +322,7 @@ export function factsKind(facts: Facts): FactsKind {
   if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
   if (has('period_a', 'period_b')) return 'comparison';
   if (has('high_period', 'low_period')) return 'extremes';
+  if (has('increasing', 'declining')) return 'direction-split';
   if (has('ranked_indicators')) return 'performance-ranking';
   if (has('analysis')) return 'analysis';
   if (has('passages')) return 'passages';
@@ -481,6 +483,53 @@ export interface RankedIndicator {
   target_basis: string;
   target_year: number | string | null;
   [key: string]: unknown;
+}
+
+/**
+ * One indicator in a group split by direction of travel.
+ *
+ * `polarity` says which way is welcome — 'Increase' means a higher value is the
+ * better outcome, 'Decrease' means a lower one is. Inflation, Cost per Student
+ * and PISA Rank are all `Decrease`, so a fall is the good news. Nothing here
+ * assumes up is good.
+ */
+export interface DirectionRow {
+  indicator: string;
+  change_yoy_percent?: number | Figure;
+  actual?: number | Figure;
+  /** Per row, already at display scale. May be '' where there is no unit. */
+  unit?: string;
+  period_label?: string;
+  polarity?: string;
+  /** Present on `no_comparison` rows. */
+  reason?: string;
+  [key: string]: unknown;
+}
+
+function directionRows(facts: Facts, key: string): DirectionRow[] {
+  const value = facts[key];
+  return Array.isArray(value) ? (value as DirectionRow[]) : [];
+}
+
+export function increasingRows(facts: Facts): DirectionRow[] {
+  return directionRows(facts, 'increasing');
+}
+
+export function decliningRows(facts: Facts): DirectionRow[] {
+  return directionRows(facts, 'declining');
+}
+
+export function unchangedRows(facts: Facts): DirectionRow[] {
+  return directionRows(facts, 'unchanged');
+}
+
+/**
+ * Indicators with no published year-on-year figure. They are **not**
+ * "unchanged" and are never shown as such: an answer that silently covers 6 of
+ * 8 indicators is a false picture of the group.
+ */
+export function noComparisonRows(facts: Facts): DirectionRow[] {
+  return directionRows(facts, 'no_comparison');
 }
 
 /** An indicator that could not be scored, and why. */

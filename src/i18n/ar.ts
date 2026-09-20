@@ -74,6 +74,11 @@ export const ar: Dict = {
   'read.councilAttached': 'تعليق المجلس الأعلى المرفق بنقطة بيانات {period}',
   'read.periodMismatch': 'يشير هذا التعليق إلى فترة مختلفة عن نقطة البيانات المرفق بها.',
 
+  'direction.rose': 'ارتفعت ({n})',
+  'direction.fell': 'انخفضت ({n})',
+  'direction.unchanged': 'دون تغيّر ({n})',
+  'direction.noComparison': 'لا تتوفر مقارنة سنوية لـ {n} من {total}',
+
   'ranking.rankedOf': 'رُتِّب {n} من {total}',
   'ranking.notAssessable': 'تعذّر ترتيب {n} من {total}',
   'ranking.targetFor': 'مستهدف {year}',

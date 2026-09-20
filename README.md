@@ -78,6 +78,8 @@ whatever `.env` says.
 | A min/max answer means nothing without its range | `Extremes` shows `extremum` and `scanned_from → scanned_to` |
 | `attainment_percent` is used as given, never recomputed | `PerformanceRanking` — `actual / target` inverts every `Decrease` indicator |
 | `not_assessable[]` is shown in the open | `PerformanceRanking` — a leaderboard showing 10 of 13 is a false picture of the sector |
+| `increasing` / `declining` split by direction, never by good or bad | `DirectionSplit` — `polarity` says which way is welcome, and each row states it |
+| `no_comparison[]` is not "unchanged" | `DirectionSplit` — its own labelled section, with each row's reason |
 | A catalogue listing's citations *are* its names | `AnswerCard` suppresses the sources block for `count` answers |
 | `facts.indicator` is named on every answer | `AnswerCard` — an unnamed indicator hides a wrong match |
 | `facts.note` is a caveat and must show | `AnswerCard`, except when a `note` is the whole payload (a greeting marker) |
@@ -140,6 +142,7 @@ Type any of these (substring matching, in either language):
 | `Show me the analyst commentary` | SCAI commentary, attributed, with bullets |
 | `Show me articles on diversification` | article excerpts behind "Show sources" |
 | `Which are the best performing ones?` | ranking by progress to target, plus what could not be ranked |
+| `Which indicators are rising and which are falling?` | split by direction, plus what has no year-on-year figure |
 | `What is labor productivity?` | approximate-match warning |
 | `ما الناتج المحلي الإجمالي الحقيقي؟` | Arabic reply, RTL, with the UI still in English |
 | `Tell me about GDP Growth Demo` | no data, as an answer not an error |
