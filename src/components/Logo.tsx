@@ -17,6 +17,19 @@ import styles from './Logo.module.css';
  * second file to keep in step. Replace `scai-logo.jpg` with a true vector and
  * this component is the only thing that changes.
  */
+/*
+ * Cropped to the artwork's own ink box, measured from the file: x 157–1997,
+ * y 159–767 of 2153×928. The JPEG carries wide white margins which the filter
+ * correctly drops, but which would otherwise eat a third of whatever height the
+ * header gives it.
+ *
+ * Within that box the four bands are the crest (345px), the Arabic wordmark
+ * (88px), the English wordmark (76px) and "State of Qatar" (44px). Those ratios
+ * are what set the header height: at anything under ~56px of rendered lockup
+ * the two wordmarks stop being readable.
+ */
+const VIEWBOX = '147 149 1860 628';
+
 export function Logo({ title }: { title: string }) {
   const id = useId();
   const filterId = `scai-logo-${id}`;
@@ -24,7 +37,7 @@ export function Logo({ title }: { title: string }) {
   return (
     <svg
       className={styles.logo}
-      viewBox="0 0 2153 928"
+      viewBox={VIEWBOX}
       role="img"
       aria-label={title}
       preserveAspectRatio="xMidYMid meet"
@@ -42,7 +55,7 @@ export function Logo({ title }: { title: string }) {
         {/* JPEG compression leaves the ground a shade under pure white; this
             clips that haze away and keeps the strokes solid. */}
         <feComponentTransfer in="matte" result="clipped">
-          <feFuncA type="linear" slope="6" intercept="-0.25" />
+          <feFuncA type="linear" slope="8" intercept="-0.35" />
         </feComponentTransfer>
         <feFlood floodColor="currentColor" result="ink" />
         <feComposite in="ink" in2="clipped" operator="in" />

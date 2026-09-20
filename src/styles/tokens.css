@@ -95,7 +95,9 @@
   /* ---- layout --------------------------------------------------- */
   --canvas-max: 1180px;
   --gutter: 20px;
-  --header-h: 56px;
+  /* Set by the lockup: crest plus three lines of type, which stop being legible
+     below about 56px of rendered height. */
+  --header-h: 80px;
   --subbar-h: 48px;
 
   /* ---- motion --------------------------------------------------- */

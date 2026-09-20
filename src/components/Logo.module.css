@@ -1,9 +1,11 @@
-/* Height-led: the lockup is wide, so the header sets the height and the width
-   follows from the artwork's own ratio. */
+/* Height-led: the lockup is wide, so its container sets the height and the width
+   follows. The explicit ratio matches the cropped viewBox, because `width: auto`
+   on an inline SVG is not reliably derived from the viewBox everywhere. */
 .logo {
   display: block;
   height: 100%;
   width: auto;
+  aspect-ratio: 1860 / 628;
   max-width: 100%;
   color: inherit;
 }
