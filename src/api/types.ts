@@ -516,6 +516,18 @@ export interface RankedIndicator {
 export interface DirectionRow {
   indicator: string;
   change_yoy_percent?: number | Figure;
+  /**
+   * Percentage **points**, not percent. For an indicator already measured in
+   * per cent, a move from 2.6% to 1.8% is −0.8pp, and calling it −0.8% would be
+   * a different — and wrong — claim.
+   */
+  change_yoy_pp?: number | Figure;
+  /**
+   * Which of the two fields above carries the change. The service spells the
+   * points case 'percentage_points'; 'pp' is accepted too, so a change of
+   * wording in the payload cannot silently turn points into per cent.
+   */
+  change_kind?: string;
   actual?: number | Figure;
   /** Per row, already at display scale. May be '' where there is no unit. */
   unit?: string;
@@ -524,6 +536,33 @@ export interface DirectionRow {
   /** Present on `no_comparison` rows. */
   reason?: string;
   [key: string]: unknown;
+}
+
+/**
+ * The year-on-year change, and what kind of change it is.
+ *
+ * Percent and percentage points are different measurements, not two ways of
+ * formatting one. `change_kind` decides; where it is absent the field that is
+ * present does.
+ */
+export function yoyChange(row: {
+  change_yoy_percent?: number | Figure;
+  change_yoy_pp?: number | Figure;
+  change_kind?: string;
+}): { value: number; kind: 'pp' | 'percent' } | null {
+  const pp = toNumber(row.change_yoy_pp ?? null);
+  const percent = toNumber(row.change_yoy_percent ?? null);
+
+  const kind = (row.change_kind ?? '').toLowerCase();
+  const saysPoints = kind === 'percentage_points' || kind === 'pp' || kind === 'points';
+  const saysPercent = kind === 'percent' || kind === 'percentage';
+
+  if (saysPoints && pp !== null) return { value: pp, kind: 'pp' };
+  if (saysPoints && percent !== null) return { value: percent, kind: 'pp' };
+  if (saysPercent && percent !== null) return { value: percent, kind: 'percent' };
+  if (pp !== null) return { value: pp, kind: 'pp' };
+  if (percent !== null) return { value: percent, kind: 'percent' };
+  return null;
 }
 
 function directionRows(facts: Facts, key: string): DirectionRow[] {

@@ -62,6 +62,22 @@ export function formatPercent(value: Figure | undefined, lang: Lang): string {
   return `${sign}${formatNumber(parsed, lang, { decimals, group: true })}%`;
 }
 
+/**
+ * A change in percentage **points**, signed.
+ *
+ * Distinct from `formatPercent` on purpose: an indicator reported in per cent
+ * moving from 2.6 to 1.8 has fallen 0.8pp, and writing that as 0.8% states
+ * something else entirely.
+ */
+export function formatPoints(value: Figure | undefined, lang: Lang): string {
+  if (value === null || value === undefined || value === '') return NO_VALUE;
+  const parsed = toNumber(value);
+  if (parsed === null) return String(value);
+
+  const sign = parsed > 0 ? '+' : '';
+  return `${sign}${formatNumber(parsed, lang, { decimals: 2, group: true })} pp`;
+}
+
 /** Signed absolute change, for the same reason. */
 export function formatChange(value: Figure | undefined, unit: string | null, lang: Lang): string {
   if (value === null || value === undefined || value === '') return NO_VALUE;

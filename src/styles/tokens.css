@@ -93,7 +93,7 @@
   --focus-ring: 0 0 0 3px rgba(46, 111, 191, 0.35);
 
   /* ---- layout --------------------------------------------------- */
-  --canvas-max: 1080px;
+  --canvas-max: 1180px;
   --gutter: 20px;
   /* The crest plus two lines of type beside it. */
   --header-h: 66px;

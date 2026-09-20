@@ -391,12 +391,13 @@ const directionSplit = (): ChatResponse =>
       scope_kind: 'type',
       comparison: "year-on-year, at each indicator's most recent reading",
       n_increasing: 2,
-      n_declining: 4,
+      n_declining: 5,
       n_total: 8,
       increasing: [
         {
           indicator: 'Real GDP',
           change_yoy_percent: 2.0277,
+          change_kind: 'percent',
           actual: 185.17,
           unit: 'QAR bn',
           period_label: '2025-Q4',
@@ -429,9 +430,21 @@ const directionSplit = (): ChatResponse =>
           polarity: 'Increase',
         },
         {
+          // Already measured in per cent, so its change is in points: a move
+          // from 3.4% to 2.6% is −0.8pp, not −0.8%.
+          indicator: 'Inflation',
+          change_yoy_pp: -0.8043,
+          change_kind: 'percentage_points',
+          actual: 2.6162,
+          unit: '%',
+          period_label: '2026-04',
+          polarity: 'Decrease',
+        },
+        {
           // A fall is the welcome direction here.
           indicator: 'Cost per Student',
           change_yoy_percent: -5.1204,
+          change_kind: 'percent',
           actual: 84.055,
           unit: 'QAR k',
           period_label: '2025',
@@ -449,12 +462,12 @@ const directionSplit = (): ChatResponse =>
       unchanged: [],
       no_comparison: [
         {
-          indicator: 'Inflation',
+          indicator: 'Visitor Nights',
           reason: 'no year-on-year figure published',
-          actual: 2.6162,
-          unit: '%',
-          period_label: '2026-04',
-          polarity: 'Decrease',
+          actual: 18.4,
+          unit: 'million',
+          period_label: '2025',
+          polarity: 'Increase',
         },
         {
           indicator: 'Adult Literacy Rate',

@@ -788,7 +788,7 @@ describe('indicators split by direction', () => {
     const card = await screen.findByRole('article');
 
     expect(within(card).getByText('Rose (2)')).toBeInTheDocument();
-    expect(within(card).getByText('Fell (4)')).toBeInTheDocument();
+    expect(within(card).getByText('Fell (5)')).toBeInTheDocument();
   });
 
   it('keeps the order the service sorted them in', async () => {
@@ -796,7 +796,7 @@ describe('indicators split by direction', () => {
     const card = await screen.findByRole('article');
 
     const fell = within(card)
-      .getByText('Fell (4)')
+      .getByText('Fell (5)')
       .closest('section') as HTMLElement;
     const names = within(fell)
       .getAllByRole('listitem')
@@ -804,7 +804,7 @@ describe('indicators split by direction', () => {
 
     // Largest fall first, exactly as sent.
     expect(names[0]).toContain('Government Revenues');
-    expect(names[3]).toContain('PISA Rank');
+    expect(names[names.length - 1]).toContain('PISA Rank');
   });
 
   it('shows what has no year-on-year figure, and never as "unchanged"', async () => {
@@ -819,13 +819,19 @@ describe('indicators split by direction', () => {
     expect(within(card).queryByText(/Unchanged/)).toBeNull();
   });
 
-  it('never assumes up is good: each row says which way is welcome', async () => {
+  it('reads polarity per row, not per group', async () => {
     await ask('which indicators are rising and which are falling');
     const card = await screen.findByRole('article');
 
-    // Cost per Student and PISA Rank fell, which is the welcome direction.
-    expect(within(card).getAllByText('lower is better').length).toBeGreaterThan(0);
-    expect(within(card).getAllByText('higher is better').length).toBeGreaterThan(0);
+    // The same group holds both: Government Revenues falling is unwelcome,
+    // Inflation and Cost per Student falling is the welcome direction. A group
+    // that labelled every row the same would fail here.
+    const fell = within(card).getByText('Fell (5)').closest('section') as HTMLElement;
+    expect(within(fell).getAllByText('higher is better').length).toBeGreaterThan(0);
+    expect(within(fell).getAllByText('lower is better').length).toBeGreaterThan(0);
+
+    const rose = within(card).getByText('Rose (2)').closest('section') as HTMLElement;
+    expect(within(rose).getAllByText('higher is better')).toHaveLength(2);
   });
 
   it('keeps each row’s own unit and period', async () => {
@@ -837,6 +843,16 @@ describe('indicators split by direction', () => {
     // Different schedules, so no shared period is shown.
     expect(within(card).getAllByText('2025-Q4').length).toBeGreaterThan(0);
     expect(within(card).getByText('2026-Q1')).toBeInTheDocument();
+  });
+
+  it('renders points as points, never as per cent', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    // Inflation is measured in per cent, so its year-on-year move is in
+    // percentage points: −0.80 pp. Writing it as −0.80% is a different claim.
+    expect(within(card).getByText('−0.80 pp')).toBeInTheDocument();
+    expect(within(card).queryByText('−0.80%')).toBeNull();
   });
 
   it('shows the change at reading precision, not the stored four places', async () => {

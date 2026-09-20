@@ -2,12 +2,12 @@ import {
   decliningRows,
   increasingRows,
   noComparisonRows,
-  toNumber,
   unchangedRows,
+  yoyChange,
   type DirectionRow,
   type Facts,
 } from '../api/types';
-import { formatPercent, formatWithUnit, NO_VALUE } from '../i18n/figures';
+import { formatPercent, formatPoints, formatWithUnit, NO_VALUE } from '../i18n/figures';
 import { formatNumber } from '../i18n/formatNumber';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
@@ -135,15 +135,21 @@ function Group({
 
       <ul className={styles.list}>
         {rows.map((row, index) => {
-          const change = toNumber(row.change_yoy_percent ?? null);
+          const change = yoyChange(row);
           return (
             <li key={`${row.indicator}-${index}`} className={styles.row}>
               <span className={styles.name}>
                 <LocalizedText text={row.indicator} />
               </span>
-              {/* Stored to four places; one or two is what reads. */}
+              {/* Stored to four places; two is what reads. Percentage points
+                  and per cent are different measurements, so the row says
+                  which one this is rather than defaulting to a % sign. */}
               <span className={`${styles.change} num`}>
-                {change === null ? NO_VALUE : formatPercent(change.toFixed(2), lang)}
+                {change === null
+                  ? NO_VALUE
+                  : change.kind === 'pp'
+                    ? formatPoints(change.value.toFixed(2), lang)
+                    : formatPercent(change.value.toFixed(2), lang)}
               </span>
               <Detail row={row} />
             </li>
