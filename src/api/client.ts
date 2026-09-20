@@ -18,14 +18,14 @@ import type { ChatRequest, ChatResponse, ReadResponse, SessionState } from './ty
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
 
-const FIXTURE_LATENCY_MS = 500;
+const FIXTURE_LATENCY_MS = 2500;
 
 /**
  * The first request after a service restart embeds the indicator catalog and
  * takes ~10s; later ones take 2–12s. A short timeout would cut off perfectly
  * good answers, so this is deliberately generous.
  */
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = 200_000;
 
 export class ChatError extends Error {
   readonly status: number | null;

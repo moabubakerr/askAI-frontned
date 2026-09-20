@@ -19,7 +19,7 @@ export const en = {
   'turn.number': 'Question {n}',
   'turn.loading': 'Reading the approved dataset — this can take a few seconds',
   'turn.error': 'The request did not complete. {message}',
-  'turn.timeout': 'The service did not answer in time. The first question after a restart is slower than the rest.',
+  'turn.timeout': 'The service did not answer in time.',
   'turn.retry': 'Ask again',
 
   'answer.choose': 'Which one did you mean?',
