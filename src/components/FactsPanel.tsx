@@ -7,10 +7,12 @@ import {
   factsKind,
   factsPassages,
   factsTopic,
+  publicFacts,
   factsUnit,
   type CountryRow,
   type Facts,
   type Figure,
+  type OverviewEntry,
   type SeriesRow,
 } from '../api/types';
 import { formatChange, formatFigure, formatPercent, formatWithUnit, NO_VALUE } from '../i18n/figures';
@@ -253,10 +255,25 @@ function Trend({
 }
 
 function Extremes({ facts, unit }: { facts: Facts; unit: string | null }) {
-  const { t, lang } = useI18n();
+  const { t, tOpen, lang } = useI18n();
+  const extremum = str(facts, 'extremum');
+  const scannedFrom = str(facts, 'scanned_from');
+  const scannedTo = str(facts, 'scanned_to');
+  const scanned =
+    typeof facts['scanned_points'] === 'number' ? (facts['scanned_points'] as number) : null;
 
   return (
     <div className={styles.panel}>
+      {/* Which extreme was asked for, and the range it was found over — the
+          answer means nothing without the span it scanned. */}
+      {extremum || scannedFrom ? (
+        <p className={styles.method}>
+          {extremum ? tOpen(`facts.extremum.${extremum}`, extremum) : null}
+          {scannedFrom && scannedTo ? ` · ${scannedFrom} → ${scannedTo}` : null}
+          {scanned !== null ? ` · ${t('facts.scanned', { n: String(scanned) })}` : null}
+        </p>
+      ) : null}
+
       <div className={styles.row}>
         <Stat
           label={t('facts.high', { period: str(facts, 'high_period') })}
@@ -495,7 +512,13 @@ function Passages({ facts }: { facts: Facts }) {
           aria-hidden="true"
           className={open ? `${styles.chevron} ${styles.chevronOpen}` : styles.chevron}
         />
-        {t('passages.show', { n: String(passages.length) })}
+        {t('passages.show', {
+          n: String(
+            typeof facts['passage_count'] === 'number'
+              ? (facts['passage_count'] as number)
+              : passages.length,
+          ),
+        })}
       </button>
 
       {open
@@ -513,9 +536,21 @@ function Passages({ facts }: { facts: Facts }) {
   );
 }
 
+/**
+ * A multi-metric answer: one line per indicator.
+ *
+ * Every line carries its own period, unit and granularity, so none of those may
+ * be stated once for the whole table — a shared "as of" would be wrong for most
+ * of the rows. Where the service says `report_as_growth`, the year-on-year
+ * change leads and the level follows it, because that is the figure the
+ * indicator is actually reported as.
+ */
 function Overview({ facts }: { facts: Facts }) {
   const { t, lang } = useI18n();
-  const rows = Array.isArray(facts['overview']) ? (facts['overview'] as Record<string, unknown>[]) : [];
+  const rows = Array.isArray(facts['overview']) ? (facts['overview'] as OverviewEntry[]) : [];
+  const notFound = Array.isArray(facts['not_found'])
+    ? (facts['not_found'] as unknown[]).filter((n): n is string => typeof n === 'string')
+    : [];
 
   return (
     <div className={styles.panel}>
@@ -529,21 +564,51 @@ function Overview({ facts }: { facts: Facts }) {
         </thead>
         <tbody>
           {rows.map((row, index) => {
-            const unit = typeof row['unit'] === 'string' ? (row['unit'] as string) : null;
-            const value = typeof row['actual'] === 'string' ? (row['actual'] as string) : null;
+            const unit = typeof row.unit === 'string' ? row.unit : null;
+            const level = typeof row.actual === 'string' ? row.actual : null;
+            const yoy = numberish(row.change_yoy_percent);
+            const asGrowth = row.report_as_growth === true && yoy !== null;
+
             return (
               <tr key={index}>
                 <td>
-                  <LocalizedText text={String(row['indicator'] ?? '')} />
+                  <LocalizedText text={String(row.indicator ?? '')} />
+                  {row.granularity ? (
+                    <span className={styles.granularity}>{String(row.granularity)}</span>
+                  ) : null}
                 </td>
-                <td className={styles.mono}>{String(row['period_label'] ?? '')}</td>
-                {/* Each row carries its own unit — they are not comparable. */}
-                <td className={`${styles.mono} num`}>{formatWithUnit(value, unit, lang)}</td>
+                {/* Each row's own period. Never one stated for the table. */}
+                <td className={styles.mono}>{String(row.period_label ?? '')}</td>
+                <td className={`${styles.mono} num`}>
+                  {asGrowth ? (
+                    <>
+                      <span className={styles.lead}>{`${formatPercent(yoy, lang)} ${t('facts.yoy')}`}</span>
+                      {level !== null ? (
+                        <span className={styles.secondary}>{formatWithUnit(level, unit, lang)}</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    formatWithUnit(level, unit, lang)
+                  )}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+
+      {/* Metrics that were asked for and not found. Dropping them silently
+          would make a partial answer look complete. */}
+      {notFound.length > 0 ? (
+        <p className={styles.noData}>
+          <span className={styles.noDataLabel}>{t('facts.notFound')}</span>
+          {notFound.map((name) => (
+            <span key={name} className={styles.noDataChip}>
+              <LocalizedText text={name} />
+            </span>
+          ))}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -610,7 +675,11 @@ function CountList({ facts }: { facts: Facts }) {
  */
 function UnknownShape({ facts }: { facts: Facts }) {
   const { lang } = useI18n();
-  const entries = Object.entries(facts).filter(([, value]) => typeof value !== 'object');
+  // `_`-prefixed keys are the service's own diagnostics, not part of the
+  // answer. An unknown shape is still shown; an internal field never is.
+  const entries = Object.entries(publicFacts(facts)).filter(
+    ([, value]) => typeof value !== 'object',
+  );
   if (entries.length === 0) return null;
 
   return (

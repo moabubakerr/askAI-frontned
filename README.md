@@ -71,6 +71,10 @@ whatever `.env` says.
 | The read view is offered **iff** `readable === true` | `AnswerCard` — the service decides; no client heuristic |
 | Ambiguity chips come from `facts.candidates`, resent verbatim | `factsCandidates()` — the message text is never parsed |
 | `facts.analysis[]` and `facts.passages[]` are SCAI's own writing | `CouncilText` — one shared quoted block, so they can never drift toward looking generated |
+| `_`-prefixed keys are internal diagnostics | `publicFacts()` strips them; an unknown shape still renders, an internal field never does |
+| Multi-metric rows each carry their own period, grain and unit | `Overview` states none of them for the table, and leads with YoY where `report_as_growth` is set |
+| `not_found[]` must be shown | `Overview` — a partial answer must not look complete |
+| A min/max answer means nothing without its range | `Extremes` shows `extremum` and `scanned_from → scanned_to` |
 | `facts.indicator` is named on every answer | `AnswerCard` — an unnamed indicator hides a wrong match |
 | `facts.note` is a caveat and must show | `AnswerCard`, except when a `note` is the whole payload (a greeting marker) |
 | "(approximate match)" is a low-confidence warning | `splitApproximateMatch()`, rendered as its own warning |

@@ -584,3 +584,50 @@ describe('the chrome', () => {
     expect(screen.queryByText(/Service responding/)).toBeNull();
   });
 });
+
+describe('the consolidated v2 shapes', () => {
+  it('gives every multi-metric row its own period and grain', async () => {
+    await ask('Give me a macro overview');
+    const card = await screen.findByRole('article');
+
+    // Each line carries its own period; none is stated for the table.
+    expect(within(card).getByRole('cell', { name: '2025-Q4' })).toBeInTheDocument();
+    expect(within(card).getByRole('cell', { name: '2025-12' })).toBeInTheDocument();
+    expect(within(card).getByRole('cell', { name: '2025' })).toBeInTheDocument();
+    expect(within(card).getByText('quarterly')).toBeInTheDocument();
+    expect(within(card).getByText('monthly')).toBeInTheDocument();
+  });
+
+  it('leads with year-on-year change where the service reports growth', async () => {
+    await ask('Give me a macro overview');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('+2.03% YoY')).toBeInTheDocument();
+  });
+
+  it('shows metrics that were requested and not found', async () => {
+    await ask('Give me a macro overview');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('Not found')).toBeInTheDocument();
+    expect(within(card).getByText('Tourism arrivals')).toBeInTheDocument();
+  });
+
+  it('never renders the service’s internal diagnostics', async () => {
+    await ask('Give me a macro overview');
+    await screen.findByRole('article');
+
+    // `_`-prefixed keys are diagnostics, not part of the answer.
+    expect(screen.queryByText(/_verifier_rejected_numbers/)).toBeNull();
+    expect(screen.queryByText('2.0277')).toBeNull();
+  });
+
+  it('says which extreme a min/max answer is, and over what range', async () => {
+    await ask('What are the highest and lowest values?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText(/Highest reading/)).toBeInTheDocument();
+    expect(within(card).getByText(/2024-Q1 → 2025-Q4/)).toBeInTheDocument();
+    expect(within(card).getByText(/8 readings scanned/)).toBeInTheDocument();
+  });
+});

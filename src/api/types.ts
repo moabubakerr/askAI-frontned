@@ -310,7 +310,7 @@ export type FactsKind =
  */
 export function factsKind(facts: Facts): FactsKind {
   const has = (...keys: string[]) => keys.every((key) => key in facts);
-  const keys = Object.keys(facts);
+  const keys = Object.keys(facts).filter((key) => !isInternalKey(key));
 
   // A greeting or a small-talk turn answers with prose and a marker such as
   // {"note": "Greeting — no data needed."}. That marker is the service talking
@@ -419,6 +419,22 @@ export interface AnalysisEntry {
   [key: string]: unknown;
 }
 
+/**
+ * One line of a multi-metric answer. Each carries its **own** period, so no
+ * shared period may be stated across them.
+ */
+export interface OverviewEntry {
+  indicator?: string;
+  unit?: string | null;
+  granularity?: string;
+  period_label?: string;
+  actual?: Figure;
+  change_yoy_percent?: Figure | number;
+  /** Lead with the year-on-year change rather than the level. */
+  report_as_growth?: boolean;
+  [key: string]: unknown;
+}
+
 /** Excerpts from SCAI articles — also the Council's published writing. */
 export interface PassageEntry {
   article_title?: string;
@@ -432,6 +448,24 @@ export interface PassageEntry {
 export function factsAnalysis(facts: Facts): AnalysisEntry[] {
   const value = facts['analysis'];
   return Array.isArray(value) ? (value as AnalysisEntry[]) : [];
+}
+
+/**
+ * Keys the service uses for its own diagnostics — `_verifier_rejected_numbers`,
+ * `_plain_reading_rejected`. They are never rendered; an unknown *shape* is
+ * shown to the reader, but an internal field is not part of the answer.
+ */
+export function isInternalKey(key: string): boolean {
+  return key.startsWith('_');
+}
+
+/** The readable half of a facts object, with diagnostics stripped. */
+export function publicFacts(facts: Facts): Facts {
+  const out: Facts = {};
+  for (const [key, value] of Object.entries(facts)) {
+    if (!isInternalKey(key)) out[key] = value;
+  }
+  return out;
 }
 
 export function factsPassages(facts: Facts): PassageEntry[] {

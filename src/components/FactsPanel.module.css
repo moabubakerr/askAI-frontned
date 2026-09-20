@@ -200,3 +200,25 @@
 [dir='rtl'] .chevron:not(.chevronOpen) {
   transform: rotate(180deg);
 }
+
+/* Each multi-metric row states its own grain; there is no shared one. */
+.granularity {
+  margin-inline-start: 6px;
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Where the service reports an indicator as growth, the change leads and the
+   level follows it. */
+.lead {
+  display: block;
+  font-weight: 600;
+}
+
+.secondary {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--ink-muted);
+}

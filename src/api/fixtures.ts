@@ -151,6 +151,10 @@ const extremes = (): ChatResponse =>
       sourcesFooter('Real GDP', '2024-Q1 → 2025-Q4'),
     {
       indicator: 'Real GDP',
+      extremum: 'highest',
+      scanned_points: 8,
+      scanned_from: '2024-Q1',
+      scanned_to: '2025-Q4',
       high_period: '2025-Q4',
       high_value: '185.170',
       low_period: '2024-Q1',
@@ -248,10 +252,36 @@ const overview = (): ChatResponse =>
       sourcesFooter('Macro overview', '2025-Q4'),
     {
       overview: [
-        { indicator: 'Real GDP', period_label: '2025-Q4', actual: '185.170', unit: 'QAR' },
-        { indicator: 'Inflation', period_label: '2025-Q4', actual: '2.600', unit: '%' },
-        { indicator: 'Population', period_label: '2025', actual: '3.100', unit: 'million' },
+        {
+          indicator: 'Real GDP',
+          unit: 'QAR',
+          granularity: 'quarterly',
+          period_label: '2025-Q4',
+          actual: '185.170',
+          change_yoy_percent: 2.0277,
+          // Reported as growth, so the change leads and the level follows.
+          report_as_growth: true,
+        },
+        {
+          indicator: 'Inflation',
+          unit: '%',
+          granularity: 'monthly',
+          period_label: '2025-12',
+          actual: '2.600',
+          report_as_growth: false,
+        },
+        {
+          indicator: 'Population',
+          unit: 'million',
+          granularity: 'yearly',
+          period_label: '2025',
+          actual: '3.100',
+          report_as_growth: false,
+        },
       ],
+      not_found: ['Tourism arrivals'],
+      // Internal diagnostics: never rendered, only logged.
+      _verifier_rejected_numbers: ['2.0277'],
     },
     [citation('Real GDP', '2025-Q4'), citation('Inflation', '2025-Q4', false)],
     {
@@ -366,6 +396,7 @@ const passagesAnswer = (): ChatResponse =>
     'Three published articles discuss economic diversification.',
     {
       topic: 'economic diversification',
+      passage_count: 2,
       passages: [
         {
           article_title: 'Diversification and the non-hydrocarbon economy',
