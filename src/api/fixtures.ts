@@ -758,10 +758,43 @@ const READ_WITH_HEADLINE: ReadResponse = {
       ].join('\n'),
     },
   ],
+  // The service names the reading `value` here, and the unit and precision come
+  // from the facts the answer was composed from rather than from the row.
   evidence: [
-    { period_label: '2025-Q3', actual: '184.905', unit: 'QAR', indicator: 'Real GDP' },
-    { period_label: '2025-Q4', actual: '185.170', unit: 'QAR', indicator: 'Real GDP' },
+    {
+      period_label: '2024-Q4',
+      period_human: 'Q4 2024',
+      value: '181.49',
+      target: null,
+      record_id: '9f6bc480-0420-4074-54c4-08dea2389ab2',
+      table: 'published_data_points',
+      country: 'Qatar',
+    },
+    {
+      period_label: '2025-Q4',
+      period_human: 'Q4 2025',
+      value: '185.17',
+      target: null,
+      record_id: '1125d985-1723-4e56-54a8-08dea2389ab2',
+      table: 'published_data_points',
+      country: 'Qatar',
+    },
   ],
+  facts_payload: {
+    ok: true,
+    facts: {
+      period_a: '2024-Q4',
+      value_a: '181.49',
+      period_b: '2025-Q4',
+      value_b: '185.17',
+      absolute_change: '3.680000',
+      percent_change: '2.0277',
+      unit: 'QAR bn',
+      indicator: 'Real GDP',
+      decimal_places: 1,
+    },
+    citations: [],
+  },
   narration:
     'The quarter continued a gradual upward path, with each of the last four quarters higher than the one before it.',
   disclaimer: 'Generated from the readings above — not Council analysis.',
@@ -773,7 +806,10 @@ const READ_WITHOUT_HEADLINE: ReadResponse = {
   // The service sometimes repeats the narration here word for word.
   one_liner: 'The series moves within a narrow band, with no quarter falling below 181.',
   council_analysis: [],
-  evidence: TREND_ROWS.map((row) => ({ ...row, unit: 'QAR', indicator: 'Real GDP' })),
+  evidence: TREND_ROWS.map((row) => ({
+    period_label: row.period_label,
+    value: row.actual,
+  })),
   narration: 'The series moves within a narrow band, with no quarter falling below 181.',
   disclaimer: 'Generated from the readings above — not Council analysis.',
 };

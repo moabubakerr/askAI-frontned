@@ -96,13 +96,37 @@ export const en = {
   'chart.colValue': 'Value',
   'chart.missingCountries': 'Not shown, no approved data: {countries}',
 
-  'firstrun.heading': 'Ask about Qatar’s published economic indicators.',
   'firstrun.q1': 'What is the latest value of Real GDP?',
   'firstrun.q2': 'Show the Real GDP trend over time',
   'firstrun.q3': 'What does inflation mean?',
   'firstrun.q4': 'What’s the latest in Qatar’s economy?',
   'firstrun.q5': 'What was the growth rate of Real GDP?',
   'firstrun.q6': 'What can you do?',
+
+  'lens.group': 'Reading depth',
+  'lens.executive': 'Executive Lens',
+  'lens.executiveHint': 'Concise summaries for decision-makers',
+  'lens.explore': 'Explore Data',
+  'lens.exploreHint': 'Full detail: charts, evidence and related content',
+
+  'composer.source': 'SCEAI Indicators',
+  'composer.pocNote':
+    'Note: user roles and privileges are not enforced in this POC; role-based access will be applied upon production integration.',
+
+  'firstrun.welcome': 'Welcome to Ask AI',
+  'firstrun.intro':
+    'Ask about Qatar’s economic indicators and their approved descriptions. Every value comes from the approved indicator database — never estimated.',
+  'firstrun.priority': 'Priority questions',
+  'firstrun.topics': 'Topics',
+  'firstrun.note': 'Responses are based on the approved indicator data warehouse.',
+  'firstrun.help': 'Help',
+  'firstrun.footnote':
+    'Ask AI is an assistive layer. Verify figures against the Economic Monitoring Dashboard as the source of truth.',
+
+  'topic.t1': 'GDP growth',
+  'topic.t2': 'Trade balance',
+  'topic.t3': 'Non-hydrocarbon exports',
+  'topic.t4': 'Workforce',
 
   'a11y.answerReady': 'Answer ready for question {n}',
   'a11y.asking': 'Asking question {n}',

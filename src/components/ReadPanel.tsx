@@ -1,13 +1,16 @@
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
+  factsUnit,
   replyDir,
   sameProse,
+  toNumber,
   type CouncilAnalysis,
+  type Figure,
   type ReadEvidence,
   type ReadResponse,
 } from '../api/types';
-import { formatFigure, formatWithUnit } from '../i18n/figures';
+import { formatAtPrecision, formatFigure, formatWithUnit, NO_VALUE } from '../i18n/figures';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import { CouncilProse, CouncilText } from './CouncilText';
@@ -95,7 +98,7 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
             />
             {t('read.evidence')}
           </button>
-          {evidenceOpen ? <EvidenceTable rows={evidence} /> : null}
+          {evidenceOpen ? <EvidenceTable rows={evidence} read={read} /> : null}
         </div>
       ) : null}
     </section>
@@ -131,8 +134,32 @@ function CouncilBlock({ item }: { item: CouncilAnalysis }) {
   );
 }
 
-function EvidenceTable({ rows }: { rows: ReadEvidence[] }) {
+/**
+ * The readings the retelling was built from.
+ *
+ * The rows carry no unit or precision of their own, so both come from the facts
+ * the answer was composed from — otherwise a figure would be shown bare, or at
+ * a precision nobody chose.
+ */
+function EvidenceTable({ rows, read }: { rows: ReadEvidence[]; read: ReadResponse }) {
   const { t, lang } = useI18n();
+
+  const facts = read.facts_payload && read.facts_payload.ok ? read.facts_payload.facts : undefined;
+  const unit = facts ? factsUnit(facts) : null;
+  const decimals =
+    facts && typeof facts['decimal_places'] === 'number'
+      ? (facts['decimal_places'] as number)
+      : undefined;
+
+  const hasTarget = rows.some((row) => row.target !== null && row.target !== undefined);
+
+  const show = (figure: Figure | undefined): string => {
+    if (figure === null || figure === undefined || figure === '') return NO_VALUE;
+    const parsed = toNumber(figure);
+    if (parsed === null || decimals === undefined) return formatWithUnit(figure, unit, lang);
+    const formatted = formatAtPrecision(parsed, decimals, lang);
+    return unit ? `${formatted} ${unit}` : formatted;
+  };
 
   return (
     <table className={styles.table}>
@@ -140,15 +167,16 @@ function EvidenceTable({ rows }: { rows: ReadEvidence[] }) {
         <tr>
           <th scope="col">{t('facts.period')}</th>
           <th scope="col">{t('facts.value')}</th>
+          {hasTarget ? <th scope="col">{t('facts.target')}</th> : null}
         </tr>
       </thead>
       <tbody>
         {rows.map((row, index) => (
           <tr key={index}>
-            <td className={styles.mono}>{row.period_label ?? ''}</td>
-            <td className={`${styles.mono} num`}>
-              {formatWithUnit(row.actual ?? null, row.unit ?? null, lang)}
-            </td>
+            <td className={styles.mono}>{row.period_human || row.period_label || ''}</td>
+            {/* `/read` sends `value`; the /chat shapes send `actual`. */}
+            <td className={`${styles.mono} num`}>{show(row.value ?? row.actual)}</td>
+            {hasTarget ? <td className={`${styles.mono} num`}>{show(row.target)}</td> : null}
           </tr>
         ))}
       </tbody>

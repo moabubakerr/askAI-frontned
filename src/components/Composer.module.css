@@ -2,94 +2,117 @@
   position: sticky;
   bottom: 0;
   z-index: 20;
-  background: linear-gradient(to bottom, rgba(248, 250, 252, 0) 0%, var(--page-bg) 28%);
+  background: linear-gradient(to bottom, rgba(244, 246, 249, 0) 0%, var(--page-bg) 26%);
   padding-block-start: 22px;
 }
 
 .inner {
-  max-width: var(--canvas-max);
+  max-width: 840px;
   margin-inline: auto;
   padding-inline: var(--gutter);
-  padding-block-end: 16px;
+  padding-block-end: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* One card: the field and its controls belong together. */
+.card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
 }
 
 .input {
-  flex: 1 1 260px;
-  min-width: 0;
-  padding-inline: 14px;
-  padding-block: 11px;
-  border-radius: var(--radius);
-  border: 1px solid var(--neutral-300);
-  background: var(--surface);
+  width: 100%;
+  border: 0;
+  background: transparent;
   font-size: var(--fs-sentence);
-  box-shadow: var(--shadow-1);
-  transition: border-color var(--t-hover) var(--ease);
+  color: var(--ink);
+  padding-inline: 4px;
 }
 
 .input::placeholder {
   color: var(--ink-faint);
 }
 
-.input:hover {
-  border-color: var(--neutral-400);
-}
-
 .input:focus-visible {
-  border-color: var(--blue-500);
+  outline: none;
 }
 
-.send {
-  display: inline-flex;
+.controls {
+  display: flex;
   align-items: center;
-  gap: 7px;
-  flex: none;
-  padding-inline: 18px;
-  padding-block: 11px;
-  border: 1px solid var(--blue-900);
-  border-radius: var(--radius);
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lens {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-50);
+}
+
+.lensOption {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  transition:
+    background var(--t-hover) var(--ease),
+    color var(--t-hover) var(--ease);
+}
+
+.lensOption[aria-checked='true'] {
   background: var(--blue-900);
   color: #fff;
+}
+
+.lensOption:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.source {
   font-size: var(--fs-body);
-  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.reset,
+.send {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: background var(--t-hover) var(--ease);
-}
-
-.send:hover:not(:disabled) {
-  background: var(--blue-800);
-}
-
-.send:disabled {
-  opacity: 0.45;
-  cursor: default;
+  transition:
+    background var(--t-hover) var(--ease),
+    color var(--t-hover) var(--ease),
+    opacity var(--t-hover) var(--ease);
 }
 
 .reset {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-inline-start: auto;
-  padding-inline: 12px;
-  padding-block: 6px;
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--ink-muted);
-  font-size: var(--fs-small);
-  cursor: pointer;
-  transition:
-    color var(--t-hover) var(--ease),
-    border-color var(--t-hover) var(--ease);
 }
 
 .reset:hover:not(:disabled) {
@@ -97,7 +120,35 @@
   border-color: var(--neutral-300);
 }
 
-.reset:disabled {
-  opacity: 0.45;
+.send {
+  border: 0;
+  background: var(--neutral-300);
+  color: #fff;
+}
+
+.send:not(:disabled) {
+  background: var(--blue-900);
+}
+
+.send:hover:not(:disabled) {
+  background: var(--blue-800);
+}
+
+.reset:disabled,
+.send:disabled {
+  opacity: 0.5;
   cursor: default;
+}
+
+.reset:focus-visible,
+.send:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.poc {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
 }

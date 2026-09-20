@@ -46,8 +46,20 @@ function loadSessionId(): string {
   }
 }
 
+/**
+ * How much of an answer is on screen.
+ *
+ * Executive is the answer and its figures; Explore adds the chart and the
+ * sources behind them. It changes what is shown, never what was asked: the
+ * request and the response are identical either way, so switching costs no
+ * round trip.
+ */
+export type Lens = 'executive' | 'explore';
+
 export interface ConversationStore {
   turns: Turn[];
+  lens: Lens;
+  setLens: (lens: Lens) => void;
   busy: boolean;
   ask: (question: string, lang: Lang) => void;
   retry: (turn: Turn, lang: Lang) => void;
@@ -61,6 +73,7 @@ export interface ConversationStore {
 
 function useConversationStore(): ConversationStore {
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [lens, setLens] = useState<Lens>('explore');
   const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
 
@@ -169,6 +182,8 @@ function useConversationStore(): ConversationStore {
 
   return {
     turns,
+    lens,
+    setLens,
     busy,
     ask,
     retry,

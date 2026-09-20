@@ -3,6 +3,7 @@ import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation, type Turn as TurnModel } from '../state/useConversation';
 import { AnswerCard } from './AnswerCard';
+import { Loader } from './Loader';
 import styles from './Turn.module.css';
 
 export function Turn({ turn }: { turn: TurnModel }) {
@@ -23,12 +24,7 @@ export function Turn({ turn }: { turn: TurnModel }) {
       {/* There is no streaming: one JSON response, 2–12s, and ~10s on the first
           request after a restart while the catalog is embedded. So the waiting
           state has to be patient rather than apologetic. */}
-      {turn.status === 'loading' ? (
-        <p className={styles.loading}>
-          <span className={styles.spinner} aria-hidden="true" />
-          {t('turn.loading')}
-        </p>
-      ) : null}
+      {turn.status === 'loading' ? <Loader label={t('turn.loading')} /> : null}
 
       {turn.status === 'error' ? (
         <div className={styles.failure}>

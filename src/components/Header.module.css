@@ -46,6 +46,18 @@
   box-shadow: var(--focus-ring);
 }
 
+.appPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--blue-500);
+  color: #fff;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
 .controls {
   display: flex;
   align-items: center;
@@ -53,25 +65,33 @@
   flex: none;
 }
 
+/* A white disc, as in the Council's other applications. */
 .avatar {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border: 0;
+  background: #fff;
+  color: var(--blue-900);
   cursor: pointer;
-  transition: background var(--t-hover) var(--ease);
+  transition: opacity var(--t-hover) var(--ease);
 }
 
 .avatar:hover {
-  background: rgba(255, 255, 255, 0.16);
+  opacity: 0.88;
+}
+
+.avatar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 @media (max-width: 520px) {
-  .brand {
-    display: none;
+  .appPill span,
+  .appPill {
+    font-size: var(--fs-small);
+    padding-inline: 12px;
   }
 }

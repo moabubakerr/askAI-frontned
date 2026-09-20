@@ -1,4 +1,4 @@
-import { UserRound } from 'lucide-react';
+import { Sparkles, UserRound } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation } from '../state/useConversation';
 import { Logo } from './Logo';
@@ -30,6 +30,12 @@ export function Header() {
         </button>
 
         <div className={styles.controls}>
+          {/* Which app this is, inside the Council's suite. Not a control. */}
+          <span className={styles.appPill}>
+            <Sparkles size={15} strokeWidth={2} aria-hidden="true" />
+            {t('app.product')}
+          </span>
+
           <button type="button" className={styles.avatar} aria-label={t('header.account')}>
             <UserRound size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>

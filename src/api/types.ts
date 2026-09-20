@@ -74,7 +74,16 @@ export interface ChatResponse {
  * different treatments, and are never merged — see `ReadPanel`.
  */
 export interface ReadResponse {
+  ok?: boolean;
+  message?: string | null;
   readable?: boolean;
+  /**
+   * `/read` carries the same facts as the answer it is retelling. The evidence
+   * rows have no unit or precision of their own, so those are read from here.
+   */
+  facts_payload?: FactsPayload;
+  chart?: ChartSpec | null;
+  verified?: boolean;
   /** Null for trends and rankings, which have no single figure. */
   headline: ReadHeadline | null;
   one_liner?: string | null;
@@ -127,9 +136,20 @@ export function sameProse(a: string | null | undefined, b: string | null | undef
 
 export interface ReadEvidence {
   period_label?: string;
+  period_human?: string;
+  /**
+   * The reading. `/read` names it `value`; the `/chat` shapes name the same
+   * thing `actual`, so both are accepted — reading only one of them renders a
+   * column of dashes.
+   */
+  value?: Figure;
   actual?: Figure;
+  target?: Figure;
   unit?: string | null;
   indicator?: string;
+  record_id?: string;
+  table?: string;
+  country?: string;
   [key: string]: unknown;
 }
 

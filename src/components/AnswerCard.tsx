@@ -17,6 +17,7 @@ import { useConversation, type Turn } from '../state/useConversation';
 import { Chart } from './Chart/Chart';
 import { Citations } from './Citations';
 import { FactsPanel } from './FactsPanel';
+import { Loader } from './Loader';
 import { ReadPanel } from './ReadPanel';
 import styles from './AnswerCard.module.css';
 
@@ -35,7 +36,11 @@ interface Props {
  */
 export function AnswerCard({ turn, response, onAsk }: Props) {
   const { t } = useI18n();
-  const { readTurn } = useConversation();
+  const { readTurn, lens } = useConversation();
+  // Executive is the answer and its figures; Explore adds the chart behind them
+  // and the sources under them. Both are the same response — switching costs no
+  // round trip, and nothing that changes the meaning of a figure is ever hidden.
+  const explore = lens === 'explore';
 
   const payload = response.facts_payload;
   const found = isFound(payload);
@@ -113,7 +118,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
           ambiguous match carries its candidates, and those become one click. */}
       {!found ? <Choices facts={payload.facts} onAsk={onAsk} /> : null}
 
-      {chart ? <Chart spec={chart} /> : null}
+      {chart && explore ? <Chart spec={chart} /> : null}
 
       {/* The service decides what is readable — true only when the answer holds
           an actual reading. Never inferred from the shape of the answer. */}
@@ -127,7 +132,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
           ) : null}
 
           {turn.readStatus === 'loading' ? (
-            <p className={styles.readLoading}>{t('read.loading')}</p>
+            <Loader label={t('read.loading')} size="small" />
           ) : null}
 
           {turn.readStatus === 'error' ? (
@@ -140,7 +145,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
         </div>
       ) : null}
 
-      {showCitations ? <Citations items={citations} /> : null}
+      {showCitations && explore ? <Citations items={citations} /> : null}
     </article>
   );
 }

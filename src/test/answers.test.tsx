@@ -327,13 +327,18 @@ describe('the read-it-for-me view', () => {
     expect(items.some((text) => text?.startsWith('•'))).toBe(false);
   });
 
-  it('puts the raw readings behind a disclosure', async () => {
+  it('puts the raw readings behind a disclosure, with their figures', async () => {
     const user = await openRead();
     await screen.findByText(/According to SCAI/);
 
-    expect(screen.queryByText('184.905 QAR')).toBeNull();
+    expect(screen.queryByText(/185\.2 QAR bn/)).toBeNull();
     await user.click(screen.getByRole('button', { name: /Data evidence/ }));
-    expect(screen.getByText('184.905 QAR')).toBeInTheDocument();
+
+    // `/read` names the reading `value`, not `actual`; reading only `actual`
+    // renders a column of dashes. Unit and precision come from the facts.
+    expect(screen.getByText('185.2 QAR bn')).toBeInTheDocument();
+    expect(screen.getByText('181.5 QAR bn')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'Q4 2025' })).toBeInTheDocument();
   });
 
   it('handles a null headline, which trends and rankings have', async () => {
