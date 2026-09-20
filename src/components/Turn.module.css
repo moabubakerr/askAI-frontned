@@ -25,9 +25,24 @@
 
 .answer {
   align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   width: 100%;
   max-width: 82%;
   min-width: 0;
+}
+
+/* The source, above the card it answered from. */
+.source {
+  padding: 5px 12px;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-pill);
+  background: var(--blue-50);
+  color: var(--blue-800);
+  font-size: var(--fs-small);
+  font-weight: 500;
 }
 
 @media (max-width: 780px) {

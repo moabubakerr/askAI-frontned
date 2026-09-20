@@ -37,6 +37,12 @@ export function Turn({ turn }: { turn: TurnModel }) {
           </div>
         ) : null}
 
+        {/* What answered, named before the answer rather than inside it: the
+            reader knows where the figures came from before reading them. */}
+        {turn.status === 'ready' && turn.response ? (
+          <span className={styles.source}>{t('source.name')}</span>
+        ) : null}
+
         {turn.status === 'ready' && turn.response ? (
           <AnswerCard
             turn={turn}

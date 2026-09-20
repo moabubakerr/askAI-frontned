@@ -848,3 +848,32 @@ describe('indicators split by direction', () => {
     expect(within(card).queryByText(/2\.0277/)).toBeNull();
   });
 });
+
+describe('the read disclosure', () => {
+  it('is one control that opens, closes and shows its state', async () => {
+    const user = await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    const trigger = within(card).getByRole('button', { name: /Read this for me/ });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    await screen.findByText(/According to SCAI/);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    // Closing keeps what was fetched, so reopening costs no request.
+    await user.click(trigger);
+    expect(screen.queryByText(/According to SCAI/)).toBeNull();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    expect(await screen.findByText(/According to SCAI/)).toBeInTheDocument();
+  });
+
+  it('names its source above the answer', async () => {
+    await ask('What is the latest value of Real GDP?');
+    await screen.findByRole('article');
+
+    expect(screen.getByText('SCEAI Indicators')).toBeInTheDocument();
+  });
+});

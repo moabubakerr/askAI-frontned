@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, BookOpen, X } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 import {
   factsCandidates,
   factsIndicator,
@@ -126,53 +126,44 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
 
       {/* The service decides what is readable — true only when the answer holds
           an actual reading. Never inferred from the shape of the answer. */}
+      {/* One control, always visible, that says what it does and shows whether
+          it is open — the same disclosure as Sources. A dismiss that only
+          appeared on hover was a way out that most readers never found. */}
       {response.readable === true ? (
         <div className={styles.readBlock}>
-          {turn.readStatus === 'idle' ? (
-            <button
-              type="button"
-              className={styles.readButton}
-              onClick={() => {
-                setReadOpen(true);
-                readTurn(turn);
-              }}
-            >
-              <BookOpen size={14} strokeWidth={1.75} aria-hidden="true" />
-              {t('read.action')}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={styles.readTrigger}
+            aria-expanded={turn.readStatus === 'ready' ? readOpen : false}
+            onClick={() => {
+              if (turn.readStatus === 'ready') {
+                setReadOpen((open) => !open);
+                return;
+              }
+              setReadOpen(true);
+              readTurn(turn);
+            }}
+          >
+            <ChevronRight
+              size={13}
+              strokeWidth={2}
+              aria-hidden="true"
+              className={
+                turn.readStatus === 'ready' && readOpen
+                  ? `${styles.chevron} ${styles.chevronOpen}`
+                  : styles.chevron
+              }
+            />
+            {turn.readStatus === 'error' ? t('read.retry') : t('read.action')}
+          </button>
 
           {turn.readStatus === 'loading' ? (
             <Loader label={t('read.loading')} size="small" />
           ) : null}
 
-          {turn.readStatus === 'error' ? (
-            <button type="button" className={styles.readButton} onClick={() => readTurn(turn)}>
-              {t('read.retry')}
-            </button>
-          ) : null}
-
-          {/* Already fetched, so reopening it costs nothing. */}
-          {turn.readStatus === 'ready' && !readOpen ? (
-            <button type="button" className={styles.readButton} onClick={() => setReadOpen(true)}>
-              <BookOpen size={14} strokeWidth={1.75} aria-hidden="true" />
-              {t('read.action')}
-            </button>
-          ) : null}
-
+          {/* Already fetched, so closing and reopening costs nothing. */}
           {turn.readStatus === 'ready' && turn.read && readOpen ? (
-            <div className={styles.readOpen}>
-              <button
-                type="button"
-                className={styles.readDismiss}
-                onClick={() => setReadOpen(false)}
-                aria-label={t('read.hide')}
-                title={t('read.hide')}
-              >
-                <X size={14} strokeWidth={2} aria-hidden="true" />
-              </button>
-              <ReadPanel read={turn.read} />
-            </div>
+            <ReadPanel read={turn.read} />
           ) : null}
         </div>
       ) : null}

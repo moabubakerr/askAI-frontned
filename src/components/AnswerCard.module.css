@@ -127,74 +127,49 @@
   gap: 10px;
 }
 
-.readButton {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: var(--fs-body);
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color var(--t-hover) var(--ease);
-}
-
-.readButton:hover {
-  border-color: var(--neutral-300);
-}
-
-.readButton:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
 .readLoading {
   margin: 0;
   font-size: var(--fs-body);
   color: var(--ink-muted);
 }
 
-/* The dismiss sits over the panel's own corner, out of the reading line. */
-.readOpen {
-  position: relative;
-}
-
-.readDismiss {
-  position: absolute;
-  inset-block-start: 8px;
-  inset-inline-end: 8px;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
+/* The same disclosure as Sources: always there, and it shows its own state. */
+.readTrigger {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
   color: var(--ink-muted);
+  font-family: inherit;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
   cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity var(--t-hover) var(--ease),
-    color var(--t-hover) var(--ease);
+  transition: color var(--t-hover) var(--ease);
 }
 
-/* Revealed on hover, and always present for keyboard users. */
-.readOpen:hover .readDismiss,
-.readOpen:focus-within .readDismiss {
-  opacity: 1;
-}
-
-.readDismiss:hover {
+.readTrigger:hover {
   color: var(--ink);
 }
 
-.readDismiss:focus-visible {
+.readTrigger:focus-visible {
   outline: none;
-  opacity: 1;
+  border-radius: var(--radius);
   box-shadow: var(--focus-ring);
+}
+
+.chevron {
+  transition: transform var(--t-hover) var(--ease);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+[dir='rtl'] .chevron:not(.chevronOpen) {
+  transform: rotate(180deg);
 }

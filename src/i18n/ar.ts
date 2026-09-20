@@ -113,7 +113,7 @@ export const ar: Dict = {
   'lens.explore': 'استكشاف البيانات',
   'lens.exploreHint': 'التفاصيل الكاملة: الرسوم والأدلة والمحتوى ذو الصلة',
 
-  'composer.source': 'مؤشرات المجلس الأعلى',
+  'source.name': 'مؤشرات المجلس الأعلى',
 
   'firstrun.welcome': 'مرحبًا بك في اسأل الذكاء الاصطناعي',
   'firstrun.intro':

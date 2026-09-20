@@ -112,19 +112,6 @@
   gap: 8px;
 }
 
-/* The one source, stated as a quiet tag rather than a control that promises a
-   choice which does not exist. */
-.source {
-  padding: 5px 11px;
-  border: 1px solid var(--blue-100);
-  border-radius: var(--radius-pill);
-  background: var(--blue-50);
-  color: var(--blue-800);
-  font-size: var(--fs-small);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .reset,
 .send {
   display: inline-grid;
@@ -186,7 +173,4 @@
     gap: 8px;
   }
 
-  .source {
-    display: none;
-  }
 }

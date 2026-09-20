@@ -111,7 +111,7 @@ export const en = {
   'lens.explore': 'Explore Data',
   'lens.exploreHint': 'Full detail: charts, evidence and related content',
 
-  'composer.source': 'SCEAI Indicators',
+  'source.name': 'SCEAI Indicators',
 
   'firstrun.welcome': 'Welcome to Ask AI',
   'firstrun.intro':
