@@ -82,7 +82,7 @@ export const en = {
   'firstrun.q1': 'What is the latest value of Real GDP?',
   'firstrun.q2': 'Show the Real GDP trend over time',
   'firstrun.q3': 'What does inflation mean?',
-  'firstrun.q4': 'Compare Real GDP across Qatar and Saudi Arabia',
+  'firstrun.q4': 'What’s the latest in Qatar’s economy?',
   'firstrun.q5': 'What was the growth rate of Real GDP?',
   'firstrun.q6': 'What can you do?',
 
