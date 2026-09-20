@@ -23,7 +23,6 @@ export const ar: Dict = {
   'turn.timeout': 'لم تُجب الخدمة في الوقت المتاح. السؤال الأول بعد إعادة التشغيل أبطأ من غيره.',
   'turn.retry': 'اسأل مرة أخرى',
 
-  'answer.unverified': 'روجعت الصياغة واستُبدلت بقالب مبسّط. البيانات كما هي.',
   'answer.choose': 'أيّها تقصد؟',
 
   'facts.period': 'الفترة',
@@ -73,6 +72,14 @@ export const ar: Dict = {
 
   'read.councilAttached': 'تعليق المجلس الأعلى المرفق بنقطة بيانات {period}',
   'read.periodMismatch': 'يشير هذا التعليق إلى فترة مختلفة عن نقطة البيانات المرفق بها.',
+
+  'ranking.rankedOf': 'رُتِّب {n} من {total}',
+  'ranking.notAssessable': 'تعذّر ترتيب {n} من {total}',
+  'ranking.targetFor': 'مستهدف {year}',
+  'ranking.order.best_first': 'الأفضل أولًا',
+  'ranking.order.worst_first': 'الأضعف أولًا',
+  'ranking.polarity.Increase': 'الأعلى أفضل',
+  'ranking.polarity.Decrease': 'الأدنى أفضل',
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',

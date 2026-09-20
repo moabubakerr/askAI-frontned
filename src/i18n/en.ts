@@ -21,7 +21,6 @@ export const en = {
   'turn.timeout': 'The service did not answer in time. The first question after a restart is slower than the rest.',
   'turn.retry': 'Ask again',
 
-  'answer.unverified': 'Wording checked and replaced with a plain template. The data is unchanged.',
   'answer.choose': 'Which one did you mean?',
 
   'facts.period': 'Period',
@@ -71,6 +70,14 @@ export const en = {
 
   'read.councilAttached': 'SCAI commentary attached to the {period} data point',
   'read.periodMismatch': 'This commentary refers to a different period than the data point it is filed against.',
+
+  'ranking.rankedOf': '{n} of {total} ranked',
+  'ranking.notAssessable': '{n} of {total} could not be ranked',
+  'ranking.targetFor': 'target for {year}',
+  'ranking.order.best_first': 'Best first',
+  'ranking.order.worst_first': 'Worst first',
+  'ranking.polarity.Increase': 'higher is better',
+  'ranking.polarity.Decrease': 'lower is better',
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',

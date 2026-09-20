@@ -1,0 +1,185 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+
+.scope {
+  font-size: var(--fs-sentence);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.scopeKind {
+  margin-inline-start: 6px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.order,
+.count {
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.basis {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Rank, name and score on the first line; the bar spans under them; the
+   supporting figures sit beneath. Rows arrive sorted and are never reordered. */
+.row {
+  display: grid;
+  grid-template-columns: 28px 1fr max-content;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+}
+
+.row:nth-child(odd) {
+  background: var(--neutral-50);
+}
+
+.rank {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+.name {
+  min-width: 0;
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+
+.score {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.track {
+  grid-column: 2 / -1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-200);
+  overflow: hidden;
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: inline-size var(--t-move) var(--ease);
+}
+
+/* At or past target / close to it / far from it. A product decision: the API
+   reports the number, not the banding. */
+.row[data-band='met'] .bar {
+  background: var(--green-600);
+}
+.row[data-band='met'] .score {
+  color: var(--green-600);
+}
+
+.row[data-band='near'] .bar {
+  background: var(--amber-600);
+}
+.row[data-band='near'] .score {
+  color: var(--amber-700);
+}
+
+.row[data-band='far'] .bar {
+  background: var(--neutral-400);
+}
+.row[data-band='far'] .score {
+  color: var(--ink-muted);
+}
+
+.detail {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: var(--fs-small);
+  color: var(--ink-muted);
+}
+
+.actual {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+.target,
+.period {
+  font-family: var(--font-mono);
+}
+
+.polarity {
+  color: var(--ink-faint);
+}
+
+/* Shown, labelled, and never behind a disclosure. */
+.unranked {
+  padding: 10px 12px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius);
+  background: var(--gold-50);
+}
+
+.unrankedTitle {
+  margin: 0 0 6px;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--gold-700);
+}
+
+.unrankedList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.unrankedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  font-size: var(--fs-body);
+}
+
+.reason {
+  color: var(--ink-muted);
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .score {
+    grid-column: 2;
+  }
+}

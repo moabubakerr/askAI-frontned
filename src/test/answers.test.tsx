@@ -631,3 +631,84 @@ describe('the consolidated v2 shapes', () => {
     expect(within(card).getByText(/8 readings scanned/)).toBeInTheDocument();
   });
 });
+
+describe('performance ranking', () => {
+  it('uses attainment_percent as given, so polarity is not inverted', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    // Cost per Student is a Decrease indicator: 84.055 against a target of
+    // 88.6 is beating it. Computing actual/target would show 94.9% and rank it
+    // last; a PISA rank of 48 against 35 would become 137% instead of 72.9%.
+    expect(within(card).getByText('105.4%')).toBeInTheDocument();
+    expect(within(card).getByText('72.9%')).toBeInTheDocument();
+    expect(within(card).queryByText('94.9%')).toBeNull();
+    expect(within(card).queryByText(/137/)).toBeNull();
+  });
+
+  it('keeps the order the service ranked them in', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    const ranked = within(card)
+      .getAllByRole('listitem')
+      .map((node) => node.textContent ?? '')
+      .filter((text) => text.includes('%'));
+
+    expect(ranked[0] ?? '').toContain('Cost per Student');
+    expect(ranked[1] ?? '').toContain('PISA Rank');
+    expect(ranked[2] ?? '').toContain('Teacher–Student Ratio');
+  });
+
+  it('shows what could not be ranked, in the open', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    // 3 of 13 quietly missing would be a more confident picture of the sector
+    // than the honest one.
+    expect(within(card).getByText('2 of 5 could not be ranked')).toBeInTheDocument();
+    expect(within(card).getByText('no reading yet')).toBeInTheDocument();
+    expect(within(card).getByText('no target set')).toBeInTheDocument();
+    // Not folded away behind a disclosure.
+    expect(within(card).queryByRole('button', { name: /could not be ranked/i })).toBeNull();
+  });
+
+  it('dates a standing goal rather than passing it off as this period’s target', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    // PISA's 35 is a 2030 goal, not a target filed against the 2022 reading.
+    expect(within(card).getByText(/target for 2030/)).toBeInTheDocument();
+  });
+
+  it('keeps each row’s own unit rather than hoisting one into a header', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText(/84.055 QAR k/)).toBeInTheDocument();
+    expect(within(card).getByText(/48 Rank/)).toBeInTheDocument();
+    // An empty unit renders as a bare figure.
+    expect(within(card).getByText('15.1')).toBeInTheDocument();
+  });
+
+  it('says which way the ranking runs and what it is measured against', async () => {
+    await ask('Which are the best performing ones?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('Best first')).toBeInTheDocument();
+    expect(within(card).getByText('3 of 5 ranked')).toBeInTheDocument();
+    expect(within(card).getByText(/polarity applied/)).toBeInTheDocument();
+  });
+});
+
+describe('catalogue listings', () => {
+  it('renders the names once, with no duplicate sources block', async () => {
+    await ask('Give me all the indicator names');
+    const card = await screen.findByRole('article');
+
+    // The citations for a listing are the indicators themselves, so a sources
+    // block would print the same list a second time.
+    expect(within(card).queryByRole('button', { name: /Sources/ })).toBeNull();
+    expect(within(card).getAllByText('Nominal GDP')).toHaveLength(1);
+  });
+});

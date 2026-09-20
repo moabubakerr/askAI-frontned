@@ -46,8 +46,13 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
   const { body: withoutWarning, warning } = splitApproximateMatch(response.answer);
   const { body, hasFooter } = splitSourcesFooter(withoutWarning);
 
+  const kind = found ? factsKind(payload.facts) : 'unknown';
+
   const citations = payload.citations ?? [];
-  const showCitations = hasFooter && citations.length > 0;
+  // For a catalogue listing the citations *are* the indicators — one per name —
+  // so the sources block would print the same list a second time. The names are
+  // the provenance; there is nothing else to attribute.
+  const showCitations = hasFooter && citations.length > 0 && kind !== 'count';
   const chart = response.chart ?? payload.chart ?? null;
 
   const indicator = found ? factsIndicator(payload.facts) : null;
@@ -55,7 +60,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
   // `note` is a caveat on the figures — but a greeting arrives as a facts
   // object holding *only* a note ("Greeting — no data needed."), which is the
   // service talking to itself. A note with no data beside it is not a caveat.
-  const note = found && factsKind(payload.facts) !== 'none' ? factsNote(payload.facts) : null;
+  const note = found && kind !== 'none' ? factsNote(payload.facts) : null;
 
   // The service answers in the language of the question, which need not be the
   // language of the interface. Direction is decided per reply, from the reply.

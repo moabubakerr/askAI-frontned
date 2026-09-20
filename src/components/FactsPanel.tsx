@@ -17,6 +17,7 @@ import {
 } from '../api/types';
 import { formatChange, formatFigure, formatPercent, formatWithUnit, NO_VALUE } from '../i18n/figures';
 import { CouncilProse, CouncilText } from './CouncilText';
+import { PerformanceRanking } from './PerformanceRanking';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
 import styles from './FactsPanel.module.css';
@@ -58,6 +59,8 @@ export function FactsPanel({ facts, hasChart = false }: { facts: Facts; hasChart
       return <CountryTable facts={facts} unit={unit} rowsKey="ranked" ranked />;
     case 'period-ranking':
       return <PeriodRanking facts={facts} unit={unit} />;
+    case 'performance-ranking':
+      return <PerformanceRanking facts={facts} />;
     case 'analysis':
       return <AnalysisList facts={facts} unit={unit} />;
     case 'passages':

@@ -75,6 +75,9 @@ whatever `.env` says.
 | Multi-metric rows each carry their own period, grain and unit | `Overview` states none of them for the table, and leads with YoY where `report_as_growth` is set |
 | `not_found[]` must be shown | `Overview` — a partial answer must not look complete |
 | A min/max answer means nothing without its range | `Extremes` shows `extremum` and `scanned_from → scanned_to` |
+| `attainment_percent` is used as given, never recomputed | `PerformanceRanking` — `actual / target` inverts every `Decrease` indicator |
+| `not_assessable[]` is shown in the open | `PerformanceRanking` — a leaderboard showing 10 of 13 is a false picture of the sector |
+| A catalogue listing's citations *are* its names | `AnswerCard` suppresses the sources block for `count` answers |
 | `facts.indicator` is named on every answer | `AnswerCard` — an unnamed indicator hides a wrong match |
 | `facts.note` is a caveat and must show | `AnswerCard`, except when a `note` is the whole payload (a greeting marker) |
 | "(approximate match)" is a low-confidence warning | `splitApproximateMatch()`, rendered as its own warning |
@@ -134,6 +137,7 @@ Type any of these (substring matching, in either language):
 | `What were the strongest quarters?` | period ranking + order |
 | `Show me the analyst commentary` | SCAI commentary, attributed, with bullets |
 | `Show me articles on diversification` | article excerpts behind "Show sources" |
+| `Which are the best performing ones?` | ranking by progress to target, plus what could not be ranked |
 | `What is labor productivity?` | approximate-match warning |
 | `ما الناتج المحلي الإجمالي الحقيقي؟` | Arabic reply, RTL, with the UI still in English |
 | `Tell me about GDP Growth Demo` | no data, as an answer not an error |

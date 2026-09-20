@@ -315,14 +315,95 @@ const capability = (): ChatResponse =>
     false,
   );
 
+const LINE = '\n';
+const NAMES = ['Real GDP', 'Nominal GDP', 'GDP per capita'];
+
 const countList = (): ChatResponse =>
   found(
-    'There are 3 published indicators in the national accounts sector: Real GDP, Nominal GDP and GDP per capita.',
-    { count: 3, names: ['Real GDP', 'Nominal GDP', 'GDP per capita'] },
-    [],
+    [
+      'There are 3 published indicators in the national accounts sector. All 3 are listed below.',
+      '',
+      'Sources:',
+      ...NAMES.map((name) => `• ${name} — SCAI Approved/Published Data`),
+    ].join(LINE),
+    { count: NAMES.length, names: NAMES },
+    // One citation per name: the sources block would repeat the list.
+    NAMES.map((name) => citation(name, '2025')),
     null,
     true,
     false,
+  );
+
+/** Indicators ranked by progress against their own targets. */
+const performanceRanking = (): ChatResponse =>
+  found(
+    'Ranked by how close each is to its target, best first.',
+    {
+      scope: 'Education Sector',
+      scope_kind: 'sector',
+      order: 'best_first',
+      n_ranked: 3,
+      n_total: 5,
+      basis: "percent of each indicator's own target attained, with polarity applied",
+      ranked_indicators: [
+        {
+          // Beating a target it is meant to come in *under*: actual/target
+          // would call this 95% and rank it last.
+          indicator: 'Cost per Student (K-12 Public Schools)',
+          attainment_percent: 105.4,
+          actual: 84.055,
+          unit: 'QAR k',
+          period_label: '2025',
+          target: 88.6,
+          polarity: 'Decrease',
+          target_basis: 'period',
+          target_year: null,
+        },
+        {
+          indicator: 'PISA Rank',
+          attainment_percent: 72.9,
+          actual: 48,
+          unit: 'Rank',
+          period_label: '2022',
+          target: 35,
+          polarity: 'Decrease',
+          target_basis: 'indicator',
+          target_year: 2030,
+        },
+        {
+          indicator: 'Teacher–Student Ratio',
+          attainment_percent: 88.2,
+          actual: 15.1,
+          unit: '',
+          period_label: '2025',
+          target: 17.1,
+          polarity: 'Increase',
+          target_basis: 'period',
+          target_year: null,
+        },
+      ],
+      not_assessable: [
+        {
+          indicator: 'Graduates from STEM ( Share of All Graduates )',
+          reason: 'no reading yet',
+          actual: null,
+          target: null,
+          unit: '%',
+          period_label: null,
+          polarity: 'Increase',
+        },
+        {
+          indicator: 'Adult Literacy Rate',
+          reason: 'no target set',
+          actual: 97.8,
+          target: null,
+          unit: '%',
+          period_label: '2024',
+          polarity: 'Increase',
+        },
+      ],
+    },
+    [],
   );
 
 const periodRanking = (): ChatResponse =>
@@ -457,18 +538,20 @@ interface Fixture {
 
 const FIXTURES: Fixture[] = [
   { keywords: ['what can you', 'capabilit', 'ماذا يمكنك'], respond: capability },
-  { keywords: ['how many', 'list', 'كم عدد'], respond: countList },
+  { keywords: ['how many', 'list', 'indicator names', 'كم عدد'], respond: countList },
   { keywords: ['mean', 'definition', 'what is inflation', 'تعريف'], respond: definition },
   { keywords: ['overview', 'macro', 'نظرة عامة'], respond: overview },
   // Order is the disambiguation here: "highest and lowest" is a question about
   // extremes in one series, while "rank" is a question across countries.
-  { keywords: ['highest and lowest', 'max', 'min', 'أعلى', 'أدنى'], respond: extremes },
+  // Not bare 'min'/'max': "best performing" contains "min".
+  { keywords: ['highest and lowest', 'maximum', 'minimum', 'أعلى', 'أدنى'], respond: extremes },
   { keywords: ['rank', 'ترتيب'], respond: countryRanking },
   { keywords: ['growth rate', 'grew', 'نمو'], respond: growth },
   // Likewise "against"/"between" compares two periods; "across" compares
   // countries — and both questions start with the word "compare".
   { keywords: ['against', 'between', 'مقارنة بين'], respond: comparison },
   { keywords: ['across', 'compare', 'versus', ' vs ', 'قارن'], respond: countryComparison },
+  { keywords: ['best performing', 'performance', 'ranked by target', 'الأفضل أداءً'], respond: performanceRanking },
   { keywords: ['commentary', 'analyst', 'تعليق'], respond: analysisAnswer },
   { keywords: ['article', 'diversification', 'مقال'], respond: passagesAnswer },
   { keywords: ['best quarters', 'strongest', 'top periods', 'أفضل الفترات'], respond: periodRanking },

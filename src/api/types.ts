@@ -295,6 +295,7 @@ export type FactsKind =
   | 'country-comparison'
   | 'country-ranking'
   | 'period-ranking'
+  | 'performance-ranking'
   | 'analysis'
   | 'passages'
   | 'overview'
@@ -320,6 +321,7 @@ export function factsKind(facts: Facts): FactsKind {
   if (has('period_start', 'period_end', 'growth_rate_percent')) return 'growth';
   if (has('period_a', 'period_b')) return 'comparison';
   if (has('high_period', 'low_period')) return 'extremes';
+  if (has('ranked_indicators')) return 'performance-ranking';
   if (has('analysis')) return 'analysis';
   if (has('passages')) return 'passages';
   if (has('ranked_periods')) return 'period-ranking';
@@ -433,6 +435,52 @@ export interface OverviewEntry {
   /** Lead with the year-on-year change rather than the level. */
   report_as_growth?: boolean;
   [key: string]: unknown;
+}
+
+/**
+ * One indicator in a performance ranking.
+ *
+ * `attainment_percent` is the whole answer: it is the sort key, the bar length
+ * and the score, and it already has polarity applied. Recomputing it from
+ * `actual / target` inverts every `Decrease` indicator — a cost that came in
+ * under target would read as a failure — so it is used exactly as given.
+ */
+export interface RankedIndicator {
+  indicator: string;
+  attainment_percent: number;
+  actual: Figure | number;
+  /** Per row, never per answer: these are different indicators. */
+  unit: string;
+  period_label: string;
+  target: Figure | number;
+  /** 'Increase' — higher is better. 'Decrease' — lower is better. */
+  polarity: string;
+  /** 'period' — filed against that reading. 'indicator' — a standing goal. */
+  target_basis: string;
+  target_year: number | string | null;
+  [key: string]: unknown;
+}
+
+/** An indicator that could not be scored, and why. */
+export interface NotAssessable {
+  indicator: string;
+  reason: string;
+  actual: Figure | number | null;
+  target: Figure | number | null;
+  unit?: string;
+  period_label?: string | null;
+  polarity?: string;
+  [key: string]: unknown;
+}
+
+export function rankedIndicators(facts: Facts): RankedIndicator[] {
+  const value = facts['ranked_indicators'];
+  return Array.isArray(value) ? (value as RankedIndicator[]) : [];
+}
+
+export function notAssessable(facts: Facts): NotAssessable[] {
+  const value = facts['not_assessable'];
+  return Array.isArray(value) ? (value as NotAssessable[]) : [];
 }
 
 /** Excerpts from SCAI articles — also the Council's published writing. */
