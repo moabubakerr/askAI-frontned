@@ -222,3 +222,20 @@
   font-size: var(--fs-small);
   color: var(--ink-muted);
 }
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+/* The unit and the compared period travel with their own figure. */
+.rowUnit {
+  color: var(--ink-muted);
+}
+
+/* Direction only. Up and down is a fact; good and bad is not — a fall in
+   inflation is the desirable direction — and the field that says which is
+   which is not on this response. */
+.arrow {
+  margin-inline-end: 4px;
+  color: var(--ink-faint);
+}

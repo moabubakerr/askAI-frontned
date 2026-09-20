@@ -251,31 +251,43 @@ const overview = (): ChatResponse =>
     'Across the approved dataset, Real GDP stands at 185.17 QAR billion, inflation at 2.60% and population at 3.10 million.' +
       sourcesFooter('Macro overview', '2025-Q4'),
     {
+      // The curated headline snapshot, shown as before → after.
+      overview_kind: 'macro',
       overview: [
         {
           indicator: 'Real GDP',
-          unit: 'QAR',
-          granularity: 'quarterly',
+          actual: 185.17,
           period_label: '2025-Q4',
-          actual: '185.170',
+          unit: 'QAR bn',
+          decimal_places: 1,
+          granularity: 'quarterly',
+          previous_value: 181.49,
+          previous_period: '2024-Q4',
           change_yoy_percent: 2.0277,
-          // Reported as growth, so the change leads and the level follows.
-          report_as_growth: true,
+          target: null,
+          report_as_growth: false,
+          asked_as: 'Real GDP',
         },
         {
+          // No comparable reading a year back: no movement is known.
           indicator: 'Inflation',
+          actual: 2.6162,
+          period_label: '2026-04',
           unit: '%',
+          decimal_places: 4,
           granularity: 'monthly',
-          period_label: '2025-12',
-          actual: '2.600',
           report_as_growth: false,
         },
         {
-          indicator: 'Population',
-          unit: 'million',
-          granularity: 'yearly',
-          period_label: '2025',
-          actual: '3.100',
+          indicator: 'Trade Balance',
+          actual: 37.972,
+          period_label: '2025-Q4',
+          unit: 'QAR bn',
+          decimal_places: 3,
+          granularity: 'quarterly',
+          previous_value: 46.127,
+          previous_period: '2024-Q4',
+          change_yoy_percent: -17.6797,
           report_as_growth: false,
         },
       ],
@@ -298,6 +310,42 @@ const overview = (): ChatResponse =>
       ],
       note: 'Units differ per bar; these are not on a shared scale.',
     },
+  );
+
+/**
+ * An overview with no `overview_kind`: a list of metrics the reader named,
+ * which stays compact rather than getting the before → after treatment.
+ */
+const namedMetrics = (): ChatResponse =>
+  found(
+    'Real GDP grew 2.03% year on year, and inflation stood at 2.60%.',
+    {
+      overview: [
+        {
+          indicator: 'Real GDP',
+          unit: 'QAR',
+          granularity: 'quarterly',
+          period_label: '2025-Q4',
+          actual: '185.170',
+          change_yoy_percent: 2.0277,
+          // Reported as growth, so the change leads and the level follows.
+          report_as_growth: true,
+        },
+        {
+          indicator: 'Inflation',
+          unit: '%',
+          granularity: 'monthly',
+          period_label: '2025-12',
+          actual: '2.600',
+          report_as_growth: false,
+        },
+      ],
+      not_found: ['Tourism arrivals'],
+    },
+    [citation('Real GDP', '2025-Q4')],
+    null,
+    true,
+    false,
   );
 
 const capability = (): ChatResponse =>
@@ -540,7 +588,11 @@ const FIXTURES: Fixture[] = [
   { keywords: ['what can you', 'capabilit', 'ماذا يمكنك'], respond: capability },
   { keywords: ['how many', 'list', 'indicator names', 'كم عدد'], respond: countList },
   { keywords: ['mean', 'definition', 'what is inflation', 'تعريف'], respond: definition },
-  { keywords: ['overview', 'macro', 'نظرة عامة'], respond: overview },
+  { keywords: ['gdp and inflation', 'these metrics', 'هذه المؤشرات'], respond: namedMetrics },
+  {
+    keywords: ['overview', 'macro', 'economy doing', 'economy growing', 'نظرة عامة'],
+    respond: overview,
+  },
   // Order is the disambiguation here: "highest and lowest" is a question about
   // extremes in one series, while "rank" is a question across countries.
   // Not bare 'min'/'max': "best performing" contains "min".

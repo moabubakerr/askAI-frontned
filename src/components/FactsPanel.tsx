@@ -7,7 +7,9 @@ import {
   factsKind,
   factsPassages,
   factsTopic,
+  overviewKind,
   publicFacts,
+  toNumber,
   factsUnit,
   type CountryRow,
   type Facts,
@@ -15,7 +17,14 @@ import {
   type OverviewEntry,
   type SeriesRow,
 } from '../api/types';
-import { formatChange, formatFigure, formatPercent, formatWithUnit, NO_VALUE } from '../i18n/figures';
+import {
+  formatAtPrecision,
+  formatChange,
+  formatFigure,
+  formatPercent,
+  formatWithUnit,
+  NO_VALUE,
+} from '../i18n/figures';
 import { CouncilProse, CouncilText } from './CouncilText';
 import { PerformanceRanking } from './PerformanceRanking';
 import { LocalizedText } from '../i18n/LocalizedText';
@@ -551,6 +560,11 @@ function Passages({ facts }: { facts: Facts }) {
 function Overview({ facts }: { facts: Facts }) {
   const { t, lang } = useI18n();
   const rows = Array.isArray(facts['overview']) ? (facts['overview'] as OverviewEntry[]) : [];
+
+  // The curated headline snapshot gets the before → after treatment; a list of
+  // metrics the reader named stays compact.
+  if (overviewKind(facts) === 'macro') return <MacroOverview facts={facts} rows={rows} />;
+
   const notFound = Array.isArray(facts['not_found'])
     ? (facts['not_found'] as unknown[]).filter((n): n is string => typeof n === 'string')
     : [];
@@ -614,6 +628,129 @@ function Overview({ facts }: { facts: Facts }) {
       ) : null}
     </div>
   );
+}
+
+/**
+ * The headline snapshot: where each indicator stands, and where it stood a year
+ * earlier.
+ *
+ * A column of levels answers "what is it now" and nothing else — the question
+ * behind "how is the economy doing?" is whether it moved, so the comparison is
+ * the substance of the row rather than a footnote to it.
+ *
+ * Three things are deliberate. Each row is rounded to its own
+ * `decimal_places` — SCAI's Format column — rather than to a number chosen
+ * here. Each row's `unit` already carries its scale ('QAR bn'), so nothing is
+ * appended to it. And each row keeps its own period: 2025-Q4 next to 2026-04 is
+ * correct, because these indicators report on different schedules, so no shared
+ * "as of" is ever stated.
+ *
+ * The change is **not** coloured green and red. Up and down is a fact; good and
+ * bad is not — a fall in inflation is the desirable direction, and the field
+ * that resolves which way is which is not on this response. Direction is shown
+ * with an arrow and left neutral.
+ */
+function MacroOverview({ facts, rows }: { facts: Facts; rows: OverviewEntry[] }) {
+  const { t, lang } = useI18n();
+  const notFound = Array.isArray(facts['not_found'])
+    ? (facts['not_found'] as unknown[]).filter((n): n is string => typeof n === 'string')
+    : [];
+
+  return (
+    <div className={styles.panel}>
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th scope="col">{t('facts.indicator')}</th>
+              <th scope="col">{t('facts.period')}</th>
+              <th scope="col">{t('facts.value')}</th>
+              <th scope="col">{t('facts.vsYearEarlier')}</th>
+              <th scope="col">{t('facts.change')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => {
+              const decimals = typeof row.decimal_places === 'number' ? row.decimal_places : undefined;
+              const unit = typeof row.unit === 'string' && row.unit.length > 0 ? row.unit : null;
+
+              const now = toNumber(row.actual ?? null);
+              const before = toNumber(row.previous_value ?? null);
+              const yoy = toNumber(row.change_yoy_percent ?? null);
+
+              const value =
+                now === null
+                  ? NO_VALUE
+                  : decimals === undefined
+                    ? formatFigure(String(row.actual), lang)
+                    : formatAtPrecision(now, decimals, lang);
+
+              const previous =
+                before === null
+                  ? NO_VALUE
+                  : decimals === undefined
+                    ? formatFigure(String(row.previous_value), lang)
+                    : formatAtPrecision(before, decimals, lang);
+
+              return (
+                <tr key={index}>
+                  <td>
+                    <LocalizedText text={String(row.indicator ?? '')} />
+                    {row.granularity ? (
+                      <span className={styles.granularity}>{String(row.granularity)}</span>
+                    ) : null}
+                  </td>
+                  <td className={styles.mono}>{String(row.period_label ?? '')}</td>
+                  <td className={`${styles.mono} num`}>
+                    {value}
+                    {unit && now !== null ? <span className={styles.rowUnit}> {unit}</span> : null}
+                  </td>
+                  <td className={`${styles.mono} num`}>
+                    {previous}
+                    {before !== null && row.previous_period ? (
+                      <span className={styles.rowUnit}> ({row.previous_period})</span>
+                    ) : null}
+                  </td>
+                  {/* An absent change means no movement is known, not that
+                      nothing moved. */}
+                  <td className={`${styles.mono} num`} data-direction={direction(yoy)}>
+                    {yoy === null ? (
+                      NO_VALUE
+                    ) : (
+                      <>
+                        <span aria-hidden="true" className={styles.arrow}>
+                          {yoy > 0 ? '▲' : yoy < 0 ? '▼' : '•'}
+                        </span>
+                        {formatPercent(yoy.toFixed(2), lang)}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {notFound.length > 0 ? (
+        <p className={styles.noData}>
+          <span className={styles.noDataLabel}>{t('facts.notFound')}</span>
+          {notFound.map((name) => (
+            <span key={name} className={styles.noDataChip}>
+              <LocalizedText text={name} />
+            </span>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function direction(change: number | null): 'up' | 'down' | 'flat' | undefined {
+  if (change === null) return undefined;
+  if (change > 0) return 'up';
+  if (change < 0) return 'down';
+  return 'flat';
 }
 
 function Capability({ facts }: { facts: Facts }) {

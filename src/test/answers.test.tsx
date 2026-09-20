@@ -587,26 +587,25 @@ describe('the chrome', () => {
 
 describe('the consolidated v2 shapes', () => {
   it('gives every multi-metric row its own period and grain', async () => {
-    await ask('Give me a macro overview');
+    await ask('Show me GDP and inflation');
     const card = await screen.findByRole('article');
 
     // Each line carries its own period; none is stated for the table.
     expect(within(card).getByRole('cell', { name: '2025-Q4' })).toBeInTheDocument();
     expect(within(card).getByRole('cell', { name: '2025-12' })).toBeInTheDocument();
-    expect(within(card).getByRole('cell', { name: '2025' })).toBeInTheDocument();
     expect(within(card).getByText('quarterly')).toBeInTheDocument();
     expect(within(card).getByText('monthly')).toBeInTheDocument();
   });
 
   it('leads with year-on-year change where the service reports growth', async () => {
-    await ask('Give me a macro overview');
+    await ask('Show me GDP and inflation');
     const card = await screen.findByRole('article');
 
     expect(within(card).getByText('+2.03% YoY')).toBeInTheDocument();
   });
 
   it('shows metrics that were requested and not found', async () => {
-    await ask('Give me a macro overview');
+    await ask('Show me GDP and inflation');
     const card = await screen.findByRole('article');
 
     expect(within(card).getByText('Not found')).toBeInTheDocument();
@@ -710,5 +709,66 @@ describe('catalogue listings', () => {
     // block would print the same list a second time.
     expect(within(card).queryByRole('button', { name: /Sources/ })).toBeNull();
     expect(within(card).getAllByText('Nominal GDP')).toHaveLength(1);
+  });
+});
+
+describe('the macro snapshot', () => {
+  it('shows where each indicator stood a year earlier, not just where it is', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    // The question is whether it moved, so the comparison is the substance of
+    // the row rather than a footnote to it.
+    expect(within(card).getByText('vs a year earlier')).toBeInTheDocument();
+    expect(within(card).getByText(/181\.5/)).toBeInTheDocument();
+    // Two rows have a year-earlier reading; both name the period compared.
+    expect(within(card).getAllByText(/\(2024-Q4\)/)).toHaveLength(2);
+  });
+
+  it('rounds each row to its own decimal_places', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    // SCAI's own Format column: Real GDP to 1, inflation to 4.
+    expect(within(card).getByText('185.2')).toBeInTheDocument();
+    expect(within(card).getByText('2.6162')).toBeInTheDocument();
+  });
+
+  it('keeps each row’s own unit and period, with no shared "as of"', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    // 2025-Q4 next to 2026-04 is correct: they report on different schedules.
+    expect(within(card).getAllByRole('cell', { name: /2025-Q4/ }).length).toBeGreaterThan(0);
+    expect(within(card).getByRole('cell', { name: /2026-04/ })).toBeInTheDocument();
+    // The unit already carries its scale; nothing is appended to it.
+    expect(within(card).getAllByText('QAR bn').length).toBeGreaterThan(0);
+  });
+
+  it('implies no movement where there is no comparable reading', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    const rows = within(card)
+      .getAllByRole('row')
+      .filter((row) => (row.textContent ?? '').includes('Inflation'));
+    expect(rows).toHaveLength(1);
+    // An absent change is "not known", never "flat".
+    expect(rows[0]?.textContent).toContain('—');
+  });
+
+  it('shows direction without calling it good or bad', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText(/\+2\.03%/)).toBeInTheDocument();
+    expect(within(card).getByText(/−17\.68%/)).toBeInTheDocument();
+
+    // A fall in inflation is the desirable direction, so the snapshot marks
+    // direction and leaves the judgement out of it.
+    const fall = within(card)
+      .getAllByRole('cell')
+      .find((cell) => (cell.textContent ?? '').includes('17.68'));
+    expect(fall).toHaveAttribute('data-direction', 'down');
   });
 });

@@ -427,14 +427,36 @@ export interface AnalysisEntry {
  */
 export interface OverviewEntry {
   indicator?: string;
+  /** Carries its own scale: 'QAR bn', 'million', '%', or '' for none. */
   unit?: string | null;
   granularity?: string;
   period_label?: string;
-  actual?: Figure;
+  actual?: Figure | number;
   change_yoy_percent?: Figure | number;
   /** Lead with the year-on-year change rather than the level. */
   report_as_growth?: boolean;
+
+  /* The same period one year earlier. All three are optional per row: a series
+     with no comparable reading a year back simply has none, and an absent
+     figure means no movement is known — never that nothing moved. */
+  previous_value?: Figure | number;
+  previous_period?: string;
+  /** SCAI's own Format column: how many decimals this indicator is shown to. */
+  decimal_places?: number;
+
+  asked_as?: string;
+  target?: Figure | number | null;
   [key: string]: unknown;
+}
+
+/**
+ * 'macro' marks the curated headline snapshot, which is shown as a before →
+ * after comparison. An overview without the marker is a list of metrics the
+ * reader named, and stays compact.
+ */
+export function overviewKind(facts: Facts): string | null {
+  const kind = facts['overview_kind'];
+  return typeof kind === 'string' && kind.length > 0 ? kind : null;
 }
 
 /**

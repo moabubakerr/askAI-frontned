@@ -73,6 +73,7 @@ whatever `.env` says.
 | `facts.analysis[]` and `facts.passages[]` are SCAI's own writing | `CouncilText` — one shared quoted block, so they can never drift toward looking generated |
 | `_`-prefixed keys are internal diagnostics | `publicFacts()` strips them; an unknown shape still renders, an internal field never does |
 | Multi-metric rows each carry their own period, grain and unit | `Overview` states none of them for the table, and leads with YoY where `report_as_growth` is set |
+| `overview_kind: "macro"` is the headline snapshot | `MacroOverview` — before → after per row, each rounded to its own `decimal_places`, direction shown without calling it good or bad |
 | `not_found[]` must be shown | `Overview` — a partial answer must not look complete |
 | A min/max answer means nothing without its range | `Extremes` shows `extremum` and `scanned_from → scanned_to` |
 | `attainment_percent` is used as given, never recomputed | `PerformanceRanking` — `actual / target` inverts every `Decrease` indicator |
@@ -129,7 +130,8 @@ Type any of these (substring matching, in either language):
 | `What was the growth rate of Real GDP?` | growth rate + method |
 | `Compare Real GDP across Qatar and Saudi Arabia` | country rows, bar chart, **countries with no data** |
 | `Rank the countries by Real GDP` | ranking + period used |
-| `Give me a macro overview` | per-row units, and the "not a shared scale" warning |
+| `How is Qatar's economy doing?` | macro snapshot: value, the year-earlier reading, and the change |
+| `Show me GDP and inflation` | a named list of metrics, compact |
 | `What can you do?` | capability |
 | `How many indicators are there?` | count + names |
 | `Give me the blunt version` | `verified: false` marker |

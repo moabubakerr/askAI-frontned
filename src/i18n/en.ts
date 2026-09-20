@@ -49,6 +49,7 @@ export const en = {
   'facts.scanned': '{n} readings scanned',
   'facts.extremum.highest': 'Highest reading',
   'facts.extremum.lowest': 'Lowest reading',
+  'facts.vsYearEarlier': 'vs a year earlier',
   'facts.noDataFor': 'No approved data for',
   'read.action': 'Read this for me',
   'read.title': 'Read this for me',

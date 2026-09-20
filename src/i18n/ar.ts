@@ -51,6 +51,7 @@ export const ar: Dict = {
   'facts.scanned': 'فُحصت {n} قراءة',
   'facts.extremum.highest': 'أعلى قراءة',
   'facts.extremum.lowest': 'أدنى قراءة',
+  'facts.vsYearEarlier': 'مقارنة بالعام السابق',
   'facts.noDataFor': 'لا توجد بيانات معتمدة لـ',
   'read.action': 'اقرأ هذا نيابة عني',
   'read.title': 'اقرأ هذا نيابة عني',
