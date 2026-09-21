@@ -13,8 +13,20 @@
  * Set `VITE_USE_FIXTURES=true` to resolve from the sample fixtures instead.
  */
 
-import { resolveFixture, resolveReadFixture, fixtureSession } from './fixtures';
-import type { ChatRequest, ChatResponse, ReadResponse, SessionState } from './types';
+import {
+  resolveFixture,
+  resolveReadFixture,
+  fixtureSession,
+  resolveFeedbackFixture,
+} from './fixtures';
+import type {
+  ChatRequest,
+  ChatResponse,
+  FeedbackRequest,
+  FeedbackResponse,
+  ReadResponse,
+  SessionState,
+} from './types';
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
 
@@ -121,6 +133,51 @@ export async function getSession(sessionId: string): Promise<SessionState | null
   } catch {
     return null;
   }
+}
+
+/**
+ * A rating the reader gave an answer.
+ *
+ * `comment_required: true` on a rejection means the score was fine and the
+ * comment was missing — a different repair from a rating that was itself
+ * invalid, so the two are told apart here rather than merged into one error.
+ */
+export class FeedbackRejected extends ChatError {
+  readonly commentRequired: boolean;
+
+  constructor(message: string, commentRequired: boolean) {
+    super(message, 422);
+    this.name = 'FeedbackRejected';
+    this.commentRequired = commentRequired;
+  }
+}
+
+export async function sendFeedback(req: FeedbackRequest): Promise<FeedbackResponse> {
+  if (USE_FIXTURES) {
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS));
+    return resolveFeedbackFixture(req);
+  }
+
+  const res = await fetch('/api/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+
+  if (res.status === 422) {
+    // `detail.message` is written for a reader, so it is shown verbatim rather
+    // than replaced with wording invented here.
+    const body = (await res.json().catch(() => null)) as
+      | { detail?: { message?: string; comment_required?: boolean } }
+      | null;
+    throw new FeedbackRejected(
+      body?.detail?.message ?? 'rejected',
+      body?.detail?.comment_required === true,
+    );
+  }
+
+  if (!res.ok) throw new ChatError(`${res.status} ${res.statusText}`, res.status);
+  return (await res.json()) as FeedbackResponse;
 }
 
 /**

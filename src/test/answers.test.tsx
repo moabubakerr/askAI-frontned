@@ -895,3 +895,93 @@ describe('the read disclosure', () => {
     expect(screen.getByText('SCEAI Indicators')).toBeInTheDocument();
   });
 });
+
+describe('rating an answer', () => {
+  it('posts a 3, 4 or 5 straight away, with the message and session ids', async () => {
+    const chatSpy = vi.spyOn(client, 'chat');
+    const feedbackSpy = vi.spyOn(client, 'sendFeedback');
+
+    const user = await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    await user.click(within(card).getByRole('radio', { name: 'Rate 4 out of 5' }));
+    await screen.findByText(/your rating was recorded/i);
+
+    const sent = feedbackSpy.mock.calls[0]?.[0];
+    expect(sent?.rating).toBe(4);
+    expect(sent?.comment).toBeUndefined();
+    expect(sent?.message_id).toBe((await chatSpy.mock.results[0]?.value)?.message_id);
+    // The server looks up the exchange by this id to store it beside the score.
+    expect(sent?.session_id).toBe(chatSpy.mock.calls[0]?.[0]?.session_id);
+  });
+
+  it('asks for the reason before posting a 1 or a 2', async () => {
+    const feedbackSpy = vi.spyOn(client, 'sendFeedback');
+
+    const user = await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    await user.click(within(card).getByRole('radio', { name: 'Rate 1 out of 5' }));
+
+    // Posting on the click would take a guaranteed 422 and have to recover.
+    expect(feedbackSpy).not.toHaveBeenCalled();
+    const box = within(card).getByLabelText('What was wrong with it?');
+
+    await user.type(box, 'wrong period');
+    await user.click(within(card).getByRole('button', { name: 'Send rating' }));
+
+    await screen.findByText(/your rating was recorded/i);
+    const sent = feedbackSpy.mock.calls[0]?.[0];
+    expect(sent?.rating).toBe(1);
+    expect(sent?.comment).toBe('wrong period');
+  });
+
+  it('keeps the score and shows the service’s own wording when a comment is missing', async () => {
+    vi.spyOn(client, 'sendFeedback').mockRejectedValue(
+      new client.FeedbackRejected(
+        'A comment is required for a rating of 2 or below — please say what was wrong with the answer.',
+        true,
+      ),
+    );
+
+    const user = await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    // Reaching the rejection directly: a 4 is posted immediately.
+    await user.click(within(card).getByRole('radio', { name: 'Rate 4 out of 5' }));
+
+    expect(
+      await screen.findByText(
+        'A comment is required for a rating of 2 or below — please say what was wrong with the answer.',
+      ),
+    ).toBeInTheDocument();
+    // comment_required means the score was fine, so it is kept.
+    expect(within(card).getByRole('radio', { name: 'Rate 4 out of 5' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(within(card).getByLabelText('What was wrong with it?')).toBeInTheDocument();
+  });
+
+  it('retires itself once rated, because ratings are append-only', async () => {
+    const feedbackSpy = vi.spyOn(client, 'sendFeedback');
+
+    const user = await ask('What is the latest value of Real GDP?');
+    const card = await screen.findByRole('article');
+
+    await user.click(within(card).getByRole('radio', { name: 'Rate 5 out of 5' }));
+    await screen.findByText(/your rating was recorded/i);
+
+    // There is no update or delete endpoint: re-rating would post a second row.
+    expect(screen.queryByRole('radio', { name: 'Rate 1 out of 5' })).toBeNull();
+    expect(feedbackSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('can rate a refusal, which is often the answer most worth flagging', async () => {
+    await ask('Tell me about GDP Growth Demo');
+    const card = await screen.findByRole('article');
+
+    expect(card).toHaveAttribute('data-ok', 'false');
+    expect(within(card).getByRole('radio', { name: 'Rate 1 out of 5' })).toBeInTheDocument();
+  });
+});

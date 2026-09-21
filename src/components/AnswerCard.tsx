@@ -18,6 +18,7 @@ import { useConversation, type Turn } from '../state/useConversation';
 import { Chart } from './Chart/Chart';
 import { Citations } from './Citations';
 import { FactsPanel } from './FactsPanel';
+import { Feedback } from './Feedback';
 import { Loader } from './Loader';
 import { ReadPanel } from './ReadPanel';
 import styles from './AnswerCard.module.css';
@@ -169,6 +170,10 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
       ) : null}
 
       {showCitations && explore ? <Citations items={citations} /> : null}
+
+      {/* Independent of `readable`: a refusal or a greeting is often the answer
+          most worth flagging. */}
+      {response.message_id ? <Feedback turn={turn} /> : null}
     </article>
   );
 }

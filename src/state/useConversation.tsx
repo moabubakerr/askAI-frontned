@@ -1,6 +1,35 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { chat as chatApi, endSession as endSessionApi, read as readApi } from '../api/client';
+import {
+  chat as chatApi,
+  endSession as endSessionApi,
+  read as readApi,
+  sendFeedback as sendFeedbackApi,
+} from '../api/client';
 import type { ChatRequest, ChatResponse, Lang, ReadResponse } from '../api/types';
+
+/**
+ * A rating, once given, is not taken back.
+ *
+ * `/feedback` is append-only by design — there is no update or delete — so
+ * letting a reader change their mind would post a second row and leave the
+ * dashboard holding both. The control retires itself instead.
+ */
+export interface FeedbackState {
+  status: 'idle' | 'sending' | 'sent' | 'rejected' | 'failed';
+  /** The score the reader chose, kept across a rejection. */
+  rating: number | null;
+  /** The service's own wording, shown verbatim. */
+  message: string | null;
+  /** The score was fine and the comment was missing. A different repair. */
+  commentRequired: boolean;
+}
+
+const NO_FEEDBACK: FeedbackState = {
+  status: 'idle',
+  rating: null,
+  message: null,
+  commentRequired: false,
+};
 
 export interface Turn {
   index: number;
@@ -14,6 +43,7 @@ export interface Turn {
   /** The read-it-for-me view of this same question, once asked for. */
   read: ReadResponse | null;
   readStatus: 'idle' | 'loading' | 'ready' | 'error';
+  feedback: FeedbackState;
 }
 
 /**
@@ -65,6 +95,8 @@ export interface ConversationStore {
   retry: (turn: Turn, lang: Lang) => void;
   /** Fetch the read-it-for-me view of a turn's question. */
   readTurn: (turn: Turn) => void;
+  /** Rate an answer. A comment is required at 1 or 2. */
+  rate: (turn: Turn, rating: number, comment?: string) => void;
   /** Ends the conversation here and on the server. */
   reset: () => void;
   focusComposer: () => void;
@@ -125,6 +157,7 @@ function useConversationStore(): ConversationStore {
           timedOut: false,
           read: null,
           readStatus: 'idle',
+          feedback: NO_FEEDBACK,
         },
       ]);
 
@@ -149,6 +182,48 @@ function useConversationStore(): ConversationStore {
       readApi({ message: turn.question, session_id: sessionId.current }).then(
         (response) => patchTurn(turn.index, { read: response, readStatus: 'ready' }),
         () => patchTurn(turn.index, { readStatus: 'error' }),
+      );
+    },
+    [patchTurn],
+  );
+
+  const rate = useCallback(
+    (turn: Turn, rating: number, comment?: string) => {
+      const messageId = turn.response?.message_id;
+      if (!messageId || turn.feedback.status === 'sending' || turn.feedback.status === 'sent') {
+        return;
+      }
+
+      patchTurn(turn.index, {
+        feedback: { status: 'sending', rating, message: null, commentRequired: false },
+      });
+
+      sendFeedbackApi({
+        message_id: messageId,
+        rating,
+        ...(comment?.trim() ? { comment: comment.trim() } : {}),
+        // The same id the question went out on, so the server can store the
+        // exchange beside the rating.
+        session_id: sessionId.current,
+      }).then(
+        () =>
+          patchTurn(turn.index, {
+            feedback: { status: 'sent', rating, message: null, commentRequired: false },
+          }),
+        (cause: unknown) => {
+          const rejection = cause as { message?: string; commentRequired?: boolean };
+          const commentRequired = rejection?.commentRequired === true;
+          patchTurn(turn.index, {
+            feedback: {
+              // A missing comment is not a failure to retry: the score stands
+              // and the reader is asked for the reason.
+              status: commentRequired ? 'rejected' : 'failed',
+              rating,
+              message: rejection?.message ?? null,
+              commentRequired,
+            },
+          });
+        },
       );
     },
     [patchTurn],
@@ -188,6 +263,7 @@ function useConversationStore(): ConversationStore {
     ask,
     retry,
     readTurn,
+    rate,
     reset,
     focusComposer,
     sessionId: sessionId.current,

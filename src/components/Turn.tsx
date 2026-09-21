@@ -1,3 +1,5 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ArrowDown } from 'lucide-react';
 import { formatNumber } from '../i18n/formatNumber';
 import { LocalizedText } from '../i18n/LocalizedText';
 import { useI18n } from '../i18n/useI18n';
@@ -6,9 +8,78 @@ import { AnswerCard } from './AnswerCard';
 import { Loader } from './Loader';
 import styles from './Turn.module.css';
 
+/**
+ * Not every environment implements it — jsdom does not, and an unguarded call
+ * throws inside the effect and takes the answer down with it.
+ */
+function scrollTo(element: HTMLElement, block: ScrollLogicalPosition) {
+  if (typeof element.scrollIntoView !== 'function') return;
+  element.scrollIntoView({ behavior: 'smooth', block });
+}
+
 export function Turn({ turn }: { turn: TurnModel }) {
   const { t, lang } = useI18n();
   const { ask, retry } = useConversation();
+
+  const answerRef = useRef<HTMLDivElement>(null);
+  const [jumpVisible, setJumpVisible] = useState(false);
+
+  const ready = turn.status === 'ready';
+  const readReady = turn.readStatus === 'ready';
+
+  /**
+   * Bring the reader to the answer when it arrives.
+   *
+   * To its top edge, not the bottom of the page: a reply can carry prose, a tile
+   * grid, a chart and a sources list, and landing at the bottom shows the
+   * sources while hiding the answer. `scroll-margin` on the container leaves the
+   * question partly visible above it, for context.
+   *
+   * After layout and after a frame, because the chart and the tiles measure
+   * themselves — scrolling before that lands in the wrong place.
+   *
+   * And never against the reader: if they scrolled away while waiting, the
+   * answer offers itself rather than seizing the viewport.
+   */
+  useLayoutEffect(() => {
+    if (!ready) return;
+    const element = answerRef.current;
+    if (!element) return;
+
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const box = element.getBoundingClientRect();
+        const inView = box.top < window.innerHeight && box.bottom > 0;
+
+        if (!inView) {
+          setJumpVisible(true);
+          return;
+        }
+
+        scrollTo(element, 'start');
+        // The viewport is only half of it: scrolling alone leaves a screen
+        // reader and the keyboard back at the composer.
+        element.focus({ preventScroll: true });
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [ready]);
+
+  /** The retelling replaces a block in place, which otherwise says nothing. */
+  useEffect(() => {
+    if (!readReady) return;
+    const panel = answerRef.current?.querySelector<HTMLElement>('[data-read-panel]');
+    if (panel) scrollTo(panel, 'nearest');
+  }, [readReady]);
+
+  function jump() {
+    setJumpVisible(false);
+    const element = answerRef.current;
+    if (!element) return;
+    scrollTo(element, 'start');
+    element.focus({ preventScroll: true });
+  }
 
   return (
     <section className={styles.turn} aria-labelledby={`turn-${turn.index}-question`}>
@@ -23,7 +94,12 @@ export function Turn({ turn }: { turn: TurnModel }) {
       {/* There is no streaming: one JSON response, 2–12s, and ~10s on the first
           request after a restart while the catalog is embedded. So the waiting
           state has to be patient rather than apologetic. */}
-      <div className={styles.answer}>
+      <div
+        className={styles.answer}
+        ref={answerRef}
+        tabIndex={-1}
+        aria-labelledby={`turn-${turn.index}-question`}
+      >
         {turn.status === 'loading' ? <Loader label={t('turn.loading')} /> : null}
 
         {turn.status === 'error' ? (
@@ -51,6 +127,13 @@ export function Turn({ turn }: { turn: TurnModel }) {
           />
         ) : null}
       </div>
+
+      {jumpVisible ? (
+        <button type="button" className={styles.jump} onClick={jump}>
+          <ArrowDown size={15} strokeWidth={2} aria-hidden="true" />
+          {t('turn.jump')}
+        </button>
+      ) : null}
     </section>
   );
 }

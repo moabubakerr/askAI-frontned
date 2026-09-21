@@ -39,6 +39,11 @@ export interface SessionState {
 }
 
 export interface ChatResponse {
+  /**
+   * Identifies this answer. It is the only way to say which answer a rating is
+   * about, so it is kept with the message rather than derived from anything.
+   */
+  message_id?: string;
   /** User-facing prose. Always present. Includes its own `Sources:` footer. */
   answer: string;
   facts_payload: FactsPayload;
@@ -74,6 +79,7 @@ export interface ChatResponse {
  * different treatments, and are never merged — see `ReadPanel`.
  */
 export interface ReadResponse {
+  message_id?: string;
   ok?: boolean;
   message?: string | null;
   readable?: boolean;
@@ -740,6 +746,37 @@ export function splitSourcesFooter(answer: string): { body: string; hasFooter: b
   const match = answer.match(/\n\s*(?:Sources|المصادر)\s*:\s*\n/);
   if (!match || match.index === undefined) return { body: answer, hasFooter: false };
   return { body: answer.slice(0, match.index).trimEnd(), hasFooter: true };
+}
+
+/* ------------------------------------------------------------------ */
+/* POST /feedback                                                      */
+/* ------------------------------------------------------------------ */
+
+export interface FeedbackRequest {
+  message_id: string;
+  /** 1–5. */
+  rating: number;
+  /** Required at 1 or 2: a low score without a reason is not actionable. */
+  comment?: string;
+  /**
+   * The same id sent to /chat. The server looks up that exchange to store the
+   * question and answer beside the rating — a wrong id still records the score,
+   * just without its context, and never errors. It fails silently, so it is
+   * taken from the same place the question was sent from.
+   */
+  session_id: string;
+}
+
+export interface FeedbackResponse {
+  ok: boolean;
+  feedback_id?: string;
+}
+
+/** A rating of 1 or 2 must say what was wrong. */
+export const COMMENT_REQUIRED_AT_OR_BELOW = 2;
+
+export function commentRequiredFor(rating: number): boolean {
+  return rating <= COMMENT_REQUIRED_AT_OR_BELOW;
 }
 
 /** Exhaustiveness guard. */

@@ -34,6 +34,50 @@
   width: 100%;
   max-width: 92%;
   min-width: 0;
+  /* Where `scrollIntoView` stops: clear of the sticky header, with room above
+     so the question stays partly visible for context. */
+  scroll-margin-block-start: calc(var(--header-h) + 16px);
+}
+
+.answer:focus {
+  outline: none;
+}
+
+.answer:focus-visible {
+  outline: none;
+  border-radius: var(--radius);
+  box-shadow: var(--focus-ring);
+}
+
+/* Offered, not forced: the reader scrolled away while waiting. */
+.jump {
+  position: fixed;
+  inset-block-end: 120px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--blue-900);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+}
+
+.jump:hover {
+  background: var(--blue-800);
+}
+
+.jump:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* The source, above the card it answered from. It keeps its own width. */

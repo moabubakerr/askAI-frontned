@@ -9,12 +9,15 @@
  * Nothing outside `src/api/` imports this file.
  */
 
+import { commentRequiredFor } from './types';
 import type {
   ChartSpec,
   ChatRequest,
   ChatResponse,
   Citation,
   Facts,
+  FeedbackRequest,
+  FeedbackResponse,
   ReadResponse,
   SessionState,
 } from './types';
@@ -49,6 +52,7 @@ function found(
   readable = true,
 ): ChatResponse {
   return {
+    message_id: `msg_${Math.random().toString(36).slice(2, 10)}`,
     answer,
     facts_payload: { ok: true, facts, citations, chart },
     chart,
@@ -59,6 +63,9 @@ function found(
 
 function missing(message: string, facts?: Facts): ChatResponse {
   return {
+    // A refusal is rateable too: those are often the answers most worth
+    // flagging.
+    message_id: `msg_${Math.random().toString(36).slice(2, 10)}`,
     answer: message,
     facts_payload: { ok: false, message, ...(facts ? { facts } : {}), citations: [] },
     chart: null,
@@ -843,6 +850,37 @@ export function fixtureSession(sessionId: string): SessionState {
     last_period: '2025-Q4',
     turns: 1,
   };
+}
+
+/**
+ * The service's own rule, enforced here so the client is exercised against it:
+ * a rating of 1 or 2 without a comment is refused, and the refusal says the
+ * score was fine and the comment was not.
+ */
+export function resolveFeedbackFixture(req: FeedbackRequest): FeedbackResponse {
+  if (!Number.isInteger(req.rating) || req.rating < 1 || req.rating > 5) {
+    throw new FeedbackFixtureRejection('That rating is not one of 1 to 5.', false);
+  }
+
+  if (commentRequiredFor(req.rating) && !req.comment?.trim()) {
+    throw new FeedbackFixtureRejection(
+      'A comment is required for a rating of 2 or below — please say what was wrong with the answer.',
+      true,
+    );
+  }
+
+  return { ok: true, feedback_id: `fb_${Math.random().toString(36).slice(2, 10)}` };
+}
+
+/** Mirrors the shape `client.ts` throws for a 422, so both paths behave alike. */
+export class FeedbackFixtureRejection extends Error {
+  readonly commentRequired: boolean;
+
+  constructor(message: string, commentRequired: boolean) {
+    super(message);
+    this.name = 'FeedbackRejected';
+    this.commentRequired = commentRequired;
+  }
 }
 
 /** Resolve a request against the sample data. */

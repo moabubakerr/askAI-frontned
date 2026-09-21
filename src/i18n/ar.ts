@@ -22,6 +22,7 @@ export const ar: Dict = {
   'turn.loading': 'قراءة البيانات المعتمدة — قد يستغرق ذلك بضع ثوانٍ',
   'turn.error': 'لم يكتمل الطلب. {message}',
   'turn.timeout': 'لم تُجب الخدمة في الوقت المتاح. السؤال الأول بعد إعادة التشغيل أبطأ من غيره.',
+  'turn.jump': 'انتقل إلى الإجابة',
   'turn.retry': 'اسأل مرة أخرى',
 
   'answer.choose': 'أيّها تقصد؟',
@@ -88,6 +89,14 @@ export const ar: Dict = {
   'ranking.order.worst_first': 'الأضعف أولًا',
   'ranking.polarity.Increase': 'الأعلى أفضل',
   'ranking.polarity.Decrease': 'الأدنى أفضل',
+
+  'feedback.question': 'هل كانت هذه الإجابة مفيدة؟',
+  'feedback.rate': 'قيّم {n} من 5',
+  'feedback.commentLabel': 'ما الخطأ فيها؟',
+  'feedback.commentPlaceholder': 'مثلًا: الفترة غير صحيحة',
+  'feedback.submit': 'إرسال التقييم',
+  'feedback.thanks': 'شكرًا لك، سُجّل تقييمك.',
+  'feedback.failed': 'تعذّر إرسال التقييم.',
 
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',

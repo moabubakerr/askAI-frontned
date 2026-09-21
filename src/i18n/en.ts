@@ -20,6 +20,7 @@ export const en = {
   'turn.loading': 'Reading the approved dataset — this can take a few seconds',
   'turn.error': 'The request did not complete. {message}',
   'turn.timeout': 'The service did not answer in time.',
+  'turn.jump': 'Jump to answer',
   'turn.retry': 'Ask again',
 
   'answer.choose': 'Which one did you mean?',
@@ -86,6 +87,14 @@ export const en = {
   'ranking.order.worst_first': 'Worst first',
   'ranking.polarity.Increase': 'higher is better',
   'ranking.polarity.Decrease': 'lower is better',
+
+  'feedback.question': 'Was this answer useful?',
+  'feedback.rate': 'Rate {n} out of 5',
+  'feedback.commentLabel': 'What was wrong with it?',
+  'feedback.commentPlaceholder': 'for example, wrong period',
+  'feedback.submit': 'Send rating',
+  'feedback.thanks': 'Thank you, your rating was recorded.',
+  'feedback.failed': 'The rating could not be sent.',
 
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',

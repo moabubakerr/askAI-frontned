@@ -1,0 +1,129 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition:
+    color var(--t-hover) var(--ease),
+    background var(--t-hover) var(--ease);
+}
+
+.star:hover:not(:disabled) {
+  background: var(--neutral-100);
+  color: var(--gold-700);
+}
+
+.star:disabled {
+  cursor: default;
+}
+
+.filled {
+  color: var(--gold-700);
+}
+
+.star:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.message {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--amber-700);
+}
+
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.commentLabel {
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}
+
+.comment {
+  width: 100%;
+  max-width: 460px;
+  padding: 9px 11px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.comment:focus-visible {
+  outline: none;
+  border-color: var(--blue-400);
+  box-shadow: var(--focus-ring);
+}
+
+.submit {
+  padding: 7px 15px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--blue-900);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.submit:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.thanks {
+  margin: 0;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--hairline);
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}

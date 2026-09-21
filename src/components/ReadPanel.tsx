@@ -42,7 +42,7 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
   const oneLiner = sameProse(read.one_liner, read.narration) ? null : read.one_liner;
 
   return (
-    <section className={styles.panel} aria-label={t('read.title')}>
+    <section className={styles.panel} aria-label={t('read.title')} data-read-panel>
       {/* Null for trends and rankings, which have no single figure. */}
       {headline ? (
         <header className={styles.headline} dir={replyDir(headline.indicator)}>

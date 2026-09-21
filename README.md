@@ -66,6 +66,11 @@ whatever `.env` says.
 | Trend summary figures are computed server-side | stat tiles: first → latest, % change, peak, trough |
 | `table` is carried on each citation | `Citations` — shown as the row's `title`, with no badge |
 | `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
+| `message_id` is the only way to say which answer a rating is about | kept with the turn; `Feedback` sends it with the same `session_id` |
+| A rating of 1 or 2 must carry a comment | `Feedback` opens the box first — the 422 is the backstop, not the path |
+| `comment_required` means the score was fine | the score is kept and `detail.message` is shown verbatim |
+| Ratings are append-only | the control retires once sent, so no second row is posted |
+| An answer must bring the reader to it | `Turn` scrolls to the answer's **top** and moves focus there; a reader who scrolled away is offered a jump instead |
 | A new conversation must `DELETE /session/{id}` | `reset()` — otherwise the old indicator leaks into an unrelated question |
 | Council analysis and generated prose must never share a block | `ReadPanel` — separate surfaces, attribution on one, disclaimer on the other |
 | The read view is offered **iff** `readable === true` | `AnswerCard` — the service decides; no client heuristic |
