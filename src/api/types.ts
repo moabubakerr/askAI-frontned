@@ -461,6 +461,14 @@ export interface OverviewEntry {
   period_label?: string;
   actual?: Figure | number;
   change_yoy_percent?: Figure | number;
+  /**
+   * Percentage **points**. An indicator already measured in per cent moving
+   * from 0.63% to 2.62% has risen 1.99 points; rendering that as +1.99% would
+   * be a wrong number, not a wrong label.
+   */
+  change_yoy_pp?: Figure | number;
+  /** Which of the two the row carries: 'percentage_points' or 'percent'. */
+  change_kind?: string;
   /** Lead with the year-on-year change rather than the level. */
   report_as_growth?: boolean;
 
@@ -777,6 +785,29 @@ export const COMMENT_REQUIRED_AT_OR_BELOW = 2;
 
 export function commentRequiredFor(rating: number): boolean {
   return rating <= COMMENT_REQUIRED_AT_OR_BELOW;
+}
+
+/**
+ * How a movement should read: welcome, unwelcome, or simply up and down.
+ *
+ * `polarity` is what makes green and red honest. 'Increase' means a higher
+ * value is the better outcome, 'Decrease' means a lower one is — so inflation
+ * falling is good news and colouring it red would state the opposite.
+ *
+ * Where the service sends no polarity there is nothing to judge with, and the
+ * movement is reported as direction alone.
+ */
+export function moveTone(
+  change: number | null,
+  polarity?: string,
+): 'good' | 'bad' | 'up' | 'down' | 'flat' | undefined {
+  if (change === null) return undefined;
+  if (change === 0) return 'flat';
+
+  const rising = change > 0;
+  if (polarity === 'Increase') return rising ? 'good' : 'bad';
+  if (polarity === 'Decrease') return rising ? 'bad' : 'good';
+  return rising ? 'up' : 'down';
 }
 
 /** Exhaustiveness guard. */

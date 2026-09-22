@@ -232,10 +232,24 @@
   color: var(--ink-muted);
 }
 
-/* Direction only. Up and down is a fact; good and bad is not — a fall in
-   inflation is the desirable direction — and the field that says which is
-   which is not on this response. */
+/* Rising green, falling red.
+   Worth knowing what this claims: these rows carry no `polarity`, so the colour
+   can only follow the direction of travel. For an indicator where a fall is the
+   welcome direction — inflation is the obvious one — red marks the movement,
+   not a judgement about it. The moment the service sends polarity here, this
+   should read it the way DirectionSplit does. */
 .arrow {
   margin-inline-end: 4px;
-  color: var(--ink-faint);
+}
+
+td[data-direction='up'] {
+  color: var(--green-700);
+}
+
+td[data-direction='down'] {
+  color: var(--red-700);
+}
+
+td[data-direction='flat'] {
+  color: var(--ink-muted);
 }

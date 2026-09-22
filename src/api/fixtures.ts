@@ -276,13 +276,29 @@ const overview = (): ChatResponse =>
           asked_as: 'Real GDP',
         },
         {
-          // No comparable reading a year back: no movement is known.
+          // Already measured in per cent, so its year-on-year move is in
+          // points: 0.63% to 2.62% is +1.99 pp, and +1.99% would be a
+          // different — and wrong — figure.
           indicator: 'Inflation',
           actual: 2.6162,
           period_label: '2026-04',
           unit: '%',
           decimal_places: 4,
           granularity: 'monthly',
+          previous_value: 0.6262,
+          previous_period: '2025-04',
+          change_yoy_pp: 1.99,
+          change_kind: 'percentage_points',
+          report_as_growth: false,
+        },
+        {
+          // No comparable reading a year back: no movement is known.
+          indicator: 'Population',
+          actual: 3.1,
+          period_label: '2025',
+          unit: 'million',
+          decimal_places: 1,
+          granularity: 'yearly',
           report_as_growth: false,
         },
         {

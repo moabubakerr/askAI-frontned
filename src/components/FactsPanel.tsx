@@ -10,6 +10,7 @@ import {
   overviewKind,
   publicFacts,
   toNumber,
+  yoyChange,
   factsUnit,
   type CountryRow,
   type Facts,
@@ -21,6 +22,7 @@ import {
   formatChange,
   formatFigure,
   formatPercent,
+  formatPoints,
   formatWithUnit,
   NO_VALUE,
 } from '../i18n/figures';
@@ -585,7 +587,7 @@ function Overview({ facts }: { facts: Facts }) {
           {rows.map((row, index) => {
             const unit = typeof row.unit === 'string' ? row.unit : null;
             const level = typeof row.actual === 'string' ? row.actual : null;
-            const yoy = numberish(row.change_yoy_percent);
+            const yoy = yoyChange(row);
             const asGrowth = row.report_as_growth === true && yoy !== null;
 
             return (
@@ -601,7 +603,13 @@ function Overview({ facts }: { facts: Facts }) {
                 <td className={`${styles.mono} num`}>
                   {asGrowth ? (
                     <>
-                      <span className={styles.lead}>{`${formatPercent(yoy, lang)} ${t('facts.yoy')}`}</span>
+                      <span className={styles.lead}>
+                        {`${
+                          yoy && yoy.kind === 'pp'
+                            ? formatPoints(yoy.value.toFixed(2), lang)
+                            : formatPercent(yoy ? yoy.value.toFixed(2) : null, lang)
+                        } ${t('facts.yoy')}`}
+                      </span>
                       {level !== null ? (
                         <span className={styles.secondary}>{formatWithUnit(level, unit, lang)}</span>
                       ) : null}
@@ -678,7 +686,10 @@ function MacroOverview({ facts, rows }: { facts: Facts; rows: OverviewEntry[] })
 
               const now = toNumber(row.actual ?? null);
               const before = toNumber(row.previous_value ?? null);
-              const yoy = toNumber(row.change_yoy_percent ?? null);
+              // Percent or points — `change_kind` decides, and reading only one
+              // of the two fields leaves the cell blank while the prose above
+              // states the change.
+              const yoy = yoyChange(row);
 
               // As sent. `decimal_places` is still on the row, but the figures
               // already carry the precision they are meant to be shown at.
@@ -707,15 +718,20 @@ function MacroOverview({ facts, rows }: { facts: Facts; rows: OverviewEntry[] })
                   </td>
                   {/* An absent change means no movement is known, not that
                       nothing moved. */}
-                  <td className={`${styles.mono} num`} data-direction={direction(yoy)}>
+                  <td
+                    className={`${styles.mono} num`}
+                    data-direction={direction(yoy ? yoy.value : null)}
+                  >
                     {yoy === null ? (
                       NO_VALUE
                     ) : (
                       <>
                         <span aria-hidden="true" className={styles.arrow}>
-                          {yoy > 0 ? '▲' : yoy < 0 ? '▼' : '•'}
+                          {yoy.value > 0 ? '▲' : yoy.value < 0 ? '▼' : '•'}
                         </span>
-                        {formatPercent(yoy.toFixed(2), lang)}
+                        {yoy.kind === 'pp'
+                          ? formatPoints(yoy.value.toFixed(2), lang)
+                          : formatPercent(yoy.value.toFixed(2), lang)}
                       </>
                     )}
                   </td>

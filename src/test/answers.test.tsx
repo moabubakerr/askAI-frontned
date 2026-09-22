@@ -758,10 +758,24 @@ describe('the macro snapshot', () => {
 
     const rows = within(card)
       .getAllByRole('row')
-      .filter((row) => (row.textContent ?? '').includes('Inflation'));
+      .filter((row) => (row.textContent ?? '').includes('Population'));
     expect(rows).toHaveLength(1);
     // An absent change is "not known", never "flat".
     expect(rows[0]?.textContent).toContain('—');
+  });
+
+  it('renders a change in points as points, not as per cent', async () => {
+    await ask('How is Qatar’s economy doing?');
+    const card = await screen.findByRole('article');
+
+    const inflation = within(card)
+      .getAllByRole('row')
+      .find((row) => (row.textContent ?? '').includes('Inflation'));
+
+    // Reading only change_yoy_percent left this cell blank while the prose
+    // above it stated the change. And +1.99% would be a different number.
+    expect(inflation?.textContent).toContain('+1.99 pp');
+    expect(inflation?.textContent).not.toContain('+1.99%');
   });
 
   it('shows direction without calling it good or bad', async () => {
@@ -983,5 +997,26 @@ describe('rating an answer', () => {
 
     expect(card).toHaveAttribute('data-ok', 'false');
     expect(within(card).getByRole('radio', { name: 'Rate 1 out of 5' })).toBeInTheDocument();
+  });
+});
+
+describe('colouring a movement', () => {
+  it('reads polarity, so a welcome fall is not marked as a loss', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    const cell = (name: string) =>
+      within(card)
+        .getAllByRole('listitem')
+        .find((row) => (row.textContent ?? '').includes(name))
+        ?.querySelector('[data-tone]');
+
+    // Both fell. Government Revenues is 'Increase', so falling is unwelcome;
+    // Inflation is 'Decrease', so falling is the good news.
+    expect(cell('Government Revenues')).toHaveAttribute('data-tone', 'bad');
+    expect(cell('Inflation')).toHaveAttribute('data-tone', 'good');
+
+    // And a rise is judged the same way round.
+    expect(cell('Real GDP')).toHaveAttribute('data-tone', 'good');
   });
 });

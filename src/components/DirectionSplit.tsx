@@ -2,6 +2,7 @@ import {
   decliningRows,
   increasingRows,
   noComparisonRows,
+  moveTone,
   unchangedRows,
   yoyChange,
   type DirectionRow,
@@ -141,10 +142,14 @@ function Group({
               <span className={styles.name}>
                 <LocalizedText text={row.indicator} />
               </span>
-              {/* Stored to four places; two is what reads. Percentage points
-                  and per cent are different measurements, so the row says
-                  which one this is rather than defaulting to a % sign. */}
-              <span className={`${styles.change} num`}>
+              {/* Green and red by whether the move is *welcome*, not by which
+                  way it went: these rows carry `polarity`, and inflation
+                  falling is good news. Stored to four places; two is what
+                  reads, and points are not per cent. */}
+              <span
+                className={`${styles.change} num`}
+                data-tone={change ? moveTone(change.value, row.polarity) : undefined}
+              >
                 {change === null
                   ? NO_VALUE
                   : change.kind === 'pp'

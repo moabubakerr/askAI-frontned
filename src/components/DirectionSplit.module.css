@@ -101,6 +101,21 @@
   color: var(--ink);
 }
 
+/* Welcome and unwelcome, read from each row's own polarity. */
+.change[data-tone='good'] {
+  color: var(--green-700);
+}
+
+.change[data-tone='bad'] {
+  color: var(--red-700);
+}
+
+/* No polarity to judge with: direction only. */
+.change[data-tone='up'],
+.change[data-tone='down'] {
+  color: var(--ink);
+}
+
 .detail {
   grid-column: 1 / -1;
   display: flex;
