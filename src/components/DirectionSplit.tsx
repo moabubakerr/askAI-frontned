@@ -142,13 +142,17 @@ function Group({
               <span className={styles.name}>
                 <LocalizedText text={row.indicator} />
               </span>
-              {/* Green and red by whether the move is *welcome*, not by which
-                  way it went: these rows carry `polarity`, and inflation
-                  falling is good news. Stored to four places; two is what
-                  reads, and points are not per cent. */}
+              {/* Colour follows direction, because the group heading above it
+                  already does: a row filed under "Rose" that reads red argues
+                  with its own heading. Whether the move is welcome is said in
+                  words instead — "lower is better" on the line below — which is
+                  the honest place for a judgement anyway.
+
+                  Stored to four places; two is what reads, and points are not
+                  per cent. */}
               <span
                 className={`${styles.change} num`}
-                data-tone={change ? moveTone(change.value, row.polarity) : undefined}
+                data-tone={change ? moveTone(change.value) : undefined}
               >
                 {change === null
                   ? NO_VALUE

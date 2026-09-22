@@ -788,14 +788,15 @@ export function commentRequiredFor(rating: number): boolean {
 }
 
 /**
- * How a movement should read: welcome, unwelcome, or simply up and down.
+ * Which way a movement went.
  *
- * `polarity` is what makes green and red honest. 'Increase' means a higher
- * value is the better outcome, 'Decrease' means a lower one is — so inflation
- * falling is good news and colouring it red would state the opposite.
+ * Colour follows direction, not judgement. Where rows are grouped by direction
+ * — "Rose" and "Fell" — a row coloured by whether its move was *welcome* reads
+ * as a mistake against the heading above it: inflation filed under "Rose" but
+ * printed in red looks like a bug, not a warning. Whether a direction is
+ * welcome is said in words instead, from each row's own `polarity`.
  *
- * Where the service sends no polarity there is nothing to judge with, and the
- * movement is reported as direction alone.
+ * `polarity` is still accepted here for a caller that wants the other reading.
  */
 export function moveTone(
   change: number | null,

@@ -1001,7 +1001,7 @@ describe('rating an answer', () => {
 });
 
 describe('colouring a movement', () => {
-  it('reads polarity, so a welcome fall is not marked as a loss', async () => {
+  it('colours by direction, so no row argues with the group it sits in', async () => {
     await ask('which indicators are rising and which are falling');
     const card = await screen.findByRole('article');
 
@@ -1011,12 +1011,22 @@ describe('colouring a movement', () => {
         .find((row) => (row.textContent ?? '').includes(name))
         ?.querySelector('[data-tone]');
 
-    // Both fell. Government Revenues is 'Increase', so falling is unwelcome;
-    // Inflation is 'Decrease', so falling is the good news.
-    expect(cell('Government Revenues')).toHaveAttribute('data-tone', 'bad');
-    expect(cell('Inflation')).toHaveAttribute('data-tone', 'good');
+    // Everything under "Fell" reads as a fall, whatever its polarity — a red
+    // figure under a "Rose" heading looks like a mistake, not a judgement.
+    expect(cell('Government Revenues')).toHaveAttribute('data-tone', 'down');
+    expect(cell('Inflation')).toHaveAttribute('data-tone', 'down');
+    expect(cell('Real GDP')).toHaveAttribute('data-tone', 'up');
+  });
 
-    // And a rise is judged the same way round.
-    expect(cell('Real GDP')).toHaveAttribute('data-tone', 'good');
+  it('still says which direction is welcome, in words', async () => {
+    await ask('which indicators are rising and which are falling');
+    const card = await screen.findByRole('article');
+
+    const inflation = within(card)
+      .getAllByRole('listitem')
+      .find((row) => (row.textContent ?? '').includes('Inflation'));
+
+    // The judgement moved out of the colour and into the line under the figure.
+    expect(inflation?.textContent).toContain('lower is better');
   });
 });

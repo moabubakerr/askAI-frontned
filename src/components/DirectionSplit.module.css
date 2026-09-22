@@ -76,6 +76,14 @@
   color: var(--ink-faint);
 }
 
+.group[data-direction='up'] .arrow {
+  color: var(--green-700);
+}
+
+.group[data-direction='down'] .arrow {
+  color: var(--red-700);
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -101,19 +109,18 @@
   color: var(--ink);
 }
 
-/* Welcome and unwelcome, read from each row's own polarity. */
-.change[data-tone='good'] {
+/* Direction, matching the group each row sits in. Whether that
+   direction is welcome is carried by the polarity line under the figure. */
+.change[data-tone='up'] {
   color: var(--green-700);
 }
 
-.change[data-tone='bad'] {
+.change[data-tone='down'] {
   color: var(--red-700);
 }
 
-/* No polarity to judge with: direction only. */
-.change[data-tone='up'],
-.change[data-tone='down'] {
-  color: var(--ink);
+.change[data-tone='flat'] {
+  color: var(--ink-muted);
 }
 
 .detail {
@@ -130,8 +137,10 @@
   font-family: var(--font-mono);
 }
 
+/* The judgement, in words: the only place the client says whether a direction
+   is welcome. */
 .polarity {
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 
 .reason {
