@@ -1,0 +1,25 @@
+/* Paragraphs keep the service's own line breaks; the gap between them does the
+   spacing rather than a blank line of text. */
+.paragraph {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.paragraph + .paragraph,
+.paragraph + .list,
+.list + .paragraph {
+  margin-block-start: 10px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-inline-start: 20px;
+  list-style: disc;
+}
+
+.list li::marker {
+  color: var(--ink-faint);
+}

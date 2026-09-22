@@ -1,7 +1,7 @@
 import { Quote } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { bulletLines, nonBulletText, replyDir } from '../api/types';
-import { LocalizedText } from '../i18n/LocalizedText';
+import { Inline } from '../i18n/ProseText';
 import styles from './CouncilText.module.css';
 
 /**
@@ -47,14 +47,14 @@ export function CouncilProse({ text, label }: { text: string; label?: string }) 
       {label ? <span className={styles.label}>{label}</span> : null}
       {lead ? (
         <p className={styles.lead}>
-          <LocalizedText text={lead} />
+          <Inline text={lead} />
         </p>
       ) : null}
       {bullets.length > 0 ? (
         <ul className={styles.bullets}>
           {bullets.map((line, index) => (
             <li key={index}>
-              <LocalizedText text={line} />
+              <Inline text={line} />
             </li>
           ))}
         </ul>

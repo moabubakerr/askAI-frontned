@@ -1030,3 +1030,48 @@ describe('colouring a movement', () => {
     expect(inflation?.textContent).toContain('lower is better');
   });
 });
+
+describe('the prose the service writes', () => {
+  async function askWithAnswer(answer: string) {
+    vi.spyOn(client, 'chat').mockResolvedValue({
+      message_id: 'm1',
+      answer,
+      facts_payload: { ok: true, facts: { indicator: 'Real GDP' }, citations: [] },
+      chart: null,
+      verified: true,
+      readable: true,
+    });
+    return ask('anything');
+  }
+
+  it('renders **bold** as bold, not as asterisks', async () => {
+    await askWithAnswer('- **Total Population**: grew to 3.37 Mn.');
+    const card = await screen.findByRole('article');
+
+    expect(within(card).getByText('Total Population').tagName).toBe('STRONG');
+    expect(card.textContent).not.toContain('**');
+  });
+
+  it('renders a dash list as a list', async () => {
+    await askWithAnswer('Mixed performance:\n\n- Real GDP rose.\n- Inflation increased.');
+    const card = await screen.findByRole('article');
+
+    const items = within(card)
+      .getAllByRole('listitem')
+      .map((node) => node.textContent);
+    expect(items).toContain('Real GDP rose.');
+    expect(items).toContain('Inflation increased.');
+    // The marker is the list's job, so the text no longer carries it.
+    expect(items.some((text) => text?.startsWith('-'))).toBe(false);
+  });
+
+  it('renders markup it does not know as the text it was', async () => {
+    await askWithAnswer('A heading\n# Not a heading here\n<script>alert(1)</script>');
+    const card = await screen.findByRole('article');
+
+    // Never HTML from a response: unknown markup stays characters.
+    expect(card.textContent).toContain('# Not a heading here');
+    expect(card.textContent).toContain('<script>alert(1)</script>');
+    expect(card.querySelector('script')).toBeNull();
+  });
+});

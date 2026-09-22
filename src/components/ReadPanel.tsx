@@ -11,6 +11,7 @@ import {
 } from '../api/types';
 import { formatFigure, formatWithUnit } from '../i18n/figures';
 import { LocalizedText } from '../i18n/LocalizedText';
+import { ProseText } from '../i18n/ProseText';
 import { useI18n } from '../i18n/useI18n';
 import { CouncilProse, CouncilText } from './CouncilText';
 import styles from './ReadPanel.module.css';
@@ -71,9 +72,9 @@ export function ReadPanel({ read }: { read: ReadResponse }) {
 
       {read.narration ? (
         <div className={styles.narration}>
-          <p className={styles.narrationText} dir={replyDir(read.narration)}>
-            <LocalizedText text={read.narration} />
-          </p>
+          <div className={styles.narrationText} dir={replyDir(read.narration)}>
+            <ProseText text={read.narration} />
+          </div>
           {/* Travels with the narration, always. */}
           <p className={styles.disclaimer} dir={replyDir(read.disclaimer)}>
             {read.disclaimer ?? t('read.disclaimerFallback')}

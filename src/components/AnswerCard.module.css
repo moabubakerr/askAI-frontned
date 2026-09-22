@@ -26,11 +26,12 @@
   background: var(--neutral-300);
 }
 
+/* Line breaks are handled per paragraph now — see ProseText — so the block
+   itself no longer preserves whitespace, and a bullet list is a list. */
 .prose {
   font-size: var(--fs-sentence);
   line-height: 1.65;
   color: var(--ink);
-  white-space: pre-wrap;
 }
 
 .unverified {

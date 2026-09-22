@@ -13,6 +13,7 @@ import {
   type Facts,
 } from '../api/types';
 import { LocalizedText } from '../i18n/LocalizedText';
+import { ProseText } from '../i18n/ProseText';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation, type Turn } from '../state/useConversation';
 import { Chart } from './Chart/Chart';
@@ -96,10 +97,11 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
           carry a number the model wanted, which is a backend gap worth closing.
           The store logs it and the Session panel counts it. */}
 
-      {/* pre-wrap: refusals are multi-line with "• " bullets, in both
-          languages, and the line breaks are the service's own. */}
+      {/* The prose carries a little Markdown — `**bold**` and "- "/"• "
+          bullets, in both languages — and the line breaks are the service's
+          own. Rendered as plain text those show as literal asterisks. */}
       <div className={styles.prose} dir={dir}>
-        <LocalizedText text={body} />
+        <ProseText text={body} />
       </div>
 
       {/* "I matched your question to X (approximate match)" — low confidence,
