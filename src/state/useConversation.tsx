@@ -48,6 +48,15 @@ export interface Turn {
    * step counter.
    */
   stage: StreamStage | null;
+  /**
+   * The answer as it is released, before the final one lands.
+   *
+   * Fragments arrive at complete paragraph or sentence boundaries, never
+   * mid-`**`, so this is always valid Markdown and is re-rendered as it stands.
+   * It is provisional: the `answer` event is authoritative, and a `replace`
+   * empties this because everything drawn so far turned out to be wrong.
+   */
+  streamedText: string;
   /** The read-it-for-me view of this same question, once asked for. */
   read: ReadResponse | null;
   readStatus: 'idle' | 'loading' | 'ready' | 'error';
@@ -125,7 +134,11 @@ function useConversationStore(): ConversationStore {
     (index: number, question: string) => {
       const request: ChatRequest = { message: question, session_id: sessionId.current };
 
-      chatStreamApi(request, (stage) => patchTurn(index, { stage })).then(
+      chatStreamApi(
+        request,
+        (stage) => patchTurn(index, { stage }),
+        (streamedText) => patchTurn(index, { streamedText }),
+      ).then(
         (response) => {
           if (response.verified === false) {
             // Evidence of a payload that did not carry a number the model
@@ -134,7 +147,15 @@ function useConversationStore(): ConversationStore {
             // was "replaced" would only invite doubt about it.
             console.warn('[askai] answer returned verified:false', { question });
           }
-          patchTurn(index, { response, status: 'ready', error: null, timedOut: false, stage: null });
+          // The final text wins over whatever the fragments built.
+          patchTurn(index, {
+            response,
+            status: 'ready',
+            error: null,
+            timedOut: false,
+            stage: null,
+            streamedText: '',
+          });
         },
         (cause: unknown) => {
           const message = cause instanceof Error ? cause.message : String(cause);
@@ -169,6 +190,7 @@ function useConversationStore(): ConversationStore {
           error: null,
           timedOut: false,
           stage: null,
+          streamedText: '',
           read: null,
           readStatus: 'idle',
           feedback: NO_FEEDBACK,
@@ -182,7 +204,14 @@ function useConversationStore(): ConversationStore {
 
   const retry = useCallback(
     (turn: Turn, lang: Lang) => {
-      patchTurn(turn.index, { status: 'loading', error: null, timedOut: false, stage: null, lang });
+      patchTurn(turn.index, {
+        status: 'loading',
+        error: null,
+        timedOut: false,
+        stage: null,
+        streamedText: '',
+        lang,
+      });
       send(turn.index, turn.question);
     },
     [patchTurn, send],

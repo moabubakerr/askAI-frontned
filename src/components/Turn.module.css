@@ -183,3 +183,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.composing {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* The answer as it lands. Deliberately close to the finished card, so the text
+   does not jump when the real one replaces it. */
+.draft {
+  padding: 22px 24px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--fs-sentence);
+  line-height: 1.65;
+  color: var(--ink);
+}

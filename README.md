@@ -69,6 +69,9 @@ whatever `.env` says.
 | The answer is Markdown | `ProseText` — react-markdown, no raw HTML, so a response can never become markup |
 | Streaming is the same URL with an `Accept` header | `streamInit`/`readEventStream`; stages caption an indeterminate wait, never a step counter |
 | `resolved` names the indicator | shown as "Looking up …" while the answer composes, so a wrong match is obvious before reading it |
+| `delta` fragments are complete units | accumulated in `readEventStream` and re-rendered as Markdown; never a partial-syntax parser |
+| `replace` discards what was drawn | the draft is emptied; the corrected text follows in `answer` |
+| `answer` is authoritative | it replaces whatever the deltas built, and a caller that ignores deltas is still correct |
 | A stream commits to 200 before the work | an `error` event, or ending with no answer, is a failure |
 | `message_id` is the only way to say which answer a rating is about | kept with the turn; `Feedback` sends it with the same `session_id` |
 | A rating of 1 or 2 must carry a comment | `Feedback` opens the box first — the 422 is the backstop, not the path |

@@ -107,3 +107,60 @@ describe('the answer stream', () => {
     expect(answer.message_id).toBe('m1');
   });
 });
+
+describe('the answer as it arrives', () => {
+  it('accumulates deltas into valid Markdown as it goes', async () => {
+    const texts: string[] = [];
+    await readEventStream(
+      streamOf(
+        frame('delta', { text: 'Real GDP was **185.17 Bn QAR** in 2025-Q4.\n\n' }),
+        frame('delta', { text: 'That is up from 181.49 Bn QAR a year earlier.' }),
+        frame('answer', ANSWER),
+      ),
+      () => {},
+      (text) => texts.push(text),
+    );
+
+    // Each fragment is a complete unit, so every accumulated string stands on
+    // its own — no partial `**` ever reaches the renderer.
+    expect(texts[0]).toBe('Real GDP was **185.17 Bn QAR** in 2025-Q4.\n\n');
+    expect(texts[1]).toContain('a year earlier.');
+    expect(texts.every((t) => (t.match(/\*\*/g) ?? []).length % 2 === 0)).toBe(true);
+  });
+
+  it('clears what was drawn when the answer failed verification', async () => {
+    const texts: string[] = [];
+    const answer = await readEventStream(
+      streamOf(
+        frame('delta', { text: 'Real GDP was 999 Bn QAR.' }),
+        frame('replace', { reason: 'failed verification' }),
+        frame('answer', ANSWER),
+      ),
+      () => {},
+      (text) => texts.push(text),
+    );
+
+    // Everything streamed is discarded, and the corrected text follows.
+    expect(texts).toEqual(['Real GDP was 999 Bn QAR.', '']);
+    expect(answer.answer).toContain('185.17');
+  });
+
+  it('lets the answer event win over what the deltas built', async () => {
+    const answer = await readEventStream(
+      streamOf(frame('delta', { text: 'a draft that differs' }), frame('answer', ANSWER)),
+      () => {},
+      () => {},
+    );
+
+    expect(answer.answer).toBe(ANSWER.answer);
+  });
+
+  it('is correct for a caller that ignores deltas entirely', async () => {
+    const answer = await readEventStream(
+      streamOf(frame('delta', { text: 'ignored' }), frame('answer', ANSWER)),
+      () => {},
+    );
+
+    expect(answer.answer).toContain('185.17');
+  });
+});

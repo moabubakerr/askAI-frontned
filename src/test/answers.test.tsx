@@ -107,7 +107,8 @@ describe('what the reader must not be allowed to miss', () => {
   it('builds the chips from facts.candidates, not from the message text', async () => {
     const chatSpy = vi.spyOn(client, 'chatStream');
     const user = await ask('What is the GDP forecast?');
-    await screen.findByText(/could match more than one indicator/i);
+    // The card, not the text: the streamed draft carries the message first.
+    await screen.findByRole('article');
 
     // 'Debt to GDP Ratio' is in `candidates` but never in the message, so a
     // chip for it proves the structured field is what is being read.

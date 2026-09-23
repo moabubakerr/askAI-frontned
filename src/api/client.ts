@@ -107,8 +107,9 @@ async function post<T>(path: string, req: ChatRequest): Promise<T> {
 export async function chatStream(
   req: ChatRequest,
   onStage: (stage: StreamStage) => void,
+  onText?: (text: string) => void,
 ): Promise<ChatResponse> {
-  if (USE_FIXTURES) return streamFixture(req, onStage);
+  if (USE_FIXTURES) return streamFixture(req, onStage, onText);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -116,7 +117,7 @@ export async function chatStream(
   try {
     const res = await fetch('/api/chat', streamInit(req, controller.signal));
     if (!res.ok) throw new ChatError(`${res.status} ${res.statusText}`, res.status);
-    return await readEventStream(res, onStage);
+    return await readEventStream(res, onStage, onText);
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') {
       throw new ChatError('timeout');
@@ -151,6 +152,11 @@ export function streamInit(req: ChatRequest, signal?: AbortSignal): RequestInit 
 export async function readEventStream(
   res: Response,
   onStage: (stage: StreamStage) => void,
+  /**
+   * The answer so far, after each fragment. Accumulation happens here so a
+   * caller only ever holds one string, and a `replace` arrives as an empty one.
+   */
+  onText?: (text: string) => void,
 ): Promise<ChatResponse> {
   if (!res.body) throw new ChatError('no stream');
 
@@ -158,6 +164,7 @@ export async function readEventStream(
   const decoder = new TextDecoder();
   let buffer = '';
   let answer: ChatResponse | null = null;
+  let streamed = '';
 
   for (;;) {
     const { done, value } = await reader.read();
@@ -183,6 +190,22 @@ export async function readEventStream(
         }
         if (parsed.event === 'answer') answer = parsed.data as unknown as ChatResponse;
         if (parsed.event === 'stage') onStage(parsed.data as StreamStage);
+
+        // Fragments are released at complete paragraph, bullet or sentence
+        // boundaries and never mid-`**`, so the accumulated string is always
+        // valid Markdown and can be re-rendered as it stands.
+        if (parsed.event === 'delta' && typeof parsed.data['text'] === 'string') {
+          streamed += parsed.data['text'] as string;
+          onText?.(streamed);
+        }
+
+        // The answer failed verification after streaming began: everything
+        // drawn so far is wrong, and the correct text is in the `answer` event
+        // behind this one. Rare, and the case that matters.
+        if (parsed.event === 'replace') {
+          streamed = '';
+          onText?.('');
+        }
       }
 
       split = buffer.indexOf(FRAME_END);
@@ -191,6 +214,9 @@ export async function readEventStream(
 
   // Ended having said nothing: a failure, not an empty success.
   if (!answer) throw new ChatError('stream ended without an answer');
+
+  // `answer` is authoritative. Where it differs from what the deltas built —
+  // and after a `replace` it will — this is the text that is correct.
   return answer;
 }
 
@@ -221,6 +247,7 @@ function parseFrame(frame: string): { event: string; data: Record<string, unknow
 async function streamFixture(
   req: ChatRequest,
   onStage: (stage: StreamStage) => void,
+  onText?: (text: string) => void,
 ): Promise<ChatResponse> {
   const answer = resolveFixture(req);
   const stages: StreamStage[] = [
@@ -232,7 +259,17 @@ async function streamFixture(
 
   for (const stage of stages) {
     onStage(stage);
-    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS / stages.length));
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS / (stages.length + 2)));
+  }
+
+  // Released a paragraph at a time, the way the service releases it.
+  if (onText) {
+    let shown = '';
+    for (const part of answer.answer.split('\n\n')) {
+      shown += (shown ? '\n\n' : '') + part;
+      onText(shown);
+      await new Promise((resolve) => setTimeout(resolve, 90));
+    }
   }
 
   return answer;

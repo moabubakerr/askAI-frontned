@@ -2,8 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { formatNumber } from '../i18n/formatNumber';
 import { LocalizedText } from '../i18n/LocalizedText';
+import { ProseText } from '../i18n/ProseText';
 import type { MsgKey } from '../i18n/en';
 import { useI18n } from '../i18n/useI18n';
+import { replyDir } from '../api/types';
 import { useConversation, type Turn as TurnModel } from '../state/useConversation';
 import { AnswerCard } from './AnswerCard';
 import { Loader } from './Loader';
@@ -119,7 +121,16 @@ export function Turn({ turn }: { turn: TurnModel }) {
         aria-labelledby={`turn-${turn.index}-question`}
       >
         {turn.status === 'loading' ? (
-          <Loader label={t('turn.loading')} caption={stageCaption(turn.stage, t)} />
+          <div className={styles.composing}>
+            {/* Provisional, and replaced wholesale by the final answer. Shown
+                because watching an answer arrive beats watching a spinner. */}
+            {turn.streamedText ? (
+              <div className={styles.draft} dir={replyDir(turn.streamedText)}>
+                <ProseText text={turn.streamedText} />
+              </div>
+            ) : null}
+            <Loader label={t('turn.loading')} caption={stageCaption(turn.stage, t)} />
+          </div>
         ) : null}
 
         {turn.status === 'error' ? (
