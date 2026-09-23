@@ -22,6 +22,7 @@ import {
 import type {
   ChatRequest,
   ChatResponse,
+  StreamStage,
   FeedbackRequest,
   FeedbackResponse,
   ReadResponse,
@@ -85,6 +86,156 @@ async function post<T>(path: string, req: ChatRequest): Promise<T> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * The same answer as `/chat`, preceded by events saying where the work has got
+ * to.
+ *
+ * Streaming is the same URL as `/chat`, opted into with an `Accept` header: without
+ * it the service returns the JSON body as before, so falling back costs nothing.
+ *
+ * Three things shape this. It is a POST with a body, so `EventSource` cannot be
+ * used and the frames are read and parsed here. The answer text is **not**
+ * streamed token by token and will not be — figures are checked against the
+ * source data only once the whole answer exists, so nothing can be shown before
+ * that without risking showing a number and then withdrawing it. And because a
+ * stream commits to HTTP 200 before the work starts, a failure arrives as an
+ * `error` event rather than a status code: a stream that ends with neither an
+ * answer nor an error is a failure too, not an empty success.
+ */
+export async function chatStream(
+  req: ChatRequest,
+  onStage: (stage: StreamStage) => void,
+): Promise<ChatResponse> {
+  if (USE_FIXTURES) return streamFixture(req, onStage);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const res = await fetch('/api/chat', streamInit(req, controller.signal));
+    if (!res.ok) throw new ChatError(`${res.status} ${res.statusText}`, res.status);
+    return await readEventStream(res, onStage);
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === 'AbortError') {
+      throw new ChatError('timeout');
+    }
+    throw cause;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * The same request as `/chat`, with the header that opts into the stream.
+ * Without it the service answers with the JSON body exactly as before, so
+ * falling back is a matter of dropping one header.
+ */
+export function streamInit(req: ChatRequest, signal?: AbortSignal): RequestInit {
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify(req),
+    ...(signal ? { signal } : {}),
+  };
+}
+
+/**
+ * Read the frames until the answer arrives.
+ *
+ * Separate from the request so it can be exercised on its own: the failure
+ * paths are the interesting part, and a stream commits to HTTP 200 before the
+ * work starts, so nothing can be learned from a status code afterwards.
+ */
+export async function readEventStream(
+  res: Response,
+  onStage: (stage: StreamStage) => void,
+): Promise<ChatResponse> {
+  if (!res.body) throw new ChatError('no stream');
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let answer: ChatResponse | null = null;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Frames are separated by a blank line; a partial one waits in the buffer
+    // until the rest of it arrives.
+    let split = buffer.indexOf(FRAME_END);
+    while (split !== -1) {
+      const frame = buffer.slice(0, split);
+      buffer = buffer.slice(split + FRAME_END.length);
+
+      const parsed = parseFrame(frame);
+      if (parsed) {
+        if (parsed.event === 'error') {
+          throw new ChatError(
+            typeof parsed.data['message'] === 'string'
+              ? (parsed.data['message'] as string)
+              : 'stream failed',
+          );
+        }
+        if (parsed.event === 'answer') answer = parsed.data as unknown as ChatResponse;
+        if (parsed.event === 'stage') onStage(parsed.data as StreamStage);
+      }
+
+      split = buffer.indexOf(FRAME_END);
+    }
+  }
+
+  // Ended having said nothing: a failure, not an empty success.
+  if (!answer) throw new ChatError('stream ended without an answer');
+  return answer;
+}
+
+/** A blank line ends a frame. */
+const FRAME_END = '\n\n';
+
+/** One SSE frame: `event:` and `data:` lines, with a trailing CR tolerated. */
+function parseFrame(frame: string): { event: string; data: Record<string, unknown> } | null {
+  let event = 'message';
+  const data: string[] = [];
+
+  for (const raw of frame.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (line.startsWith(':')) continue; // a comment, often a keep-alive
+    if (line.startsWith('event:')) event = line.slice(6).trim();
+    else if (line.startsWith('data:')) data.push(line.slice(5).trim());
+  }
+
+  if (data.length === 0) return null;
+  try {
+    return { event, data: JSON.parse(data.join('\n')) as Record<string, unknown> };
+  } catch {
+    return null;
+  }
+}
+
+/** The fixtures walk the same stages so the caption is exercised offline. */
+async function streamFixture(
+  req: ChatRequest,
+  onStage: (stage: StreamStage) => void,
+): Promise<ChatResponse> {
+  const answer = resolveFixture(req);
+  const stages: StreamStage[] = [
+    { stage: 'understanding' },
+    { stage: 'resolved', indicator: 'Real GDP' },
+    { stage: 'retrieving', indicator: 'Real GDP' },
+    { stage: 'composing' },
+  ];
+
+  for (const stage of stages) {
+    onStage(stage);
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS / stages.length));
+  }
+
+  return answer;
 }
 
 export async function chat(req: ChatRequest): Promise<ChatResponse> {

@@ -1,7 +1,7 @@
 import { Quote } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { bulletLines, nonBulletText, replyDir } from '../api/types';
-import { Inline } from '../i18n/ProseText';
+import { replyDir } from '../api/types';
+import { ProseText } from '../i18n/ProseText';
 import styles from './CouncilText.module.css';
 
 /**
@@ -39,26 +39,11 @@ export function CouncilText({
  * its own line breaks, because the service wrote them.
  */
 export function CouncilProse({ text, label }: { text: string; label?: string }) {
-  const bullets = bulletLines(text);
-  const lead = nonBulletText(text);
-
   return (
     <div className={styles.prose} dir={replyDir(text)}>
       {label ? <span className={styles.label}>{label}</span> : null}
-      {lead ? (
-        <p className={styles.lead}>
-          <Inline text={lead} />
-        </p>
-      ) : null}
-      {bullets.length > 0 ? (
-        <ul className={styles.bullets}>
-          {bullets.map((line, index) => (
-            <li key={index}>
-              <Inline text={line} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {/* The Council's own text uses the same Markdown conventions. */}
+      <ProseText text={text} />
     </div>
   );
 }

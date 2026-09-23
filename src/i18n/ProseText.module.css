@@ -1,25 +1,99 @@
-/* Paragraphs keep the service's own line breaks; the gap between them does the
-   spacing rather than a blank line of text. */
-.paragraph {
+/*
+ * Markdown from the service. Every element it can emit is styled here, plus the
+ * ones the contract says it will not — an unexpected table should look plain,
+ * not broken.
+ *
+ * `unicode-bidi: plaintext` gives each block its own base direction, read from
+ * its first strong character. That is what keeps an English indicator name
+ * inside an Arabic sentence — and an Arabic name inside an English one — from
+ * reordering the line, without the client inspecting the text at all.
+ */
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prose :where(p, li) {
   margin: 0;
-  white-space: pre-wrap;
+  unicode-bidi: plaintext;
 }
 
-.paragraph + .paragraph,
-.paragraph + .list,
-.list + .paragraph {
-  margin-block-start: 10px;
-}
-
-.list {
+.prose :where(ul, ol) {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin: 0;
   padding-inline-start: 20px;
+}
+
+.prose ul {
   list-style: disc;
 }
 
-.list li::marker {
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li::marker {
   color: var(--ink-faint);
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The `*Sources:*` line that heads the footer. */
+.prose em {
+  font-style: normal;
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Not emitted by contract — styled so an unexpected one reads plainly. */
+.prose :where(h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.prose :where(code, pre) {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+}
+
+.prose pre {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--neutral-100);
+  overflow-x: auto;
+}
+
+.prose a {
+  color: var(--blue-800);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.prose :where(th, td) {
+  padding: 6px 10px;
+  border-block-end: 1px solid var(--hairline);
+  text-align: start;
+}
+
+.prose blockquote {
+  margin: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--hairline);
+  color: var(--ink-muted);
 }

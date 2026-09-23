@@ -80,7 +80,7 @@ function missing(message: string, facts?: Facts): ChatResponse {
 
 const latestValue = (): ChatResponse =>
   found(
-    'The actual Real GDP of Qatar for the period 2025-Q4 was 185.17 QAR billion, against a target of 190.00.' +
+    'The actual Real GDP of Qatar for the period 2025-Q4 was **185.17 QAR billion**, against a target of 190.00.' +
       sourcesFooter('Real GDP', '2025-Q4'),
     { indicator: 'Real GDP', period_label: '2025-Q4', actual: '185.17', target: '190.00', unit: 'QAR' },
     [citation('Real GDP', '2025-Q4')],

@@ -22,6 +22,13 @@ export const ar: Dict = {
   'turn.loading': 'قراءة البيانات المعتمدة — قد يستغرق ذلك بضع ثوانٍ',
   'turn.error': 'لم يكتمل الطلب. {message}',
   'turn.timeout': 'لم تُجب الخدمة في الوقت المتاح. السؤال الأول بعد إعادة التشغيل أبطأ من غيره.',
+  'stage.understanding': 'فهم السؤال',
+  'stage.routed': 'اختيار طريقة الإجابة',
+  'stage.resolved': 'تم تحديد المؤشر',
+  'stage.resolvedWith': 'قراءة {indicator}',
+  'stage.retrieving': 'جلب البيانات',
+  'stage.composing': 'صياغة الإجابة',
+  'stage.verifying': 'التحقق من الأرقام',
   'turn.jump': 'انتقل إلى الإجابة',
   'turn.retry': 'اسأل مرة أخرى',
 

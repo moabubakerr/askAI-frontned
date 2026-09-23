@@ -66,3 +66,11 @@
     }
   }
 }
+
+/* The stage, beside the dots. It is a caption, not a progress bar: the stages
+   a question goes through depend on the question. */
+.caption {
+  margin-inline-start: 12px;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}

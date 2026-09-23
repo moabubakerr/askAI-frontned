@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import {
-  chat as chatApi,
+  chatStream as chatStreamApi,
   endSession as endSessionApi,
   read as readApi,
   sendFeedback as sendFeedbackApi,
 } from '../api/client';
-import type { ChatRequest, ChatResponse, Lang, ReadResponse } from '../api/types';
+import type { ChatRequest, ChatResponse, Lang, ReadResponse, StreamStage } from '../api/types';
 
 /**
  * A rating, once given, is not taken back.
@@ -40,6 +40,14 @@ export interface Turn {
   error: string | null;
   /** The request timed out rather than failing outright. */
   timedOut: boolean;
+  /**
+   * Where the work has got to, while it is running.
+   *
+   * Not every stage fires for every question — a greeting or a refusal skips
+   * most of them — so this is a caption on an indeterminate wait, never a
+   * step counter.
+   */
+  stage: StreamStage | null;
   /** The read-it-for-me view of this same question, once asked for. */
   read: ReadResponse | null;
   readStatus: 'idle' | 'loading' | 'ready' | 'error';
@@ -117,7 +125,7 @@ function useConversationStore(): ConversationStore {
     (index: number, question: string) => {
       const request: ChatRequest = { message: question, session_id: sessionId.current };
 
-      chatApi(request).then(
+      chatStreamApi(request, (stage) => patchTurn(index, { stage })).then(
         (response) => {
           if (response.verified === false) {
             // Evidence of a payload that did not carry a number the model
@@ -126,11 +134,16 @@ function useConversationStore(): ConversationStore {
             // was "replaced" would only invite doubt about it.
             console.warn('[askai] answer returned verified:false', { question });
           }
-          patchTurn(index, { response, status: 'ready', error: null, timedOut: false });
+          patchTurn(index, { response, status: 'ready', error: null, timedOut: false, stage: null });
         },
         (cause: unknown) => {
           const message = cause instanceof Error ? cause.message : String(cause);
-          patchTurn(index, { status: 'error', error: message, timedOut: message === 'timeout' });
+          patchTurn(index, {
+            status: 'error',
+            error: message,
+            timedOut: message === 'timeout',
+            stage: null,
+          });
         },
       );
     },
@@ -155,6 +168,7 @@ function useConversationStore(): ConversationStore {
           status: 'loading',
           error: null,
           timedOut: false,
+          stage: null,
           read: null,
           readStatus: 'idle',
           feedback: NO_FEEDBACK,
@@ -168,7 +182,7 @@ function useConversationStore(): ConversationStore {
 
   const retry = useCallback(
     (turn: Turn, lang: Lang) => {
-      patchTurn(turn.index, { status: 'loading', error: null, timedOut: false, lang });
+      patchTurn(turn.index, { status: 'loading', error: null, timedOut: false, stage: null, lang });
       send(turn.index, turn.question);
     },
     [patchTurn, send],

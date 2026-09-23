@@ -757,6 +757,26 @@ export function splitSourcesFooter(answer: string): { body: string; hasFooter: b
 }
 
 /* ------------------------------------------------------------------ */
+/* POST /chat/stream                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Which part of the pipeline is running.
+ *
+ * **Not every stage fires for every question** — a greeting, a refusal or a
+ * catalogue listing skips most of them — so this is never a fixed sequence to
+ * step through. It is a caption on an indeterminate wait.
+ */
+export interface StreamStage {
+  stage: string;
+  /** Present on `resolved`. */
+  indicator?: string;
+  /** Present on `routed`. */
+  computation?: string;
+  [key: string]: unknown;
+}
+
+/* ------------------------------------------------------------------ */
 /* POST /feedback                                                      */
 /* ------------------------------------------------------------------ */
 

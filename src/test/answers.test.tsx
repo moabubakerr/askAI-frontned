@@ -105,7 +105,7 @@ describe('what the reader must not be allowed to miss', () => {
   });
 
   it('builds the chips from facts.candidates, not from the message text', async () => {
-    const chatSpy = vi.spyOn(client, 'chat');
+    const chatSpy = vi.spyOn(client, 'chatStream');
     const user = await ask('What is the GDP forecast?');
     await screen.findByText(/could match more than one indicator/i);
 
@@ -206,7 +206,7 @@ describe('charts', () => {
 
 describe('failures that are actually failures', () => {
   it('offers a retry when the request times out, and says why it was slow', async () => {
-    vi.spyOn(client, 'chat').mockRejectedValue(new client.ChatError('timeout'));
+    vi.spyOn(client, 'chatStream').mockRejectedValue(new client.ChatError('timeout'));
     await ask('What is the latest value of Real GDP?');
 
     expect(await screen.findByText(/did not answer in time/i)).toBeInTheDocument();
@@ -220,7 +220,7 @@ describe('failures that are actually failures', () => {
       chart: null,
       verified: true,
     };
-    vi.spyOn(client, 'chat').mockResolvedValue(response);
+    vi.spyOn(client, 'chatStream').mockResolvedValue(response);
 
     await ask('hello');
     await screen.findByText(/Ask me about a published indicator/);
@@ -237,7 +237,7 @@ describe('failures that are actually failures', () => {
       chart: null,
       verified: true,
     };
-    vi.spyOn(client, 'chat').mockResolvedValue(response);
+    vi.spyOn(client, 'chatStream').mockResolvedValue(response);
 
     await ask('something this client has never seen');
 
@@ -248,7 +248,7 @@ describe('failures that are actually failures', () => {
 
 describe('the session', () => {
   it('sends a stable session id, and no transcript — the server holds that', async () => {
-    const spy = vi.spyOn(client, 'chat');
+    const spy = vi.spyOn(client, 'chatStream');
     const user = await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
 
@@ -268,7 +268,7 @@ describe('the session', () => {
 
   it('ends the server-side conversation when a new one is started', async () => {
     const endSpy = vi.spyOn(client, 'endSession').mockResolvedValue();
-    const chatSpy = vi.spyOn(client, 'chat');
+    const chatSpy = vi.spyOn(client, 'chatStream');
 
     const user = await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
@@ -455,7 +455,7 @@ describe('the readable gate', () => {
       verified: true,
       readable: false,
     };
-    vi.spyOn(client, 'chat').mockResolvedValue(response);
+    vi.spyOn(client, 'chatStream').mockResolvedValue(response);
 
     await ask('anything');
     await screen.findByRole('article');
@@ -557,7 +557,7 @@ describe('trend answers', () => {
       verified: true,
       readable: true,
     };
-    vi.spyOn(client, 'chat').mockResolvedValue(response);
+    vi.spyOn(client, 'chatStream').mockResolvedValue(response);
 
     await ask('a trend with no chart');
     await screen.findByRole('article');
@@ -570,7 +570,7 @@ describe('trend answers', () => {
 describe('the chrome', () => {
   it('starts a new conversation from the logo', async () => {
     const endSpy = vi.spyOn(client, 'endSession').mockResolvedValue();
-    const chatSpy = vi.spyOn(client, 'chat');
+    const chatSpy = vi.spyOn(client, 'chatStream');
 
     const user = await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
@@ -912,7 +912,7 @@ describe('the read disclosure', () => {
 
 describe('rating an answer', () => {
   it('posts a 3, 4 or 5 straight away, with the message and session ids', async () => {
-    const chatSpy = vi.spyOn(client, 'chat');
+    const chatSpy = vi.spyOn(client, 'chatStream');
     const feedbackSpy = vi.spyOn(client, 'sendFeedback');
 
     const user = await ask('What is the latest value of Real GDP?');
@@ -1033,7 +1033,7 @@ describe('colouring a movement', () => {
 
 describe('the prose the service writes', () => {
   async function askWithAnswer(answer: string) {
-    vi.spyOn(client, 'chat').mockResolvedValue({
+    vi.spyOn(client, 'chatStream').mockResolvedValue({
       message_id: 'm1',
       answer,
       facts_payload: { ok: true, facts: { indicator: 'Real GDP' }, citations: [] },
@@ -1065,13 +1065,25 @@ describe('the prose the service writes', () => {
     expect(items.some((text) => text?.startsWith('-'))).toBe(false);
   });
 
-  it('renders markup it does not know as the text it was', async () => {
-    await askWithAnswer('A heading\n# Not a heading here\n<script>alert(1)</script>');
+  it('never turns a response into markup', async () => {
+    await askWithAnswer('Real GDP rose.\n\n<script>alert(1)</script>\n\n<img src=x onerror=1>');
     const card = await screen.findByRole('article');
 
-    // Never HTML from a response: unknown markup stays characters.
-    expect(card.textContent).toContain('# Not a heading here');
-    expect(card.textContent).toContain('<script>alert(1)</script>');
+    // Raw HTML is not rendered at all — no rehype-raw, and nothing is ever
+    // handed to dangerouslySetInnerHTML.
     expect(card.querySelector('script')).toBeNull();
+    expect(card.querySelector('img')).toBeNull();
+    expect(card.textContent).toContain('Real GDP rose.');
+  });
+
+  it('accepts • as a list marker, which Markdown itself does not', async () => {
+    await askWithAnswer('Findings:\n\n• Real GDP rose.\n• Inflation increased.');
+    const card = await screen.findByRole('article');
+
+    const items = within(card)
+      .getAllByRole('listitem')
+      .map((node) => node.textContent);
+    expect(items).toContain('Real GDP rose.');
+    expect(items).toContain('Inflation increased.');
   });
 });

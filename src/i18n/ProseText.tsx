@@ -1,109 +1,40 @@
-import { Fragment, type ReactNode } from 'react';
-import { LocalizedText } from './LocalizedText';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './ProseText.module.css';
 
 /**
- * The service's prose, which carries a little Markdown: `**bold**` for the
- * indicator name at the head of a line, and `- ` or `• ` bullets for a list.
- * Rendered as plain text those become literal asterisks and hyphens on screen.
+ * The service's prose, which is Markdown by contract.
  *
- * This understands exactly those two things and nothing else. It is not a
- * Markdown renderer and never produces HTML from the response: every fragment
- * goes through `LocalizedText`, which renders text nodes, so a stray `<script>`
- * in an answer stays the characters it was.
+ * A real parser rather than a pattern match: the answers are bilingual and carry
+ * indicator names that came from a catalogue, so an asterisk or an underscore
+ * can appear inside the text itself. Matching `**` by hand gets that wrong in
+ * exactly the cases that matter.
  *
- * Anything it does not recognise — a heading, a link, a table — is left as the
- * literal text the service sent, which is wrong-looking but never wrong.
+ * Raw HTML in the response is **not** rendered — `react-markdown` ignores it
+ * unless `rehype-raw` is added, which it deliberately is not. So an answer
+ * cannot put markup, let alone a script, into the page. That is the whole
+ * sanitisation story: nothing is ever passed to `dangerouslySetInnerHTML`.
+ *
+ * The contract says no headings, tables, nested lists, code blocks, links or
+ * images. They are parsed anyway, and styled quietly, because rendering
+ * something unexpected badly is better than rendering it as raw characters —
+ * but no layout here depends on them.
  */
 export function ProseText({ text }: { text: string }) {
-  return <>{blocks(text)}</>;
+  return (
+    <div className={styles.prose}>
+      <Markdown remarkPlugins={[remarkGfm]}>{normalizeBullets(text)}</Markdown>
+    </div>
+  );
 }
 
-const BULLET = /^\s*(?:[-*•])\s+(.*)$/;
-
-/** Group consecutive bullet lines into one list; everything else is a paragraph. */
-function blocks(text: string): ReactNode[] {
-  const lines = text.split('\n');
-  const out: ReactNode[] = [];
-
-  let bullets: string[] = [];
-  let paragraph: string[] = [];
-
-  const flushBullets = () => {
-    if (bullets.length === 0) return;
-    const items = bullets;
-    bullets = [];
-    out.push(
-      <ul key={`ul-${out.length}`} className={styles.list}>
-        {items.map((item, index) => (
-          <li key={index}>
-            <Inline text={item} />
-          </li>
-        ))}
-      </ul>,
-    );
-  };
-
-  const flushParagraph = () => {
-    if (paragraph.length === 0) return;
-    const body = paragraph.join('\n');
-    paragraph = [];
-    out.push(
-      <p key={`p-${out.length}`} className={styles.paragraph}>
-        <Inline text={body} />
-      </p>,
-    );
-  };
-
-  for (const line of lines) {
-    const bullet = line.match(BULLET);
-    if (bullet) {
-      flushParagraph();
-      bullets.push(bullet[1] ?? '');
-      continue;
-    }
-
-    if (line.trim() === '') {
-      flushBullets();
-      flushParagraph();
-      continue;
-    }
-
-    flushBullets();
-    paragraph.push(line);
-  }
-
-  flushBullets();
-  flushParagraph();
-
-  return out;
-}
-
-const BOLD = /\*\*([^*]+)\*\*/g;
-
-/** `**bold**` only. Everything else is text. */
-export function Inline({ text }: { text: string }) {
-  const parts: ReactNode[] = [];
-  let cursor = 0;
-
-  BOLD.lastIndex = 0;
-  let match = BOLD.exec(text);
-  while (match !== null) {
-    if (match.index > cursor) {
-      parts.push(<LocalizedText key={parts.length} text={text.slice(cursor, match.index)} />);
-    }
-    parts.push(
-      <strong key={parts.length}>
-        <LocalizedText text={match[1] ?? ''} />
-      </strong>,
-    );
-    cursor = match.index + match[0].length;
-    match = BOLD.exec(text);
-  }
-
-  if (cursor < text.length) {
-    parts.push(<LocalizedText key={parts.length} text={text.slice(cursor)} />);
-  }
-
-  return <>{parts.map((part, index) => <Fragment key={index}>{part}</Fragment>)}</>;
+/**
+ * The service writes list items with `-` **or** `•`, but Markdown only knows
+ * the first: a `•` line parses as ordinary text and the list collapses into a
+ * paragraph. Rewriting the marker at the start of a line is the one liberty
+ * taken with the response, and it touches nothing else — a bullet inside a
+ * sentence is left alone.
+ */
+function normalizeBullets(text: string): string {
+  return text.replace(/^([ 	]*)[•·]\s+/gm, '$1- ');
 }

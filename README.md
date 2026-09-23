@@ -66,6 +66,10 @@ whatever `.env` says.
 | Trend summary figures are computed server-side | stat tiles: first → latest, % change, peak, trough |
 | `table` is carried on each citation | `Citations` — shown as the row's `title`, with no badge |
 | `session_id` must be stable per user — the **server** holds the transcript | `useConversation`; no `conversation_context` is ever sent |
+| The answer is Markdown | `ProseText` — react-markdown, no raw HTML, so a response can never become markup |
+| Streaming is the same URL with an `Accept` header | `streamInit`/`readEventStream`; stages caption an indeterminate wait, never a step counter |
+| `resolved` names the indicator | shown as "Looking up …" while the answer composes, so a wrong match is obvious before reading it |
+| A stream commits to 200 before the work | an `error` event, or ending with no answer, is a failure |
 | `message_id` is the only way to say which answer a rating is about | kept with the turn; `Feedback` sends it with the same `session_id` |
 | A rating of 1 or 2 must carry a comment | `Feedback` opens the box first — the 422 is the backstop, not the path |
 | `comment_required` means the score was fine | the score is kept and `detail.message` is shown verbatim |

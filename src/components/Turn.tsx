@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { formatNumber } from '../i18n/formatNumber';
 import { LocalizedText } from '../i18n/LocalizedText';
+import type { MsgKey } from '../i18n/en';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation, type Turn as TurnModel } from '../state/useConversation';
 import { AnswerCard } from './AnswerCard';
@@ -15,6 +16,23 @@ import styles from './Turn.module.css';
 function scrollTo(element: HTMLElement, block: ScrollLogicalPosition) {
   if (typeof element.scrollIntoView !== 'function') return;
   element.scrollIntoView({ behavior: 'smooth', block });
+}
+
+/**
+ * The stage, in words. An unknown stage name is shown as the service sent it
+ * rather than dropped — a new step in the pipeline should read oddly, not
+ * vanish.
+ */
+function stageCaption(
+  stage: TurnModel['stage'],
+  t: (key: MsgKey, vars?: Record<string, string>) => string,
+): string | undefined {
+  if (!stage) return undefined;
+  if ((stage.stage === 'resolved' || stage.stage === 'retrieving') && stage.indicator) {
+    return t('stage.resolvedWith', { indicator: stage.indicator });
+  }
+  const key = `stage.${stage.stage}` as MsgKey;
+  return t(key) === key ? stage.stage : t(key);
 }
 
 export function Turn({ turn }: { turn: TurnModel }) {
@@ -100,7 +118,9 @@ export function Turn({ turn }: { turn: TurnModel }) {
         tabIndex={-1}
         aria-labelledby={`turn-${turn.index}-question`}
       >
-        {turn.status === 'loading' ? <Loader label={t('turn.loading')} /> : null}
+        {turn.status === 'loading' ? (
+          <Loader label={t('turn.loading')} caption={stageCaption(turn.stage, t)} />
+        ) : null}
 
         {turn.status === 'error' ? (
           <div className={styles.failure}>

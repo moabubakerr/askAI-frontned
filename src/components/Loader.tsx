@@ -9,7 +9,16 @@ import styles from './Loader.module.css';
  *
  * The label is kept for screen readers, which have no animation to read.
  */
-export function Loader({ label, size = 'default' }: { label: string; size?: 'default' | 'small' }) {
+export function Loader({
+  label,
+  size = 'default',
+  caption,
+}: {
+  label: string;
+  size?: 'default' | 'small';
+  /** Where the work has got to, when the service says. */
+  caption?: string;
+}) {
   return (
     <p className={size === 'small' ? `${styles.loader} ${styles.small}` : styles.loader}>
       <span className={styles.dots} aria-hidden="true">
@@ -17,8 +26,13 @@ export function Loader({ label, size = 'default' }: { label: string; size?: 'def
         <span className={styles.dot} />
         <span className={styles.dot} />
       </span>
+      {caption ? (
+        <span className={styles.caption} aria-hidden="true">
+          {caption}
+        </span>
+      ) : null}
       <span className="visually-hidden" role="status">
-        {label}
+        {caption ? `${label} — ${caption}` : label}
       </span>
     </p>
   );

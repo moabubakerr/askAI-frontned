@@ -20,6 +20,13 @@ export const en = {
   'turn.loading': 'Reading the approved dataset — this can take a few seconds',
   'turn.error': 'The request did not complete. {message}',
   'turn.timeout': 'The service did not answer in time.',
+  'stage.understanding': 'Understanding the question',
+  'stage.routed': 'Choosing how to answer',
+  'stage.resolved': 'Found the indicator',
+  'stage.resolvedWith': 'Looking up {indicator}',
+  'stage.retrieving': 'Retrieving the data',
+  'stage.composing': 'Composing the answer',
+  'stage.verifying': 'Checking the figures',
   'turn.jump': 'Jump to answer',
   'turn.retry': 'Ask again',
 
