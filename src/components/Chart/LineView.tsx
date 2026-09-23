@@ -69,7 +69,7 @@ export function LineView({
             x={point.x}
             y={plot.y + plot.height + 20}
             className={styles.axisLabel}
-            textAnchor="middle"
+            textAnchor={point.anchor}
           >
             {localizeNumerals(point.label, lang)}
           </text>

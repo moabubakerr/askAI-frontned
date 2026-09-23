@@ -55,15 +55,20 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
   // the `Sources:` footer — splitting the footer first would take the warning
   // with it. Then the footer, so the citations render once, properly.
   const { body: withoutWarning, warning } = splitApproximateMatch(response.answer);
-  const { body, hasFooter } = splitSourcesFooter(withoutWarning);
+  const { body } = splitSourcesFooter(withoutWarning);
 
   const kind = found ? factsKind(payload.facts) : 'unknown';
 
   const citations = payload.citations ?? [];
-  // For a catalogue listing the citations *are* the indicators — one per name —
-  // so the sources block would print the same list a second time. The names are
-  // the provenance; there is nothing else to attribute.
-  const showCitations = hasFooter && citations.length > 0 && kind !== 'count';
+  // The service gives provenance twice on purpose: as prose inside `answer`,
+  // and as the machine-readable array. The array is what is rendered — it can
+  // be linked per figure — so the prose footer is stripped above, and only one
+  // of the two ever reaches the page.
+  //
+  // For a catalogue listing the citations *are* the indicators, one per name,
+  // so the block would print the list a second time. The names are the
+  // provenance there; there is nothing else to attribute.
+  const showCitations = citations.length > 0 && kind !== 'count';
   const chart = response.chart ?? payload.chart ?? null;
 
   const indicator = found ? factsIndicator(payload.facts) : null;

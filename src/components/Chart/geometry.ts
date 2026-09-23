@@ -15,6 +15,8 @@ export interface PlottedPoint {
   value: number;
   /** x labels are thinned when the axis is crowded. */
   showLabel: boolean;
+  /** The first and last labels are anchored inward, to stay inside the plot. */
+  anchor: 'start' | 'middle' | 'end';
 }
 
 export interface Bar extends PlottedPoint {
@@ -33,6 +35,44 @@ export interface Geometry {
   areaPath: string;
   /** Path length estimate, for the left-to-right draw. */
   lineLength: number;
+}
+
+/**
+ * Roughly the width of a period label — "2026-04", "2025-Q4" — in viewBox
+ * units, plus the gap that keeps two of them apart.
+ */
+const MIN_LABEL_GAP = 78;
+
+/**
+ * Which labels to draw.
+ *
+ * Thinning by index — every nth, plus always the last — puts the final label
+ * wherever the arithmetic leaves it, which can be a few pixels from its
+ * neighbour: the two then overlap and read as one smear. Walking back from the
+ * end instead keeps the most recent period, which is the one that matters, and
+ * drops anything that would collide with a label already kept.
+ */
+function labelled(xs: number[]): Set<number> {
+  const keep = new Set<number>();
+  let lastKept: number | null = null;
+
+  for (let index = xs.length - 1; index >= 0; index -= 1) {
+    const x = xs[index];
+    if (x === undefined) continue;
+    if (lastKept === null || lastKept - x >= MIN_LABEL_GAP) {
+      keep.add(index);
+      lastKept = x;
+    }
+  }
+
+  return keep;
+}
+
+/** The end labels lean inward so they do not run off the plot. */
+function anchorFor(index: number, count: number): 'start' | 'middle' | 'end' {
+  if (index === 0) return 'start';
+  if (index === count - 1) return 'end';
+  return 'middle';
 }
 
 /** A round step close to `raw`, so axis labels read as numbers a person wrote. */
@@ -90,28 +130,37 @@ export function buildGeometry(series: SeriesPoint[], zeroBased: boolean): Geomet
 
   const count = series.length;
   const slot = plot.width / count;
-  const everyNth = Math.ceil(count / 8);
+
+  const pointXs = series.map((_, index) =>
+    count === 1 ? plot.x + plot.width / 2 : plot.x + (index / (count - 1)) * plot.width,
+  );
+  const pointLabels = labelled(pointXs);
 
   const points: PlottedPoint[] = series.map((point, index) => ({
-    x: count === 1 ? plot.x + plot.width / 2 : plot.x + (index / (count - 1)) * plot.width,
+    x: pointXs[index] ?? plot.x,
     y: y(point.value),
     label: point.label,
     value: point.value,
-    showLabel: index % everyNth === 0 || index === count - 1,
+    showLabel: pointLabels.has(index),
+    anchor: anchorFor(index, count),
   }));
 
   const barWidth = Math.min(slot * 0.56, 64);
   const baseline = y(zeroBased ? Math.max(0, min) : min);
 
+  const barXs = series.map((_, index) => plot.x + slot * (index + 0.5));
+  const barLabels = labelled(barXs);
+
   const bars: Bar[] = series.map((point, index) => {
-    const centre = plot.x + slot * (index + 0.5);
+    const centre = barXs[index] ?? plot.x;
     const top = y(point.value);
     return {
       x: centre,
       y: top,
       label: point.label,
       value: point.value,
-      showLabel: index % everyNth === 0 || index === count - 1,
+      showLabel: barLabels.has(index),
+      anchor: anchorFor(index, count),
       barX: centre - barWidth / 2,
       barY: Math.min(top, baseline),
       barWidth,

@@ -65,7 +65,7 @@ export function BarView({
             x={bar.x}
             y={plot.y + plot.height + 20}
             className={styles.axisLabel}
-            textAnchor="middle"
+            textAnchor={bar.anchor}
           >
             {localizeNumerals(bar.label, lang)}
           </text>

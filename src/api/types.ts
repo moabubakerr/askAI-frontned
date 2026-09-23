@@ -751,10 +751,24 @@ export function factsCandidates(facts: Facts | undefined): string[] {
  * citation list.
  */
 export function splitSourcesFooter(answer: string): { body: string; hasFooter: boolean } {
-  const match = answer.match(/\n\s*(?:Sources|المصادر)\s*:\s*\n/);
-  if (!match || match.index === undefined) return { body: answer, hasFooter: false };
-  return { body: answer.slice(0, match.index).trimEnd(), hasFooter: true };
+  const lines = answer.split('\n');
+  const heading = lines.findIndex((line) => SOURCES_HEADING.test(line));
+  if (heading === -1) return { body: answer, hasFooter: false };
+
+  // Everything from the first heading onward, so a response that repeats the
+  // footer — which happens on follow-up turns — loses both copies.
+  return { body: lines.slice(0, heading).join('\n').trimEnd(), hasFooter: true };
 }
+
+/**
+ * The provenance heading, in either language.
+ *
+ * It is Markdown now, so the emphasis markers are optional and so is the colon.
+ * Matched as a line of its own rather than by requiring a newline on each side:
+ * the old pattern missed `*Sources:*`, and the footer then stayed in the prose
+ * beside the citations rendered from the array — the same sources, twice.
+ */
+const SOURCES_HEADING = /^[ \t]*[*_]{0,2}[ \t]*(?:Sources|المصادر)[ \t]*:?[ \t]*[*_]{0,2}[ \t\r]*$/i;
 
 /* ------------------------------------------------------------------ */
 /* POST /chat/stream                                                   */
