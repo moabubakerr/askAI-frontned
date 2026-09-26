@@ -1,4 +1,3 @@
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
 import { panelsOf, replyDir, type AskResponse, type SourceAnswer } from '../api/types';
 import { ProseText } from '../i18n/ProseText';
 import { useI18n } from '../i18n/useI18n';
@@ -31,35 +30,14 @@ function SourcePanel({ turn, panel }: { turn: Turn; panel: SourceAnswer }) {
   const { t, tOpen } = useI18n();
   const { lens } = useConversation();
 
-  const isScai = panel.source === 'scai';
+  // Which house answered is carried by the panel's name and stripe.
   const name = tOpen(`source.${panel.source}`, panel.source);
 
   return (
     <article className={styles.panel} data-source={panel.source} data-ok={panel.ok ? 'true' : 'false'}>
       <header className={styles.head}>
         <span className={styles.name}>{name}</span>
-
-        {/* The difference the reader must be able to see: which answer carries
-            the guarantee that its figures were checked. Oxford's never can —
-            their prose is composed over data this service does not hold. */}
-        {panel.verified === true ? (
-          <span className={styles.verified}>
-            <ShieldCheck size={13} strokeWidth={1.75} aria-hidden="true" />
-            {t('panel.verified')}
-          </span>
-        ) : null}
-
-        {panel.latency_ms && lens === 'explore' ? (
-          <span className={styles.latency}>{t('panel.latency', { s: latency(panel) })}</span>
-        ) : null}
       </header>
-
-      {!isScai ? (
-        <p className={styles.unverifiedNote}>
-          <AlertTriangle size={13} strokeWidth={1.75} aria-hidden="true" />
-          {t('panel.oxfordNote')}
-        </p>
-      ) : null}
 
       {panel.ok ? (
         // Passed through byte for byte, including figures that look wrong:
@@ -83,8 +61,4 @@ function SourcePanel({ turn, panel }: { turn: Turn; panel: SourceAnswer }) {
       ) : null}
     </article>
   );
-}
-
-function latency(panel: SourceAnswer): string {
-  return ((panel.latency_ms ?? 0) / 1000).toFixed(1);
 }

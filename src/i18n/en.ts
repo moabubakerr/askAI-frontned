@@ -104,12 +104,12 @@ export const en = {
   'feedback.failed': 'The rating could not be sent.',
 
   'source.group': 'Answered by',
-  'source.scai': 'SCAI',
+  'source.scai': 'SCEAI Indicators',
   'source.oxford': 'Oxford Economics',
-  'source.combined': 'Both',
-  'source.egressWarning':
-    'Your question will be sent to Oxford Economics’ cloud. Everything else in this product stays on Council premises.',
-
+  'source.combined': 'Combined — SCEAI Indicators + Oxford Economics',
+  'source.scaiHint': 'Approved national indicator data',
+  'source.oxfordHint': 'Licensed global data, forecasts and scenarios',
+  'source.combinedHint': 'Approved data answers first; the external view is appended, clearly attributed.',
   'panel.verified': 'Figures checked',
   'panel.oxfordNote':
     'Oxford Economics’ own figures, not verified against SCAI data. Shown exactly as they sent them.',

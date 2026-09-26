@@ -3,9 +3,15 @@ import { screen, within } from '@testing-library/react';
 import * as client from '../api/client';
 import { renderApp } from './render';
 
-async function askBoth(question: string, option = 'Both') {
+/** The picker is a menu now: open it, then choose. */
+async function pick(user: ReturnType<typeof renderApp>['user'], option: string | RegExp) {
+  await user.click(screen.getByRole('button', { name: /Answered by/ }));
+  await user.click(screen.getByRole('option', { name: option }));
+}
+
+async function askBoth(question: string, option: string | RegExp = /Combined/) {
   const { user } = renderApp();
-  await user.click(screen.getByRole('radio', { name: option }));
+  await pick(user, option);
   await user.type(screen.getByLabelText('Your question'), question);
   await user.click(screen.getByRole('button', { name: 'Ask' }));
   return user;
@@ -26,15 +32,12 @@ describe('asking two houses', () => {
     expect(within(panels[1] as HTMLElement).getAllByText(/2\.4/).length).toBeGreaterThan(0);
   });
 
-  it('says which answer carries the guarantee', async () => {
+  it('names each house on its own panel', async () => {
     await askBoth('What was GDP growth in 2024?');
     const panels = await screen.findAllByRole('article');
 
-    expect(within(panels[0] as HTMLElement).getByText('Figures checked')).toBeInTheDocument();
-    expect(within(panels[1] as HTMLElement).queryByText('Figures checked')).toBeNull();
-    expect(
-      within(panels[1] as HTMLElement).getByText(/not verified against SCAI data/i),
-    ).toBeInTheDocument();
+    expect(within(panels[0] as HTMLElement).getByText('SCEAI Indicators')).toBeInTheDocument();
+    expect(within(panels[1] as HTMLElement).getByText('Oxford Economics')).toBeInTheDocument();
   });
 
   it('renders Oxford tables rather than pipe soup', async () => {
@@ -78,22 +81,19 @@ describe('asking two houses', () => {
 });
 
 describe('sending a question outside', () => {
-  it('starts on the premises and says nothing about egress', () => {
-    renderApp();
-
-    expect(screen.getByRole('radio', { name: 'SCAI' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.queryByText(/sent to Oxford Economics/)).toBeNull();
-  });
-
-  it('warns while an outside source is selected, not just on the click', async () => {
+  it('starts on the premises, every session', async () => {
     const { user } = renderApp();
-    await user.click(screen.getByRole('radio', { name: 'Both' }));
 
-    // It applies to every question asked under it, so it stays on screen.
-    expect(screen.getByText(/sent to Oxford Economics/)).toBeInTheDocument();
+    // Never written to storage: an outside source is chosen again each time.
+    expect(screen.getByRole('button', { name: /Answered by/ })).toHaveTextContent(
+      'SCEAI Indicators',
+    );
 
-    await user.click(screen.getByRole('radio', { name: 'SCAI' }));
-    expect(screen.queryByText(/sent to Oxford Economics/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: /Answered by/ }));
+    expect(screen.getAllByRole('option', { name: /SCEAI Indicators/ })[0]).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
   });
 
   it('stops offering Oxford when the deployment cannot reach it', async () => {
@@ -104,9 +104,12 @@ describe('sending a question outside', () => {
     const user = await askBoth('What was GDP growth in 2024?');
     await screen.findByText(/not configured on this deployment/);
 
-    // The option is withdrawn rather than left to fail again.
-    expect(screen.queryByRole('radio', { name: 'Both' })).toBeNull();
-    expect(screen.getByRole('radio', { name: 'SCAI' })).toHaveAttribute('aria-checked', 'true');
-    expect(user).toBeTruthy();
+    // The options are withdrawn rather than left to fail again.
+    await user.click(screen.getByRole('button', { name: /Answered by/ }));
+    expect(screen.queryByRole('option', { name: /Oxford/ })).toBeNull();
+    expect(screen.getAllByRole('option', { name: /SCEAI Indicators/ })[0]).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
   });
 });

@@ -1,65 +1,74 @@
 .wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  position: relative;
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
+.trigger {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-100);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--t-hover) var(--ease);
 }
 
-.label {
-  margin-inline-end: 2px;
-  font-size: var(--fs-eyebrow);
-  font-weight: 600;
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--ink-faint);
+.trigger:hover {
+  background: var(--neutral-150);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.chevron {
+  color: var(--ink-muted);
+  transition: transform var(--t-hover) var(--ease);
+}
+
+.open {
+  transform: rotate(180deg);
+}
+
+/* Opens upward: the composer sits at the foot of the page. */
+.menu {
+  position: absolute;
+  inset-block-end: calc(100% + 10px);
+  inset-inline-end: 0;
+  z-index: 40;
+  width: max(300px, 100%);
+  max-width: 420px;
+  padding: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
 }
 
 .option {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: start;
   font-family: inherit;
-  font-size: var(--fs-body);
   cursor: pointer;
-  transition:
-    border-color var(--t-hover) var(--ease),
-    background var(--t-hover) var(--ease),
-    color var(--t-hover) var(--ease);
+  transition: background var(--t-hover) var(--ease);
 }
 
 .option:hover {
-  color: var(--ink);
-  border-color: var(--neutral-300);
-}
-
-.option[aria-checked='true'] {
-  background: var(--blue-900);
-  border-color: var(--blue-900);
-  color: #fff;
-}
-
-/* The options that leave the premises are marked as such before they are
-   chosen, not only afterwards. */
-.option[data-outside='true'] {
-  border-color: var(--gold-200);
-  color: var(--gold-700);
-}
-
-.option[data-outside='true'][aria-checked='true'] {
-  background: var(--gold-700);
-  border-color: var(--gold-700);
-  color: #fff;
+  background: var(--neutral-50);
 }
 
 .option:focus-visible {
@@ -67,15 +76,32 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Stays on screen for as long as the choice does: it applies to every question
-   asked under it, not just the click that selected it. */
-.egress {
-  margin: 0;
-  padding: 8px 11px;
-  border: 1px solid var(--gold-200);
-  border-radius: var(--radius);
-  background: var(--gold-50);
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--fs-sentence);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.option[aria-selected='true'] .label {
+  color: var(--blue-800);
+}
+
+.description {
   font-size: var(--fs-body);
-  line-height: 1.5;
-  color: var(--amber-700);
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.check {
+  margin-inline-start: auto;
+  flex: none;
+  margin-block-start: 3px;
+  color: var(--blue-900);
 }

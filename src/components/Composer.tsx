@@ -58,6 +58,7 @@ export function Composer() {
             </div>
 
             <div className={styles.right}>
+              <SourcePicker />
               <button
                 type="button"
                 className={styles.reset}
@@ -80,8 +81,6 @@ export function Composer() {
             </div>
           </div>
         </form>
-
-        <SourcePicker />
       </div>
     </div>
   );

@@ -908,7 +908,7 @@ describe('the read disclosure', () => {
     await screen.findByRole('article');
 
     // The tag above the card, and the picker's own SCAI option.
-    expect(screen.getAllByText('SCAI').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('SCEAI Indicators').length).toBeGreaterThan(0);
   });
 });
 

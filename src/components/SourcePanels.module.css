@@ -4,15 +4,11 @@
   align-items: start;
 }
 
-/* Side by side, so the two can be read against each other. */
+/* Stacked, in the order the response lists them: the approved answer first,
+   the external view under it. Side by side made the second look like an equal
+   column rather than an appendix. */
 .pair {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 900px) {
-  .pair {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .panel {
