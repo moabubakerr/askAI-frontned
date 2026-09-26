@@ -201,3 +201,27 @@
   line-height: 1.65;
   color: var(--ink);
 }
+
+/* `/ask` sends no progress events, so the wait says who is being asked and how
+   long it usually takes, rather than showing a bar that would be invented. */
+.waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 20px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.waitingWho {
+  margin: 0;
+  font-size: var(--fs-sentence);
+  color: var(--ink);
+}
+
+.waitingNote {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink-muted);
+}

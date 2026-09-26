@@ -18,14 +18,20 @@ const SCORES = [1, 2, 3, 4, 5];
  * Shown on every answer, including refusals and greetings — those are often the
  * ones most worth flagging.
  */
-export function Feedback({ turn }: { turn: Turn }) {
+export function Feedback({ turn, messageId }: { turn: Turn; messageId: string }) {
   const { t } = useI18n();
   const { rate } = useConversation();
 
   const [pending, setPending] = useState<number | null>(null);
   const [comment, setComment] = useState('');
 
-  const { status, rating, message, commentRequired } = turn.feedback;
+  // Keyed by the answer it is about: a comparison has two, rated separately.
+  const { status, rating, message, commentRequired } = turn.feedback[messageId] ?? {
+    status: "idle" as const,
+    rating: null,
+    message: null,
+    commentRequired: false,
+  };
   const sent = status === 'sent';
   const sending = status === 'sending';
 
@@ -41,13 +47,13 @@ export function Feedback({ turn }: { turn: Turn }) {
       return;
     }
     setPending(null);
-    rate(turn, value);
+    rate(turn, messageId, value);
   }
 
   function submitComment(event: FormEvent) {
     event.preventDefault();
     if (score === null || !comment.trim()) return;
-    rate(turn, score, comment);
+    rate(turn, messageId, score, comment);
     setPending(null);
   }
 
@@ -96,11 +102,11 @@ export function Feedback({ turn }: { turn: Turn }) {
 
       {awaitingComment ? (
         <form className={styles.commentForm} onSubmit={submitComment}>
-          <label className={styles.commentLabel} htmlFor={`feedback-${turn.index}`}>
+          <label className={styles.commentLabel} htmlFor={`feedback-${turn.index}-${messageId}`}>
             {t('feedback.commentLabel')}
           </label>
           <textarea
-            id={`feedback-${turn.index}`}
+            id={`feedback-${turn.index}-${messageId}`}
             className={styles.comment}
             rows={2}
             value={comment}

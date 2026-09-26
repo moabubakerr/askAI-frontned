@@ -907,7 +907,8 @@ describe('the read disclosure', () => {
     await ask('What is the latest value of Real GDP?');
     await screen.findByRole('article');
 
-    expect(screen.getByText('SCEAI Indicators')).toBeInTheDocument();
+    // The tag above the card, and the picker's own SCAI option.
+    expect(screen.getAllByText('SCAI').length).toBeGreaterThan(0);
   });
 });
 

@@ -771,6 +771,77 @@ export function splitSourcesFooter(answer: string): { body: string; hasFooter: b
 const SOURCES_HEADING = /^[ \t]*[*_]{0,2}[ \t]*(?:Sources|المصادر)[ \t]*:?[ \t]*[*_]{0,2}[ \t\r]*$/i;
 
 /* ------------------------------------------------------------------ */
+/* POST /ask                                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Who answers.
+ *
+ * This is a data-egress decision, not a preference. `oxford` and `combined`
+ * send the reader's question verbatim to Oxford Economics' cloud; everything
+ * else in this product stays on the premises. So it is chosen explicitly, per
+ * conversation, and never remembered — see `useConversation`.
+ */
+export type Source = 'scai' | 'oxford' | 'combined';
+
+/** Which Oxford tool to use. `auto` lets their router read the question. */
+export type OxfordMode = 'auto' | 'data' | 'analysis' | 'both';
+
+export interface AskRequest {
+  message: string;
+  session_id: string;
+  source: Source;
+  oxford_mode?: OxfordMode;
+}
+
+/** One house's answer. Never merged with the other. */
+export interface SourceAnswer {
+  source: string;
+  ok: boolean;
+  answer: string;
+  /** A string when `ok` is false; that panel shows this in place of an answer. */
+  error: string | null;
+  latency_ms?: number;
+  /** Rate this half on its own. */
+  message_id?: string;
+  /**
+   * Whether every figure was checked against the rows the pipeline retrieved.
+   * Always false for Oxford: their prose is composed over data we do not hold,
+   * so there is nothing here to check it against.
+   */
+  verified?: boolean;
+  /** SCAI only. */
+  readable?: boolean;
+  facts_payload?: FactsPayload;
+  chart?: ChartSpec | null;
+  /** Oxford only. */
+  tools_used?: string[];
+}
+
+export interface AskResponse {
+  source: Source;
+  message_id?: string;
+  /**
+   * A pre-rendered convenience for a caller with one text area. Deliberately
+   * unused here: the two houses are rendered as two panels, and splitting this
+   * back apart on `---` would be reassembling what the API already separated.
+   */
+  answer?: string;
+  scai: SourceAnswer | null;
+  oxford: SourceAnswer | null;
+}
+
+/** The panels to render, in order, skipping the half that was not asked for. */
+export function panelsOf(response: AskResponse): SourceAnswer[] {
+  return [response.scai, response.oxford].filter((p): p is SourceAnswer => p !== null);
+}
+
+/** True where the question leaves the premises. */
+export function sendsQuestionOutside(source: Source): boolean {
+  return source === 'oxford' || source === 'combined';
+}
+
+/* ------------------------------------------------------------------ */
 /* POST /chat/stream                                                   */
 /* ------------------------------------------------------------------ */
 

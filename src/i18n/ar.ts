@@ -105,6 +105,22 @@ export const ar: Dict = {
   'feedback.thanks': 'شكرًا لك، سُجّل تقييمك.',
   'feedback.failed': 'تعذّر إرسال التقييم.',
 
+  'source.group': 'يجيب عنه',
+  'source.scai': 'المجلس الأعلى',
+  'source.oxford': 'أوكسفورد إيكونوميكس',
+  'source.combined': 'كلاهما',
+  'source.egressWarning':
+    'سيُرسل سؤالك إلى سحابة أوكسفورد إيكونوميكس. كل ما عدا ذلك في هذا المنتج يبقى داخل مقر المجلس.',
+
+  'panel.verified': 'أرقام مُتحقَّق منها',
+  'panel.oxfordNote':
+    'أرقام أوكسفورد إيكونوميكس نفسها، غير مُتحقَّق منها مقابل بيانات المجلس. معروضة كما أرسلوها تمامًا.',
+  'panel.latency': '{s} ث',
+  'panel.tools': 'الأدوات المستخدمة: {tools}',
+  'panel.failed': 'تعذّر على {source} الإجابة عن هذا السؤال.',
+  'panel.waiting': 'جارٍ سؤال {source}…',
+  'panel.waitingNote': 'قد تستغرق أوكسفورد إيكونوميكس نحو 20 ثانية.',
+
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',
 
@@ -128,8 +144,6 @@ export const ar: Dict = {
   'lens.executiveHint': 'ملخصات موجزة لصنّاع القرار',
   'lens.explore': 'استكشاف البيانات',
   'lens.exploreHint': 'التفاصيل الكاملة: الرسوم والأدلة والمحتوى ذو الصلة',
-
-  'source.name': 'مؤشرات المجلس الأعلى',
 
   'firstrun.welcome': 'مرحبًا بك في اسأل الذكاء الاصطناعي',
   'firstrun.intro':

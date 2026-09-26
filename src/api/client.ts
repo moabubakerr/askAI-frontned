@@ -16,10 +16,13 @@
 import {
   resolveFixture,
   resolveReadFixture,
+  resolveAskFixture,
   fixtureSession,
   resolveFeedbackFixture,
 } from './fixtures';
 import type {
+  AskRequest,
+  AskResponse,
   ChatRequest,
   ChatResponse,
   StreamStage,
@@ -45,6 +48,30 @@ const FIXTURE_LATENCY_MS = Number(import.meta.env.VITE_FIXTURE_LATENCY ?? 2500);
  * good answers, so this is deliberately generous.
  */
 const TIMEOUT_MS = 200_000;
+
+/**
+ * `/ask` reaches Oxford Economics, which takes ~20s cold, and the server gives
+ * up at 120s. This sits above that, so the client is never the one to cut a
+ * good answer short.
+ */
+const ASK_TIMEOUT_MS = 130_000;
+
+/**
+ * The reader asked a house this deployment cannot reach.
+ *
+ * Distinct from a failure: nothing went wrong, the option simply is not
+ * available here, and the UI stops offering it rather than letting the reader
+ * pick it again.
+ */
+export class SourceUnavailable extends Error {
+  readonly detail: string;
+
+  constructor(detail: string) {
+    super(detail);
+    this.name = 'SourceUnavailable';
+    this.detail = detail;
+  }
+}
 
 export class ChatError extends Error {
   readonly status: number | null;
@@ -281,6 +308,57 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
     return resolveFixture(req);
   }
   return post<ChatResponse>('/api/chat', req);
+}
+
+/**
+ * Ask one house, or both.
+ *
+ * No streaming and no progress events, unlike `/chat`. Oxford takes about 20
+ * seconds cold and the server's own ceiling is 120, so the wait here is long
+ * enough that the UI carries it with per-panel skeletons rather than a spinner.
+ *
+ * Both halves arrive together, so neither can be shown early. A half that
+ * failed comes back as `ok: false` inside a 200 — never a reason to discard
+ * the half that worked.
+ */
+export async function ask(req: AskRequest): Promise<AskResponse> {
+  if (USE_FIXTURES) {
+    await new Promise((resolve) => setTimeout(resolve, FIXTURE_LATENCY_MS));
+    return resolveAskFixture(req);
+  }
+
+  const controller = new AbortController();
+  // Above the server's 120s ceiling, so a slow answer is never cut off by the
+  // client first.
+  const timer = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    });
+
+    if (res.status === 503 || res.status === 502) {
+      // `detail.message` is written for a reader, so it is shown as written.
+      const body = (await res.json().catch(() => null)) as
+        | { detail?: { message?: string } }
+        | null;
+      const message = body?.detail?.message ?? `${res.status} ${res.statusText}`;
+      throw res.status === 503 ? new SourceUnavailable(message) : new ChatError(message, 502);
+    }
+
+    if (!res.ok) throw new ChatError(`${res.status} ${res.statusText}`, res.status);
+    return (await res.json()) as AskResponse;
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === 'AbortError') {
+      throw new ChatError('timeout');
+    }
+    throw cause;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** The read-it-for-me view of the same question. Same request shape. */

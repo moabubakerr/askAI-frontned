@@ -11,6 +11,8 @@
 
 import { commentRequiredFor } from './types';
 import type {
+  AskRequest,
+  AskResponse,
   ChartSpec,
   ChatRequest,
   ChatResponse,
@@ -897,6 +899,74 @@ export class FeedbackFixtureRejection extends Error {
     this.name = 'FeedbackRejected';
     this.commentRequired = commentRequired;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* POST /ask                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Oxford lean on tables, so the fixture does too. */
+const OXFORD_ANSWER = [
+  'Qatar real GDP growth was 2.4% in 2024, easing from 3.1% in 2023.',
+  '',
+  '| Region | Year | Variable | Value | Units |',
+  '| --- | --- | --- | --- | --- |',
+  '| Qatar | 2023 | Real GDP growth | 3.1 | % |',
+  '| Qatar | 2024 | Real GDP growth | 2.4 | % |',
+  '| Qatar | 2025 | Real GDP growth (f) | 2.6 | % |',
+  '',
+  'The 2025 figure is a forecast from our October vintage.',
+].join('\n');
+
+/**
+ * Both houses answering the same question, and disagreeing about it — 2.03%
+ * against 2.4%. That disagreement is the point of the comparison, so the
+ * fixture keeps it rather than tidying the two into one number.
+ */
+export function resolveAskFixture(req: AskRequest): AskResponse {
+  const scaiAnswer = resolveFixture({ message: req.message, session_id: req.session_id });
+
+  const scai =
+    req.source === 'oxford'
+      ? null
+      : {
+          source: 'scai',
+          ok: true,
+          answer: scaiAnswer.answer,
+          error: null,
+          latency_ms: 2100,
+          message_id: scaiAnswer.message_id,
+          verified: scaiAnswer.verified,
+          readable: scaiAnswer.readable,
+          facts_payload: scaiAnswer.facts_payload,
+          chart: scaiAnswer.chart,
+        };
+
+  // A question naming a year Oxford has nothing for: one half fails, the other
+  // still answers, and the response is still a 200.
+  const oxfordFailed = req.message.toLowerCase().includes('1990');
+
+  const oxford =
+    req.source === 'scai'
+      ? null
+      : {
+          source: 'oxford',
+          ok: !oxfordFailed,
+          answer: oxfordFailed ? '' : OXFORD_ANSWER,
+          error: oxfordFailed ? 'No series matching that request was returned.' : null,
+          latency_ms: 18014,
+          message_id: `ox_${Math.random().toString(36).slice(2, 10)}`,
+          // Always false: their prose is composed over data we do not hold.
+          verified: false,
+          tools_used: ['EconomicData'],
+        };
+
+  return {
+    source: req.source,
+    message_id: scai?.message_id ?? oxford?.message_id,
+    scai,
+    oxford,
+  };
 }
 
 /** Resolve a request against the sample data. */

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowUp, RotateCcw } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 import { useConversation, type Lens } from '../state/useConversation';
+import { SourcePicker } from './SourcePicker';
 import styles from './Composer.module.css';
 
 const LENSES: { value: Lens; key: 'lens.executive' | 'lens.explore' }[] = [
@@ -79,6 +80,8 @@ export function Composer() {
             </div>
           </div>
         </form>
+
+        <SourcePicker />
       </div>
     </div>
   );

@@ -1,0 +1,121 @@
+.panels {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Side by side, so the two can be read against each other. */
+.pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+/* The stripe says which house, before a word is read. */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: var(--stripe);
+  background: var(--accent-approved);
+}
+
+.panel[data-source='oxford']::before {
+  background: var(--accent-external);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Only one panel can carry this, and it has to be visible at a glance. */
+.verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-pill);
+  background: var(--blue-50);
+  color: var(--blue-800);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.latency,
+.tools {
+  margin: 0;
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+.tools {
+  margin-inline-start: 0;
+}
+
+/* Said on the panel itself, not in a footnote: these are Oxford's own figures
+   and nothing here checked them. */
+.unverifiedNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--gold-200);
+  border-radius: var(--radius);
+  background: var(--gold-50);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--amber-700);
+}
+
+.prose {
+  font-size: var(--fs-sentence);
+  line-height: 1.65;
+  color: var(--ink);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--neutral-50);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--ink-muted);
+}

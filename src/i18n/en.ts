@@ -103,6 +103,22 @@ export const en = {
   'feedback.thanks': 'Thank you, your rating was recorded.',
   'feedback.failed': 'The rating could not be sent.',
 
+  'source.group': 'Answered by',
+  'source.scai': 'SCAI',
+  'source.oxford': 'Oxford Economics',
+  'source.combined': 'Both',
+  'source.egressWarning':
+    'Your question will be sent to Oxford Economics’ cloud. Everything else in this product stays on Council premises.',
+
+  'panel.verified': 'Figures checked',
+  'panel.oxfordNote':
+    'Oxford Economics’ own figures, not verified against SCAI data. Shown exactly as they sent them.',
+  'panel.latency': '{s}s',
+  'panel.tools': 'Tools used: {tools}',
+  'panel.failed': '{source} could not answer this question.',
+  'panel.waiting': 'Asking {source}…',
+  'panel.waitingNote': 'Oxford Economics can take around 20 seconds.',
+
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',
 
@@ -126,8 +142,6 @@ export const en = {
   'lens.executiveHint': 'Concise summaries for decision-makers',
   'lens.explore': 'Explore Data',
   'lens.exploreHint': 'Full detail: charts, evidence and related content',
-
-  'source.name': 'SCEAI Indicators',
 
   'firstrun.welcome': 'Welcome to Ask AI',
   'firstrun.intro':

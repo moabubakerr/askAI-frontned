@@ -180,7 +180,7 @@ export function AnswerCard({ turn, response, onAsk }: Props) {
 
       {/* Independent of `readable`: a refusal or a greeting is often the answer
           most worth flagging. */}
-      {response.message_id ? <Feedback turn={turn} /> : null}
+      {response.message_id ? <Feedback turn={turn} messageId={response.message_id} /> : null}
     </article>
   );
 }

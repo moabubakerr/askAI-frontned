@@ -1,11 +1,21 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import {
+  ask as askApi,
+  SourceUnavailable,
   chatStream as chatStreamApi,
   endSession as endSessionApi,
   read as readApi,
   sendFeedback as sendFeedbackApi,
 } from '../api/client';
-import type { ChatRequest, ChatResponse, Lang, ReadResponse, StreamStage } from '../api/types';
+import type {
+  AskResponse,
+  ChatRequest,
+  ChatResponse,
+  Lang,
+  ReadResponse,
+  Source,
+  StreamStage,
+} from '../api/types';
 
 /**
  * A rating, once given, is not taken back.
@@ -60,7 +70,21 @@ export interface Turn {
   /** The read-it-for-me view of this same question, once asked for. */
   read: ReadResponse | null;
   readStatus: 'idle' | 'loading' | 'ready' | 'error';
-  feedback: FeedbackState;
+  /**
+   * Ratings, keyed by the message id they are about.
+   *
+   * A comparison has two answers and each carries its own id, so the two are
+   * rated separately — which is the cleanest signal about which house the
+   * reader trusts.
+   */
+  feedback: Record<string, FeedbackState>;
+  /** The two-house answer, when the reader asked more than SCAI. */
+  ask: AskResponse | null;
+  /**
+   * Who was asked. Held on the turn rather than read from the picker, so
+   * changing the picker never relabels an answer already on screen.
+   */
+  source: Source;
 }
 
 /**
@@ -112,8 +136,19 @@ export interface ConversationStore {
   retry: (turn: Turn, lang: Lang) => void;
   /** Fetch the read-it-for-me view of a turn's question. */
   readTurn: (turn: Turn) => void;
-  /** Rate an answer. A comment is required at 1 or 2. */
-  rate: (turn: Turn, rating: number, comment?: string) => void;
+  /** Rate one answer. A comment is required at 1 or 2. */
+  rate: (turn: Turn, messageId: string, rating: number, comment?: string) => void;
+  /**
+   * Who answers the next question.
+   *
+   * Deliberately not persisted: `oxford` and `combined` send the question to
+   * Oxford Economics' cloud, and a remembered default would keep doing that in
+   * later sessions without the reader choosing it again.
+   */
+  source: Source;
+  setSource: (source: Source) => void;
+  /** False once the deployment says Oxford is not configured here. */
+  oxfordAvailable: boolean;
   /** Ends the conversation here and on the server. */
   reset: () => void;
   focusComposer: () => void;
@@ -123,6 +158,9 @@ export interface ConversationStore {
 function useConversationStore(): ConversationStore {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [lens, setLens] = useState<Lens>('explore');
+  // Starts on the premises, every session, and is never written to storage.
+  const [source, setSource] = useState<Source>('scai');
+  const [oxfordAvailable, setOxfordAvailable] = useState(true);
   const sessionId = useRef<string>(loadSessionId());
   const nextIndex = useRef(0);
 
@@ -133,6 +171,39 @@ function useConversationStore(): ConversationStore {
   const send = useCallback(
     (index: number, question: string) => {
       const request: ChatRequest = { message: question, session_id: sessionId.current };
+
+      // `/ask` has no streaming, so the SCAI-only path stays on `/chat`: it is
+      // the common case, and the stages and the released text are worth
+      // keeping wherever they are available.
+      if (source !== 'scai') {
+        askApi({ ...request, source }).then(
+          (response) =>
+            patchTurn(index, {
+              ask: response,
+              status: 'ready',
+              error: null,
+              timedOut: false,
+              stage: null,
+              streamedText: '',
+            }),
+          (cause: unknown) => {
+            const message = cause instanceof Error ? cause.message : String(cause);
+            // Not a failure of this question: the deployment cannot reach that
+            // house at all, so it stops being offered.
+            if (cause instanceof SourceUnavailable) {
+              setOxfordAvailable(false);
+              setSource('scai');
+            }
+            patchTurn(index, {
+              status: 'error',
+              error: message,
+              timedOut: message === 'timeout',
+              stage: null,
+            });
+          },
+        );
+        return;
+      }
 
       chatStreamApi(
         request,
@@ -168,7 +239,7 @@ function useConversationStore(): ConversationStore {
         },
       );
     },
-    [patchTurn],
+    [patchTurn, source],
   );
 
   const ask = useCallback(
@@ -193,7 +264,9 @@ function useConversationStore(): ConversationStore {
           streamedText: '',
           read: null,
           readStatus: 'idle',
-          feedback: NO_FEEDBACK,
+          feedback: {},
+          ask: null,
+          source,
         },
       ]);
 
@@ -231,15 +304,14 @@ function useConversationStore(): ConversationStore {
   );
 
   const rate = useCallback(
-    (turn: Turn, rating: number, comment?: string) => {
-      const messageId = turn.response?.message_id;
-      if (!messageId || turn.feedback.status === 'sending' || turn.feedback.status === 'sent') {
-        return;
-      }
+    (turn: Turn, messageId: string, rating: number, comment?: string) => {
+      const current = turn.feedback[messageId] ?? NO_FEEDBACK;
+      if (!messageId || current.status === 'sending' || current.status === 'sent') return;
 
-      patchTurn(turn.index, {
-        feedback: { status: 'sending', rating, message: null, commentRequired: false },
-      });
+      const setFeedback = (state: FeedbackState) =>
+        patchTurn(turn.index, { feedback: { ...turn.feedback, [messageId]: state } });
+
+      setFeedback({ status: 'sending', rating, message: null, commentRequired: false });
 
       sendFeedbackApi({
         message_id: messageId,
@@ -249,22 +321,17 @@ function useConversationStore(): ConversationStore {
         // exchange beside the rating.
         session_id: sessionId.current,
       }).then(
-        () =>
-          patchTurn(turn.index, {
-            feedback: { status: 'sent', rating, message: null, commentRequired: false },
-          }),
+        () => setFeedback({ status: 'sent', rating, message: null, commentRequired: false }),
         (cause: unknown) => {
           const rejection = cause as { message?: string; commentRequired?: boolean };
           const commentRequired = rejection?.commentRequired === true;
-          patchTurn(turn.index, {
-            feedback: {
-              // A missing comment is not a failure to retry: the score stands
-              // and the reader is asked for the reason.
-              status: commentRequired ? 'rejected' : 'failed',
-              rating,
-              message: rejection?.message ?? null,
-              commentRequired,
-            },
+          setFeedback({
+            // A missing comment is not a failure to retry: the score stands
+            // and the reader is asked for the reason.
+            status: commentRequired ? 'rejected' : 'failed',
+            rating,
+            message: rejection?.message ?? null,
+            commentRequired,
           });
         },
       );
@@ -302,6 +369,9 @@ function useConversationStore(): ConversationStore {
     turns,
     lens,
     setLens,
+    source,
+    setSource,
+    oxfordAvailable,
     busy,
     ask,
     retry,

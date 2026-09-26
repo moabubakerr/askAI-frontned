@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/useI18n';
 import { replyDir } from '../api/types';
 import { useConversation, type Turn as TurnModel } from '../state/useConversation';
 import { AnswerCard } from './AnswerCard';
+import { SourcePanels } from './SourcePanels';
 import { Loader } from './Loader';
 import styles from './Turn.module.css';
 
@@ -120,7 +121,21 @@ export function Turn({ turn }: { turn: TurnModel }) {
         tabIndex={-1}
         aria-labelledby={`turn-${turn.index}-question`}
       >
-        {turn.status === 'loading' ? (
+        {turn.status === 'loading' && turn.source !== 'scai' ? (
+          <div className={styles.waiting}>
+            <p className={styles.waitingWho}>
+              {t('panel.waiting', {
+                source: turn.source === 'combined' ? t('source.combined') : t('source.oxford'),
+              })}
+            </p>
+            {/* No streaming on this endpoint, so the wait is carried by saying
+                how long it is rather than by a bar that cannot be honest. */}
+            <p className={styles.waitingNote}>{t('panel.waitingNote')}</p>
+            <Loader label={t('turn.loading')} />
+          </div>
+        ) : null}
+
+        {turn.status === 'loading' && turn.source === 'scai' ? (
           <div className={styles.composing}>
             {/* Provisional, and replaced wholesale by the final answer. Shown
                 because watching an answer arrive beats watching a spinner. */}
@@ -147,7 +162,12 @@ export function Turn({ turn }: { turn: TurnModel }) {
         {/* What answered, named before the answer rather than inside it: the
             reader knows where the figures came from before reading them. */}
         {turn.status === 'ready' && turn.response ? (
-          <span className={styles.source}>{t('source.name')}</span>
+          <span className={styles.source}>{t('source.scai')}</span>
+        ) : null}
+
+        {/* Two houses, two panels, never merged. */}
+        {turn.status === 'ready' && turn.ask ? (
+          <SourcePanels turn={turn} response={turn.ask} />
         ) : null}
 
         {turn.status === 'ready' && turn.response ? (
