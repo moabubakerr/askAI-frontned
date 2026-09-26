@@ -116,9 +116,7 @@ export const en = {
   'panel.latency': '{s}s',
   'panel.tools': 'Tools used: {tools}',
   'panel.failed': '{source} could not answer this question.',
-  'panel.waiting': 'Asking {source}…',
-  'panel.waitingNote': 'Oxford Economics can take around 20 seconds.',
-
+  'panel.waiting': 'Asking {source}…',
   'citations.title': 'Sources',
   'citations.catalogEntry': 'Catalog entry',
 

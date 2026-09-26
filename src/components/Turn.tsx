@@ -128,9 +128,6 @@ export function Turn({ turn }: { turn: TurnModel }) {
                 source: turn.source === 'combined' ? t('source.combined') : t('source.oxford'),
               })}
             </p>
-            {/* No streaming on this endpoint, so the wait is carried by saying
-                how long it is rather than by a bar that cannot be honest. */}
-            <p className={styles.waitingNote}>{t('panel.waitingNote')}</p>
             <Loader label={t('turn.loading')} />
           </div>
         ) : null}

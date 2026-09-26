@@ -118,9 +118,7 @@ export const ar: Dict = {
   'panel.latency': '{s} ث',
   'panel.tools': 'الأدوات المستخدمة: {tools}',
   'panel.failed': 'تعذّر على {source} الإجابة عن هذا السؤال.',
-  'panel.waiting': 'جارٍ سؤال {source}…',
-  'panel.waitingNote': 'قد تستغرق أوكسفورد إيكونوميكس نحو 20 ثانية.',
-
+  'panel.waiting': 'جارٍ سؤال {source}…',
   'citations.title': 'المصادر',
   'citations.catalogEntry': 'مدخل الفهرس',
 
